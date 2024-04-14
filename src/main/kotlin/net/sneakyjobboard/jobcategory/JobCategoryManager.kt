@@ -22,8 +22,9 @@ import org.joml.Vector3f
 class JobCategoryManager {
 
     public val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
+
     private val jobCategories: MutableMap<String, JobCategory> = mutableMapOf()
-    private val jobBoards: MutableList<JobBoard> = mutableListOf()
+    public val jobBoards: MutableList<JobBoard> = mutableListOf()
 
     /** Loads job categories from the configuration file on initialization. */
     init {
@@ -81,9 +82,10 @@ class JobCategoryManager {
                         )
             }
 
+            val directionList = mutableListOf<Direction?>()
+            val scaleList = mutableListOf<Int?>()
             val mapCentralLocations = mutableListOf<Location?>()
             val worldCentralLocations = mutableListOf<Location?>()
-            val directionList = mutableListOf<Direction?>()
 
             val mapCentralVectorStrings: List<String> = config.getStringList("map-central-vectors")
             val worldCentralVectorStrings: List<String> =
@@ -92,26 +94,31 @@ class JobCategoryManager {
             // Parse map central vectors
             mapCentralVectorStrings.forEach { vectorString ->
                 val components = vectorString.split(",")
-                if (components.size == 5) {
+                if (components.size == 6) {
                     val direction = Direction.valueOf(components[0])
-                    directionList.add(direction)
+                    val scale = components[1].toInt()
 
-                    val world = Bukkit.getWorld(components[1])
-                    val x = components[2].toDouble()
-                    val y = components[3].toDouble()
-                    val z = components[4].toDouble()
+                    val world = Bukkit.getWorld(components[2])
+                    val x = components[3].toDouble()
+                    val y = components[4].toDouble()
+                    val z = components[5].toDouble()
 
                     if (world != null) {
                         val location = Location(world, x, y, z)
+                        directionList.add(direction)
+                        scaleList.add(scale)
                         mapCentralLocations.add(location)
                     } else {
                         SneakyJobBoard.log(
                                 "Error parsing map central vector: World '${components[1]}' not found."
                         )
+                        directionList.add(null)
+                        scaleList.add(null)
                         mapCentralLocations.add(null)
                     }
                 } else {
                     directionList.add(null)
+                    scaleList.add(null)
                     mapCentralLocations.add(null)
                 }
             }
@@ -139,16 +146,19 @@ class JobCategoryManager {
                 }
             }
 
-            if (directionList.size > 1 &&
-                            mapCentralLocations.size > 1 &&
-                            worldCentralLocations.size > 1
+            if (directionList.size > 0 &&
+                            scaleList.size > 0 &&
+                            mapCentralLocations.size > 0 &&
+                            worldCentralLocations.size > 0
             ) {
                 for (i in 0 until mapCentralLocations.size) {
                     val mapLocation = mapCentralLocations[i]
 
                     if (mapLocation != null) {
                         val direction = directionList[i]
-                        if (direction != null) {
+                        val scale = scaleList[i]
+
+                        if (direction != null && scale != null) {
                             var worldLocation: Location? = null
 
                             // Find the last non-null worldVector
@@ -161,7 +171,7 @@ class JobCategoryManager {
 
                             if (worldLocation == null) continue
 
-                            jobBoards.add(JobBoard(direction, mapLocation, worldLocation))
+                            jobBoards.add(JobBoard(direction, scale, mapLocation, worldLocation))
                         }
                     }
                 }
@@ -300,6 +310,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
 
 data class JobBoard(
         val direction: Direction,
+        val scale: Int,
         val mapLocation: Location,
         val worldLocation: Location
 )
