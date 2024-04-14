@@ -39,7 +39,7 @@ class CommandListJob : CommandBase("listjob") {
             return false
         }
 
-        if (remainingArgs.isEmpty()) {
+        if (remainingArgs.size < 2) {
             sender.sendMessage(TextUtility.convertToComponent("&4Invalid Usage: $usageMessage"))
             return false
         }
