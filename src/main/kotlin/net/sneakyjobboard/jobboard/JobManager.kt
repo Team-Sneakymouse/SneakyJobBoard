@@ -32,8 +32,6 @@ class JobManager {
 
         if (job == null) return
 
-        job.incrementDispatched()
-
         Bukkit.getServer()
                 .dispatchCommand(
                         Bukkit.getServer().getConsoleSender(),

@@ -26,11 +26,50 @@ job-categories:
             right-rotation: 0,0,0,1
             translation: 0.0,0.0,0.0
             scale: 0.10,0.10,0.10
+    service:
+        name: "Service Industry"
+        description: "A special event is being hosted!"
+        icon-material: "jigsaw"
+        icon-custom-model-data: 2
+        item-display-brightness:
+            block: 15
+            sky: 15
+        item-display-transformation:
+            left-rotation: 0,0,0,1
+            right-rotation: 0,0,0,1
+            translation: 0.0,0.0,0.0
+            scale: 0.10,0.10,0.10
     event:
         name: "Special Event"
         description: "A special event is being hosted!"
         icon-material: "jigsaw"
-        icon-custom-model-data: 2
+        icon-custom-model-data: 3
+        item-display-brightness:
+            block: 15
+            sky: 15
+        item-display-transformation:
+            left-rotation: 0,0,0,1
+            right-rotation: 0,0,0,1
+            translation: 0.0,0.0,0.0
+            scale: 0.10,0.10,0.10
+    delivery:
+        name: "Delivery Request"
+        description: "A fellow citizen is looking for something specific."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 4
+        item-display-brightness:
+            block: 15
+            sky: 15
+        item-display-transformation:
+            left-rotation: 0,0,0,1
+            right-rotation: 0,0,0,1
+            translation: 0.0,0.0,0.0
+            scale: 0.10,0.10,0.10
+    store:
+        name: "Store"
+        description: "A store is currently open in this area."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 5
         item-display-brightness:
             block: 15
             sky: 15

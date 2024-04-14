@@ -6,10 +6,15 @@ import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.Display.Brightness
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.util.Transformation
+import org.joml.Quaternionf
+import org.joml.Vector3f
 
 /** Manages job categories and their configurations. */
 class JobCategoryManager {
@@ -38,22 +43,29 @@ class JobCategoryManager {
 
             jobCategories.clear()
 
-            jobCategoriesSection.getKeys(false).forEach { key ->
+            for (key in jobCategoriesSection.getKeys(false)) {
                 val name = jobCategoriesSection.getString("$key.name") ?: key
                 val description = jobCategoriesSection.getString("$key.description") ?: key
                 val iconMaterialString = jobCategoriesSection.getString("$key.icon-material") ?: ""
-
-                var iconMaterial = Material.matchMaterial(iconMaterialString)
-                if (iconMaterial == null) {
-                    SneakyJobBoard.log(
-                            "Invalid material '$iconMaterialString' specified for job-category '$key'. Using default."
-                    )
-                    iconMaterial = Material.MUSIC_DISC_CAT
-                }
                 val iconCustomModelData = jobCategoriesSection.getInt("$key.icon-custom-model-data")
-                val dispatchCap = jobCategoriesSection.getInt("$key.dispatch-cap")
-                val dispatchPar = jobCategoriesSection.getInt("$key.dispatch-par")
-                val durationMillis = jobCategoriesSection.getInt("$key.duration-milis")
+
+                val iconMaterial =
+                        Material.matchMaterial(iconMaterialString) ?: Material.MUSIC_DISC_CAT
+
+                val brightnessBlock =
+                        jobCategoriesSection.getInt("$key.item-display-brightness.block")
+                val brightnessSky = jobCategoriesSection.getInt("$key.item-display-brightness.sky")
+                val brightness = Brightness(brightnessBlock, brightnessSky)
+
+                val transformation =
+                        with(jobCategoriesSection.getVectorTransformation(key)) {
+                            Transformation(
+                                    this.translation,
+                                    this.leftRotation,
+                                    this.scale,
+                                    this.rightRotation
+                            )
+                        }
 
                 jobCategories[key] =
                         JobCategory(
@@ -61,14 +73,62 @@ class JobCategoryManager {
                                 description,
                                 iconMaterial,
                                 iconCustomModelData,
-                                if (dispatchCap > 0) dispatchCap else 1,
-                                dispatchPar,
-                                if (durationMillis > 0) durationMillis else 600000
+                                brightness,
+                                transformation
                         )
             }
+        } catch (e: IllegalStateException) {
+            SneakyJobBoard.log("Error: ${e.message}")
         } catch (e: Exception) {
-            SneakyJobBoard.log("An error occurred while loading job categories: ${e.message}")
+            SneakyJobBoard.log(
+                    "An unexpected error occurred while loading job categories: ${e.message}"
+            )
         }
+    }
+
+    /** Parse a Transformation from our config section. */
+    fun ConfigurationSection.getVectorTransformation(key: String): Transformation {
+        val leftRotationString =
+                getString("$key.item-display-transformation.left-rotation")?.split(",")
+                        ?: listOf("0", "0", "0", "1")
+        val rightRotationString =
+                getString("$key.item-display-transformation.right-rotation")?.split(",")
+                        ?: listOf("0", "0", "0", "1")
+        val translationString =
+                getString("$key.item-display-transformation.translation")?.split(",")
+                        ?: listOf("0.0", "0.0", "0.0")
+        val scaleString =
+                getString("$key.item-display-transformation.scale")?.split(",")
+                        ?: listOf("0.1", "0.1", "0.1")
+
+        val translation =
+                Vector3f(
+                        translationString[0].toFloat(),
+                        translationString[1].toFloat(),
+                        translationString[2].toFloat()
+                )
+        val leftRotation =
+                Quaternionf(
+                        leftRotationString[0].toFloat(),
+                        leftRotationString[1].toFloat(),
+                        leftRotationString[2].toFloat(),
+                        leftRotationString[3].toFloat()
+                )
+        val rightRotation =
+                Quaternionf(
+                        rightRotationString[0].toFloat(),
+                        rightRotationString[1].toFloat(),
+                        rightRotationString[2].toFloat(),
+                        rightRotationString[3].toFloat()
+                )
+        val scale =
+                Vector3f(
+                        scaleString[0].toFloat(),
+                        scaleString[1].toFloat(),
+                        scaleString[2].toFloat()
+                )
+
+        return Transformation(translation, leftRotation, scale, rightRotation)
     }
 
     /**
@@ -85,40 +145,19 @@ data class JobCategory(
         val description: String,
         val iconMaterial: Material,
         val iconCustomModelData: Int,
-        val dispatchCap: Int,
-        val dispatchPar: Int,
-        val durationMillis: Int
+        val brightness: Brightness,
+        val transformation: Transformation
 )
 
-data class Job(val category: JobCategory, val player: Player) {
+data class Job(val category: JobCategory, val player: Player, val durationMilis: Long) {
     val uuid: String = UUID.randomUUID().toString()
     val location: Location = player.location
+    val name: String = category.name
     var description: String = category.description
     var startTime: Long = System.currentTimeMillis()
-    var dispatched: Int = 0
 
     fun isExpired(): Boolean {
-        return (System.currentTimeMillis() >= startTime + category.durationMillis)
-    }
-
-    fun incrementDispatched() {
-        dispatched++
-    }
-
-    fun getDispatchCap(): Int {
-        return category.dispatchCap
-    }
-
-    fun isCapFulfilled(): Boolean {
-        return (dispatched >= category.dispatchCap)
-    }
-
-    fun isParFulfilled(): Boolean {
-        return (dispatched >= category.dispatchPar)
-    }
-
-    fun getName(): String {
-        return category.name
+        return (System.currentTimeMillis() >= startTime + durationMilis)
     }
 
     fun getIconItem(): ItemStack {

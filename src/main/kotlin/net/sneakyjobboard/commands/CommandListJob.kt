@@ -14,7 +14,7 @@ class CommandListJob : CommandBase("listjob") {
         this.usageMessage = buildString {
             append("/")
             append(this@CommandListJob.name)
-            append(" [jobCategory] (delayMilis)")
+            append(" [jobCategory] [durationMilis]")
         }
         this.description = "List a job to the job board."
     }
@@ -45,9 +45,7 @@ class CommandListJob : CommandBase("listjob") {
         }
 
         val jobcategory: JobCategory? =
-                SneakyJobBoard.getJobCategoryManager()
-                        .getJobCategories()
-                        .get(remainingArgs[0])
+                SneakyJobBoard.getJobCategoryManager().getJobCategories().get(remainingArgs[0])
 
         if (jobcategory == null) {
             sender.sendMessage(
@@ -58,7 +56,18 @@ class CommandListJob : CommandBase("listjob") {
             return false
         }
 
-        val job = Job(category = jobcategory, player = player)
+        val durationMilis: Long =
+                remainingArgs[1].toLongOrNull()
+                        ?: run {
+                            sender.sendMessage(
+                                    TextUtility.convertToComponent(
+                                            "&4Invalid duration value. Please provide a valid number."
+                                    )
+                            )
+                            return false
+                        }
+
+        val job = Job(category = jobcategory, player = player, durationMilis = durationMilis)
 
         SneakyJobBoard.getJobManager().report(job)
         sender.sendMessage(TextUtility.convertToComponent("&aYour job has been listed."))
