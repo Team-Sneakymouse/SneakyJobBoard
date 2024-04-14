@@ -5,12 +5,12 @@ poster-string: "&ePosted by: &b%sneakycharacters_character_name%"
 ## The first value is direction that the board will be facing. UP/DOWN/NORTH/EAST/SOUTH/WEST
 ## This is a string list, and can support multiple boards at once
 map-central-vectors:
-    - SOUTH,0,0,0
+    - SOUTH,world,0,0,0
 
 ## The world block coordinates that are represented by the map-central-vectors. The Y value is not actually used for anything, but fill in a value for consistency.
 ## This is a string list, in case different boards have different maps on them. But if a board does not have a matching world vector, it will use the last vector on the list.
 world-central-vectors:
-    - 0,0,0
+    - world,0,0,0
 
 job-categories:
     aid_request:

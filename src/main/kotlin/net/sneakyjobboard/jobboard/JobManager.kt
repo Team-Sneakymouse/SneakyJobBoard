@@ -25,7 +25,7 @@ class JobManager {
         jobs.entries.removeIf { it.value.isExpired() }
     }
 
-    /** Dispatch a player to an ongoing job. */
+    /** Dispatch a player to a listed job. */
     fun dispatch(uuid: String, pl: Player) {
         val job = jobs.get(uuid)
 

@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
 import org.bukkit.util.Vector
+import org.bukkit.Bukkit
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
@@ -81,8 +82,8 @@ class JobCategoryManager {
                         )
             }
 
-            val mapCentralVectors = mutableListOf<Vector?>()
-            val worldCentralVectors = mutableListOf<Vector?>()
+            val mapCentralLocations = mutableListOf<Location?>()
+            val worldCentralLocations = mutableListOf<Location?>()
             val directionList = mutableListOf<Direction?>()
 
             val mapCentralVectorStrings: List<String> = config.getStringList("map-central-vectors")
@@ -92,59 +93,74 @@ class JobCategoryManager {
             // Parse map central vectors
             mapCentralVectorStrings.forEach { vectorString ->
                 val components = vectorString.split(",")
-                if (components.size == 4) {
+                if (components.size == 5) {
                     val direction = Direction.valueOf(components[0])
                     directionList.add(direction)
-                    val vector =
-                            Vector(
-                                    components[1].toDouble(),
-                                    components[2].toDouble(),
-                                    components[3].toDouble()
-                            )
-                    mapCentralVectors.add(vector)
+
+                    val world = Bukkit.getWorld(components[1])
+                    val x = components[2].toDouble()
+                    val y = components[3].toDouble()
+                    val z = components[4].toDouble()
+
+                    if (world != null) {
+                        val location = Location(world, x, y, z)
+                        mapCentralLocations.add(location)
+                    } else {
+                        SneakyJobBoard.log(
+                                "Error parsing map central vector: World '${components[1]}' not found."
+                        )
+                        mapCentralLocations.add(null)
+                    }
                 } else {
                     directionList.add(null)
-                    mapCentralVectors.add(null)
+                    mapCentralLocations.add(null)
                 }
             }
 
             // Parse world central vectors
             worldCentralVectorStrings.forEach { vectorString ->
                 val components = vectorString.split(",")
-                if (components.size == 3) {
-                    val vector =
-                            Vector(
-                                    components[0].toDouble(),
-                                    components[1].toDouble(),
-                                    components[2].toDouble()
-                            )
-                    worldCentralVectors.add(vector)
+                if (components.size == 4) {
+                    val world = Bukkit.getWorld(components[0])
+                    val x = components[1].toDouble()
+                    val y = components[2].toDouble()
+                    val z = components[3].toDouble()
+
+                    if (world != null) {
+                        val location = Location(world, x, y, z)
+                        worldCentralLocations.add(location)
+                    } else {
+                        SneakyJobBoard.log(
+                                "Error parsing world central vector: World '${components[0]}' not found."
+                        )
+                        worldCentralLocations.add(null)
+                    }
                 } else {
-                    worldCentralVectors.add(null)
+                    worldCentralLocations.add(null)
                 }
             }
 
-            if (directionList.size > 1 && mapCentralVectors.size > 1 && worldCentralVectors.size > 1
+            if (directionList.size > 1 && mapCentralLocations.size > 1 && worldCentralLocations.size > 1
             ) {
-                for (i in 0 until mapCentralVectors.size) {
-                    val mapVector = mapCentralVectors[i]
+                for (i in 0 until mapCentralLocations.size) {
+                    val mapLocation = mapCentralLocations[i]
 
-                    if (mapVector != null) {
+                    if (mapLocation != null) {
                         val direction = directionList[i]
                         if (direction != null) {
-                            var worldVector: Vector? = null
+                            var worldLocation: Location? = null
 
                             // Find the last non-null worldVector
                             for (j in i downTo 0) {
-                                if (worldCentralVectors[j] != null) {
-                                    worldVector = worldCentralVectors[j]
+                                if (worldCentralLocations[j] != null) {
+                                    worldLocation = worldCentralLocations[j]
                                     break
                                 }
                             }
 
-                            if (worldVector == null) continue
+                            if (worldLocation == null) continue
 
-                            jobBoards.add(JobBoard(direction, mapVector, worldVector))
+                            jobBoards.add(JobBoard(direction, mapLocation, worldLocation))
                         }
                     }
                 }
@@ -281,7 +297,11 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     }
 }
 
-data class JobBoard(val direction: Direction, val mapVector: Vector, val worldVector: Vector)
+data class JobBoard(
+        val direction: Direction,
+        val mapLocation: Location,
+        val worldLocation: Location
+)
 
 enum class Direction {
     UP,
