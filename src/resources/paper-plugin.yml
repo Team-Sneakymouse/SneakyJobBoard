@@ -1,0 +1,13 @@
+name: SneakyJobBoard
+version: 1.0.0
+main: net.sneakyjobboard.SneakyJobBoard
+description: A Minecraft Paper plugin designed for managing the job board on the LoM2 server
+author: Team Sneakymouse
+website: https://rawb.tv
+api-version: 1.19
+
+dependencies:
+  server:
+    PlaceholderAPI:
+      load: BEFORE
+      required: false

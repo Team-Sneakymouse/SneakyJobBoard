@@ -1,0 +1,41 @@
+## The string that is used to append the poster to a listing. Supports placehodlers and color codes. "[playerName]" will also work, even without PAPI installed.
+poster-string: "&ePosted by: &b%sneakycharacters_character_name%"
+
+## The block coordinates of the central point on the map. Used to determine itemsdisplay positions
+## The first value is direction that the board will be facing. UP/DOWN/NORTH/EAST/SOUTH/WEST
+## This is a string list, and can support multiple boards at once
+map-central-vectors:
+    - SOUTH,0,0,0
+
+## The world block coordinates that are represented by the map-central-vectors. The Y value is not actually used for anything, but fill in a value for consistency.
+## This is a string list, in case different boards have different maps on them. But if a board does not have a matching world vector, it will use the last vector on the list.
+world-central-vectors:
+    - 0,0,0
+
+job-categories:
+    aid_request:
+        name: "Aid Request"
+        description: "A fellow citizens requires assistance."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 1
+        item-display-brightness:
+            block: 15
+            sky: 15
+        item-display-transformation:
+            left-rotation: 0,0,0,1
+            right-rotation: 0,0,0,1
+            translation: 0.0,0.0,0.0
+            scale: 0.10,0.10,0.10
+    event:
+        name: "Special Event"
+        description: "A special event is being hosted!"
+        icon-material: "jigsaw"
+        icon-custom-model-data: 2
+        item-display-brightness:
+            block: 15
+            sky: 15
+        item-display-transformation:
+            left-rotation: 0,0,0,1
+            right-rotation: 0,0,0,1
+            translation: 0.0,0.0,0.0
+            scale: 0.10,0.10,0.10
