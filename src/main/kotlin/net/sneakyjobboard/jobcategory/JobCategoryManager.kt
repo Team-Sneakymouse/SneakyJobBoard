@@ -1,6 +1,7 @@
 package net.sneakyjobboard.jobcategory
 
 import java.util.UUID
+import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Location
@@ -179,6 +180,20 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
         for (line in descriptionLines) {
             lore.add("&e$line")
         }
+
+        // Add poster line
+        var posterString =
+                (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
+                                ?: "&ePosted by: &b[playerName]").replace(
+                        "[playerName]",
+                        player.name
+                )
+
+        if (SneakyJobBoard.getInstance().papiActive) {
+            posterString = PlaceholderAPI.setPlaceholders(player, posterString)
+        }
+
+        lore.add(posterString)
 
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
 
