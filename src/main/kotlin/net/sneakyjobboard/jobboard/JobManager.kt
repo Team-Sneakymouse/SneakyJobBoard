@@ -11,8 +11,7 @@ class JobManager {
     private val jobs: MutableMap<String, Job> = mutableMapOf()
 
     /** Adds a new job to the map. */
-    fun report(job: Job) {
-        cleanup()
+    fun list(job: Job) {
         jobs[job.uuid] = job
     }
 

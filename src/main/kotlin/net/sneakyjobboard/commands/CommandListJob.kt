@@ -7,6 +7,11 @@ import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.HandlerList
+import org.bukkit.event.Listener
+import org.bukkit.event.player.AsyncPlayerChatEvent
+import org.bukkit.event.player.PlayerQuitEvent
 
 class CommandListJob : CommandBase("listjob") {
 
@@ -69,8 +74,15 @@ class CommandListJob : CommandBase("listjob") {
 
         val job = Job(category = jobcategory, player = player, durationMilis = durationMilis)
 
-        SneakyJobBoard.getJobManager().report(job)
-        sender.sendMessage(TextUtility.convertToComponent("&aYour job has been listed."))
+        SneakyJobBoard.getJobManager().list(job)
+        sender.sendMessage(
+                TextUtility.convertToComponent(
+                        "&aYour job has been listed. Please type the name of the job."
+                )
+        )
+
+        Bukkit.getPluginManager()
+                .registerEvents(JobNameInputListener(player, job), SneakyJobBoard.getInstance())
 
         return true
     }
@@ -94,5 +106,68 @@ class CommandListJob : CommandBase("listjob") {
             }
             else -> emptyList()
         }
+    }
+}
+
+class JobNameInputListener(private val sender: Player, private val job: Job) : Listener {
+
+    @EventHandler
+    fun onPlayerChat(event: AsyncPlayerChatEvent) {
+        if (event.player == sender) {
+            job.name = event.message
+            event.isCancelled = true
+            sender.sendMessage(
+                    TextUtility.convertToComponent(
+                            "&aJob name set to: ${event.message}\nNow please type the description of the job."
+                    )
+            )
+
+            Bukkit.getPluginManager()
+                    .registerEvents(
+                            JobDescriptionInputListener(event.player, job),
+                            SneakyJobBoard.getInstance()
+                    )
+
+            // Unregister this listener after receiving the input
+            unregisterListener()
+        }
+    }
+
+    @EventHandler
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        if (event.player == sender) {
+            unregisterListener()
+        }
+    }
+
+    private fun unregisterListener() {
+        HandlerList.unregisterAll(this)
+    }
+}
+
+class JobDescriptionInputListener(private val sender: Player, private val job: Job) : Listener {
+
+    @EventHandler
+    fun onPlayerChat(event: AsyncPlayerChatEvent) {
+        if (event.player == sender) {
+            job.description = event.message
+            event.isCancelled = true
+            sender.sendMessage(
+                    TextUtility.convertToComponent("&aJob description set to: ${event.message}")
+            )
+            // Unregister this listener after receiving the input
+            unregisterListener()
+        }
+    }
+
+    @EventHandler
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        if (event.player == sender) {
+            unregisterListener()
+        }
+    }
+
+    private fun unregisterListener() {
+        HandlerList.unregisterAll(this)
     }
 }

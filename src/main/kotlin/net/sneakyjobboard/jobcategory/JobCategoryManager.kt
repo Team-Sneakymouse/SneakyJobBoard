@@ -152,9 +152,9 @@ data class JobCategory(
 data class Job(val category: JobCategory, val player: Player, val durationMilis: Long) {
     val uuid: String = UUID.randomUUID().toString()
     val location: Location = player.location
-    val name: String = category.name
+    var name: String = category.name
     var description: String = category.description
-    var startTime: Long = System.currentTimeMillis()
+    val startTime: Long = System.currentTimeMillis()
 
     fun isExpired(): Boolean {
         return (System.currentTimeMillis() >= startTime + durationMilis)
@@ -168,7 +168,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
 
         // Set custom model data, display name, and lore.
         meta.setCustomModelData(customModelData)
-        meta.displayName(TextUtility.convertToComponent("&a${category.name}"))
+        meta.displayName(TextUtility.convertToComponent("&a${name}"))
 
         val lore = mutableListOf<String>()
 
