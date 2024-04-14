@@ -14,6 +14,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
+import org.bukkit.util.Vector
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
@@ -22,17 +23,18 @@ class JobCategoryManager {
 
     public val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
     private val jobCategories: MutableMap<String, JobCategory> = mutableMapOf()
+    private val jobBoards: MutableList<JobBoard> = mutableListOf()
 
     /** Loads job categories from the configuration file on initialization. */
     init {
-        loadJobCategories()
+        parseConfig()
     }
 
     /**
      * Loads job categories from the configuration file. If an error occurs during loading, it's
      * logged and the categories are cleared.
      */
-    public fun loadJobCategories() {
+    public fun parseConfig() {
         try {
             val configFile = SneakyJobBoard.getConfigFile()
             if (!configFile.exists()) {
@@ -77,6 +79,75 @@ class JobCategoryManager {
                                 brightness,
                                 transformation
                         )
+            }
+
+            val mapCentralVectors = mutableListOf<Vector?>()
+            val worldCentralVectors = mutableListOf<Vector?>()
+            val directionList = mutableListOf<Direction?>()
+
+            val mapCentralVectorStrings: List<String> = config.getStringList("map-central-vectors")
+            val worldCentralVectorStrings: List<String> =
+                    config.getStringList("world-central-vectors")
+
+            // Parse map central vectors
+            mapCentralVectorStrings.forEach { vectorString ->
+                val components = vectorString.split(",")
+                if (components.size == 4) {
+                    val direction = Direction.valueOf(components[0])
+                    directionList.add(direction)
+                    val vector =
+                            Vector(
+                                    components[1].toDouble(),
+                                    components[2].toDouble(),
+                                    components[3].toDouble()
+                            )
+                    mapCentralVectors.add(vector)
+                } else {
+                    directionList.add(null)
+                    mapCentralVectors.add(null)
+                }
+            }
+
+            // Parse world central vectors
+            worldCentralVectorStrings.forEach { vectorString ->
+                val components = vectorString.split(",")
+                if (components.size == 3) {
+                    val vector =
+                            Vector(
+                                    components[0].toDouble(),
+                                    components[1].toDouble(),
+                                    components[2].toDouble()
+                            )
+                    worldCentralVectors.add(vector)
+                } else {
+                    worldCentralVectors.add(null)
+                }
+            }
+
+            if (directionList.size > 1 && mapCentralVectors.size > 1 && worldCentralVectors.size > 1
+            ) {
+                for (i in 0 until mapCentralVectors.size) {
+                    val mapVector = mapCentralVectors[i]
+
+                    if (mapVector != null) {
+                        val direction = directionList[i]
+                        if (direction != null) {
+                            var worldVector: Vector? = null
+
+                            // Find the last non-null worldVector
+                            for (j in i downTo 0) {
+                                if (worldCentralVectors[j] != null) {
+                                    worldVector = worldCentralVectors[j]
+                                    break
+                                }
+                            }
+
+                            if (worldVector == null) continue
+
+                            jobBoards.add(JobBoard(direction, mapVector, worldVector))
+                        }
+                    }
+                }
             }
         } catch (e: IllegalStateException) {
             SneakyJobBoard.log("Error: ${e.message}")
@@ -208,4 +279,15 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
         itemStack.itemMeta = meta
         return itemStack
     }
+}
+
+data class JobBoard(val direction: Direction, val mapVector: Vector, val worldVector: Vector)
+
+enum class Direction {
+    UP,
+    DOWN,
+    NORTH,
+    EAST,
+    SOUTH,
+    WEST
 }
