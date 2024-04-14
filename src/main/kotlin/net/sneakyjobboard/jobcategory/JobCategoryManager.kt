@@ -4,6 +4,7 @@ import java.util.UUID
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.util.TextUtility
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -14,8 +15,6 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
-import org.bukkit.util.Vector
-import org.bukkit.Bukkit
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
@@ -140,7 +139,9 @@ class JobCategoryManager {
                 }
             }
 
-            if (directionList.size > 1 && mapCentralLocations.size > 1 && worldCentralLocations.size > 1
+            if (directionList.size > 1 &&
+                            mapCentralLocations.size > 1 &&
+                            worldCentralLocations.size > 1
             ) {
                 for (i in 0 until mapCentralLocations.size) {
                     val mapLocation = mapCentralLocations[i]
