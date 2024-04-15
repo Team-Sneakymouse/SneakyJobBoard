@@ -179,6 +179,17 @@ class JobManager {
         return jobs.values
     }
 
+    /** Get the last job that was listed by player. */
+    fun getLastListedJob(player: Player): Job? {
+        // Iterate through the jobs in reverse order to find the last job listed by the player
+        for (job in jobs.values.reversed()) {
+            if (job.player == player) {
+                return job
+            }
+        }
+        return null
+    }
+
     /** Clean up all listed jobs. */
     fun cleanup() {
         val jobIdsToRemove = jobs.keys.toList()

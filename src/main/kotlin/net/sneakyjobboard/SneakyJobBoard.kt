@@ -3,6 +3,7 @@ package net.sneakyjobboard
 import java.io.File
 import net.sneakyjobboard.commands.CommandJobBoard
 import net.sneakyjobboard.commands.CommandListJob
+import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.jobboard.JobInventoryListener
 import net.sneakyjobboard.jobboard.JobManager
 import net.sneakyjobboard.jobcategory.JobCategoryManager
@@ -27,6 +28,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
         getServer().getCommandMap().register(IDENTIFIER, CommandListJob())
         getServer().getCommandMap().register(IDENTIFIER, CommandJobBoard())
+        getServer().getCommandMap().register(IDENTIFIER, CommandUnlistJob())
 
         getServer().getPluginManager().registerEvents(this, this)
         getServer().getPluginManager().registerEvents(JobInventoryListener(), this)
