@@ -15,6 +15,23 @@ import org.bukkit.event.player.PlayerQuitEvent
 
 class CommandListJob : CommandBase("listjob") {
 
+    companion object {
+        private val playerListeners: MutableMap<Player, Listener> = mutableMapOf()
+
+        fun unregisterListener(player: Player) {
+            playerListeners[player]?.let {
+                HandlerList.unregisterAll(it)
+                playerListeners.remove(player)
+            }
+        }
+
+        fun registerListener(player: Player, listener: Listener) {
+            unregisterListener(player)
+            playerListeners[player] = listener
+            Bukkit.getPluginManager().registerEvents(listener, SneakyJobBoard.getInstance())
+        }
+    }
+
     init {
         this.usageMessage = buildString {
             append("/")
@@ -81,8 +98,7 @@ class CommandListJob : CommandBase("listjob") {
                 )
         )
 
-        Bukkit.getPluginManager()
-                .registerEvents(JobNameInputListener(player, job), SneakyJobBoard.getInstance())
+        CommandListJob.registerListener(player, JobNameInputListener(player, job))
 
         return true
     }
@@ -122,14 +138,7 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
                     )
             )
 
-            Bukkit.getPluginManager()
-                    .registerEvents(
-                            JobDescriptionInputListener(event.player, job),
-                            SneakyJobBoard.getInstance()
-                    )
-
-            // Unregister this listener after receiving the input
-            unregisterListener()
+            CommandListJob.registerListener(sender, JobDescriptionInputListener(sender, job))
         }
     }
 
@@ -141,7 +150,7 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
     }
 
     private fun unregisterListener() {
-        HandlerList.unregisterAll(this)
+        CommandListJob.unregisterListener(sender)
     }
 }
 
@@ -168,6 +177,6 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
     }
 
     private fun unregisterListener() {
-        HandlerList.unregisterAll(this)
+        CommandListJob.unregisterListener(sender)
     }
 }
