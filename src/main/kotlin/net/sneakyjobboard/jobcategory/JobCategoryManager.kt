@@ -57,6 +57,8 @@ class JobCategoryManager {
                 val iconMaterial =
                         Material.matchMaterial(iconMaterialString) ?: Material.MUSIC_DISC_CAT
 
+                val dynmapMapIcon = jobCategoriesSection.getString("$key.dynmap-map-icon") ?: key
+
                 val brightnessBlock =
                         jobCategoriesSection.getInt("$key.item-display-brightness.block")
                 val brightnessSky = jobCategoriesSection.getInt("$key.item-display-brightness.sky")
@@ -79,7 +81,8 @@ class JobCategoryManager {
                                 iconMaterial,
                                 iconCustomModelData,
                                 brightness,
-                                transformation
+                                transformation,
+								dynmapMapIcon
                         )
             }
 
@@ -227,7 +230,8 @@ data class JobCategory(
         val iconMaterial: Material,
         val iconCustomModelData: Int,
         val brightness: Brightness,
-        val transformation: Transformation
+        val transformation: Transformation,
+        val dynmapMapIcon: String
 )
 
 data class Job(val category: JobCategory, val player: Player, val durationMilis: Long) {
@@ -270,7 +274,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
                         player.name
                 )
 
-        if (SneakyJobBoard.getInstance().papiActive) {
+        if (SneakyJobBoard.isPapiActive()) {
             posterString = PlaceholderAPI.setPlaceholders(player, posterString)
         }
 

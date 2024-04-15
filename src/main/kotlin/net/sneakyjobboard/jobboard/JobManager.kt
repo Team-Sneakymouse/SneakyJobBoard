@@ -23,10 +23,11 @@ class JobManager {
     fun list(job: Job) {
         jobs[job.uuid] = job
 
+        val jobLocation = job.location
+
         // Spawn item displays
         for (jobBoard in SneakyJobBoard.getJobCategoryManager().jobBoards) {
             val displayLocation = jobBoard.mapLocation.clone().add(0.5, 0.5, 0.5)
-            val jobLocation = job.location
 
             // Find the ItemFrame at the centre of the job board
             val itemFrame =
@@ -165,6 +166,44 @@ class JobManager {
             job.itemDisplays.add(itemDisplayEntity)
         }
 
+        // Add dynmap icon
+        if (SneakyJobBoard.isDynmapActive()) {
+            val markerAPI = SneakyJobBoard.getInstance().markerAPI
+
+            val markerSet =
+                    markerAPI?.getMarkerSet("SneakyJobBoard")
+                            ?: run {
+                                markerAPI?.createMarkerSet(
+                                        "SneakyJobBoard",
+                                        "SneakyJobBoard",
+                                        null,
+                                        false
+                                )
+                                        ?: run {
+                                            SneakyJobBoard.log("Failed to create a new marker set.")
+                                            return
+                                        }
+                            }
+
+            val icon = markerAPI?.getMarkerIcon(job.category.dynmapMapIcon)
+
+            val marker =
+                    markerSet.createMarker(
+                            job.uuid,
+                            job.name,
+                            jobLocation.world.name,
+                            jobLocation.x,
+                            jobLocation.y,
+                            jobLocation.z,
+                            icon,
+                            false
+                    )
+
+            if (marker == null) {
+                SneakyJobBoard.log("Failed to create marker")
+            }
+        }
+
         // Schedule unlisting
         Bukkit.getScheduler()
                 .runTaskLater(
@@ -194,6 +233,28 @@ class JobManager {
     fun cleanup() {
         val jobIdsToRemove = jobs.keys.toList()
         jobIdsToRemove.forEach { unlist(it) }
+
+		// Clean up dynmap markers
+        if (SneakyJobBoard.isDynmapActive()) {
+            val markerAPI = SneakyJobBoard.getInstance().markerAPI
+
+            val markerSet =
+                    markerAPI?.getMarkerSet("SneakyJobBoard")
+                            ?: run {
+                                markerAPI?.createMarkerSet(
+                                        "SneakyJobBoard",
+                                        "SneakyJobBoard",
+                                        null,
+                                        false
+                                )
+                                        ?: run {
+                                            SneakyJobBoard.log("Failed to create a new marker set.")
+                                            return
+                                        }
+                            }
+
+            markerSet.deleteMarkerSet()
+        }
     }
 
     /** Unlist a job and kill off its item displays. */
@@ -201,6 +262,28 @@ class JobManager {
         val job = jobs[uuid] ?: return
 
         job.itemDisplays.forEach { entity -> entity.remove() }
+
+        if (SneakyJobBoard.isDynmapActive()) {
+            val markerAPI = SneakyJobBoard.getInstance().markerAPI
+
+            val markerSet =
+                    markerAPI?.getMarkerSet("SneakyJobBoard")
+                            ?: run {
+                                markerAPI?.createMarkerSet(
+                                        "SneakyJobBoard",
+                                        "SneakyJobBoard",
+                                        null,
+                                        false
+                                )
+                                        ?: run {
+                                            SneakyJobBoard.log("Failed to create a new marker set.")
+                                            return
+                                        }
+                            }
+
+            markerSet.findMarker(uuid).deleteMarker()
+        }
+
         jobs.remove(uuid)
     }
 

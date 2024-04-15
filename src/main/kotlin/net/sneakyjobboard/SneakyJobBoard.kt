@@ -13,12 +13,17 @@ import org.bukkit.event.Listener
 import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.permissions.Permission
 import org.bukkit.plugin.java.JavaPlugin
+import org.dynmap.DynmapCommonAPIListener
+import org.dynmap.markers.MarkerAPI
+import org.dynmap.DynmapAPI
 
 class SneakyJobBoard : JavaPlugin(), Listener {
 
     lateinit var jobCategoryManager: JobCategoryManager
     lateinit var jobManager: JobManager
     var papiActive: Boolean = false
+	var dynmapAPI: DynmapAPI? = null
+    var markerAPI: MarkerAPI? = null
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -39,6 +44,12 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             papiActive = true
             Placeholders().register()
+        }
+
+        val dynmapPlugin = Bukkit.getServer().pluginManager.getPlugin("dynmap")
+        if (dynmapPlugin != null && dynmapPlugin.isEnabled) {
+            dynmapAPI = (dynmapPlugin as DynmapAPI)
+            markerAPI = dynmapAPI!!.markerAPI
         }
     }
 
@@ -77,6 +88,11 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         /** Whether placeholderAPI is running. */
         fun isPapiActive(): Boolean {
             return instance?.papiActive ?: false
+        }
+
+		/** Whether dynmap is running. */
+        fun isDynmapActive(): Boolean {
+            return (instance?.dynmapAPI != null && instance?.markerAPI != null)
         }
 
         /** The running instance. */
