@@ -7,10 +7,13 @@ import net.sneakyjobboard.jobboard.JobInventoryListener
 import net.sneakyjobboard.jobboard.JobManager
 import net.sneakyjobboard.jobcategory.JobCategoryManager
 import org.bukkit.Bukkit
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.permissions.Permission
 import org.bukkit.plugin.java.JavaPlugin
 
-class SneakyJobBoard : JavaPlugin() {
+class SneakyJobBoard : JavaPlugin(), Listener {
 
     lateinit var jobCategoryManager: JobCategoryManager
     lateinit var jobManager: JobManager
@@ -25,6 +28,7 @@ class SneakyJobBoard : JavaPlugin() {
         getServer().getCommandMap().register(IDENTIFIER, CommandListJob())
         getServer().getCommandMap().register(IDENTIFIER, CommandJobBoard())
 
+        getServer().getPluginManager().registerEvents(this, this)
         getServer().getPluginManager().registerEvents(JobInventoryListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
@@ -33,6 +37,13 @@ class SneakyJobBoard : JavaPlugin() {
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             papiActive = true
             Placeholders().register()
+        }
+    }
+
+    @EventHandler
+    fun onPluginDisable(event: PluginDisableEvent) {
+        if (event.plugin == this) {
+            jobManager.cleanup()
         }
     }
 

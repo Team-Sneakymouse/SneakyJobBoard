@@ -22,7 +22,6 @@ class JobInventoryHolder() : InventoryHolder {
     }
 
     fun populateInventory() {
-        SneakyJobBoard.getJobManager().cleanup()
         val jobs = SneakyJobBoard.getJobManager().getJobs()
         val size = (((jobs.size + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
         inventory =

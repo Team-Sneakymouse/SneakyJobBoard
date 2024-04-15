@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Display.Brightness
+import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
@@ -254,6 +255,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     var name: String = category.name
     var description: String = category.description
     val startTime: Long = System.currentTimeMillis()
+    val itemDisplays: MutableList<ItemDisplay> = mutableListOf()
 
     fun isExpired(): Boolean {
         return (System.currentTimeMillis() >= startTime + durationMilis)
