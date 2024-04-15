@@ -34,7 +34,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         getServer().getCommandMap().register(IDENTIFIER, CommandJobBoard())
         getServer().getCommandMap().register(IDENTIFIER, CommandUnlistJob())
 
-        getServer().getPluginManager().registerEvents(this, this)
+        getServer().getPluginManager().registerEvents(PluginListener(this), this)
         getServer().getPluginManager().registerEvents(JobInventoryListener(), this)
         getServer().getPluginManager().registerEvents(JobManagerListener(), this)
 
@@ -51,13 +51,6 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         if (dynmapPlugin != null && dynmapPlugin.isEnabled) {
             val dynmapAPI = (dynmapPlugin as DynmapAPI)
             markerAPI = dynmapAPI.markerAPI
-        }
-    }
-
-    @EventHandler
-    fun onPluginDisable(event: PluginDisableEvent) {
-        if (event.plugin == this) {
-            jobManager.cleanup()
         }
     }
 
@@ -115,5 +108,15 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
     override fun onLoad() {
         instance = this
+    }
+}
+
+class PluginListener(val instance: SneakyJobBoard) : Listener {
+
+    @EventHandler
+    fun onPluginDisable(event: PluginDisableEvent) {
+        if (event.plugin == instance) {
+            SneakyJobBoard.getJobManager().cleanup()
+        }
     }
 }
