@@ -6,6 +6,7 @@ import net.sneakyjobboard.commands.CommandListJob
 import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.jobboard.JobInventoryListener
 import net.sneakyjobboard.jobboard.JobManager
+import net.sneakyjobboard.jobboard.JobManagerListener
 import net.sneakyjobboard.jobcategory.JobCategoryManager
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
@@ -35,6 +36,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
         getServer().getPluginManager().registerEvents(this, this)
         getServer().getPluginManager().registerEvents(JobInventoryListener(), this)
+        getServer().getPluginManager().registerEvents(JobManagerListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))
@@ -48,7 +50,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         val dynmapPlugin = Bukkit.getServer().pluginManager.getPlugin("dynmap")
         if (dynmapPlugin != null && dynmapPlugin.isEnabled) {
             val dynmapAPI = (dynmapPlugin as DynmapAPI)
-            markerAPI = dynmapAPI!!.markerAPI
+            markerAPI = dynmapAPI.markerAPI
         }
     }
 
