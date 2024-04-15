@@ -47,7 +47,6 @@ class JobManager {
             }
 
             // Retrieve the scale from the map item
-            SneakyJobBoard.log(itemFrame.item.toString())
             val frameItem = itemFrame.item
 
             if (frameItem.type != Material.FILLED_MAP) {
