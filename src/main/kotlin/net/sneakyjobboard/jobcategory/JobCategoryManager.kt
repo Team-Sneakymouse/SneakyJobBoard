@@ -164,7 +164,9 @@ class JobCategoryManager {
 
                             // Find the last non-null worldVector
                             for (j in i downTo 0) {
-                                if (worldCentralLocations[j] != null) {
+                                if (j < worldCentralLocations.size &&
+                                                worldCentralLocations[j] != null
+                                ) {
                                     worldLocation = worldCentralLocations[j]
                                     break
                                 }
@@ -172,7 +174,7 @@ class JobCategoryManager {
 
                             if (worldLocation == null) continue
 
-                            jobBoards.add(JobBoard(direction, scale, mapLocation, worldLocation))
+                            jobBoards.add(JobBoard(direction, mapLocation, worldLocation))
                         }
                     }
                 }
@@ -312,7 +314,6 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
 
 data class JobBoard(
         val direction: Direction,
-        val scale: Int,
         val mapLocation: Location,
         val worldLocation: Location
 )
