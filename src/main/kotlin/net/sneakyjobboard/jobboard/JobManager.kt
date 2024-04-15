@@ -281,7 +281,7 @@ class JobManager {
                                         }
                             }
 
-            markerSet.findMarker(uuid).deleteMarker()
+            markerSet.findMarker(uuid)?.deleteMarker()
         }
 
         jobs.remove(uuid)

@@ -158,7 +158,7 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
                                             }
                                 }
 
-                markerSet.findMarker(job.uuid).label = event.message
+                markerSet.findMarker(job.uuid)?.label = event.message
             }
 
             CommandListJob.registerListener(sender, JobDescriptionInputListener(sender, job))
