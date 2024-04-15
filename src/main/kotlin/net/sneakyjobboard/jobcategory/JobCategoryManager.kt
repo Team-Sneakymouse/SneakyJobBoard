@@ -82,7 +82,7 @@ class JobCategoryManager {
                                 iconCustomModelData,
                                 brightness,
                                 transformation,
-								dynmapMapIcon
+                                dynmapMapIcon
                         )
             }
 

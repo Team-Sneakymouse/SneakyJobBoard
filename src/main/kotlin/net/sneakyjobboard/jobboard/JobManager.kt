@@ -234,7 +234,7 @@ class JobManager {
         val jobIdsToRemove = jobs.keys.toList()
         jobIdsToRemove.forEach { unlist(it) }
 
-		// Clean up dynmap markers
+        // Clean up dynmap markers
         if (SneakyJobBoard.isDynmapActive()) {
             val markerAPI = SneakyJobBoard.getInstance().markerAPI
 
