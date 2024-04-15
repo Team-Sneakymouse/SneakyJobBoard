@@ -39,7 +39,8 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))
 
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+		val papiPlugin = Bukkit.getServer().pluginManager.getPlugin("PlaceholderAPI")
+        if (papiPlugin != null && papiPlugin.isEnabled) {
             papiActive = true
             Placeholders().register()
         }
