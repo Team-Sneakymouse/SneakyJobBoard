@@ -92,7 +92,7 @@ class CommandListJob : CommandBase("listjob") {
         val job = Job(category = jobcategory, player = player, durationMilis = durationMilis)
 
         SneakyJobBoard.getJobManager().list(job)
-        sender.sendMessage(
+        player.sendMessage(
                 TextUtility.convertToComponent(
                         "&aYour job has been listed. Please type the name of the job."
                 )
