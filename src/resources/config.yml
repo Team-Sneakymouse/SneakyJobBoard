@@ -3,9 +3,11 @@ poster-string: "&ePosted by: &b%sneakycharacters_character_name%"
 
 ## The block coordinates of the central point on the map itemframe. Used to determine itemsdisplay positions
 ## The scale, rotation and facing of the map itemframe are determined automatically
+## The fifth optional boolean can be used to make a board non-interactable: It will show icons, but will not open the job board UI when right-clicked
 ## This is a string list, and can support multiple boards at once
 map-central-vectors:
     - world,0,0,0
+    - world,0,0,0,FALSE
 
 ## The world block coordinates that are represented by the map-central-vectors. The Y value is not actually used for anything, but fill in a value for consistency.
 ## This is a string list, in case different boards have different maps on them. But if a board does not have a matching world vector, it will use the last vector on the list.

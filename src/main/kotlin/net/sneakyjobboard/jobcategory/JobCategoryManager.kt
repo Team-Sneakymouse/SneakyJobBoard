@@ -89,6 +89,7 @@ class JobCategoryManager {
             }
 
             val mapCentralLocations = mutableListOf<Location?>()
+            val mapInteractable = mutableListOf<Boolean?>()
             val worldCentralLocations = mutableListOf<Location?>()
 
             val mapCentralVectorStrings: List<String> = config.getStringList("map-central-vectors")
@@ -98,23 +99,27 @@ class JobCategoryManager {
             // Parse map central vectors
             mapCentralVectorStrings.forEach { vectorString ->
                 val components = vectorString.split(",")
-                if (components.size == 4) {
+                if (components.size >= 4) {
                     val world = Bukkit.getWorld(components[0])
                     val x = components[1].toDouble()
                     val y = components[2].toDouble()
                     val z = components[3].toDouble()
+                    val interactable = components.getOrNull(4)?.toBoolean() ?: true
 
                     if (world != null) {
                         val location = Location(world, x, y, z)
                         mapCentralLocations.add(location)
+                        mapInteractable.add(interactable)
                     } else {
                         SneakyJobBoard.log(
                                 "Error parsing map central vector: World '${components[1]}' not found."
                         )
                         mapCentralLocations.add(null)
+                        mapInteractable.add(null)
                     }
                 } else {
                     mapCentralLocations.add(null)
+                    mapInteractable.add(null)
                 }
             }
 
@@ -147,6 +152,7 @@ class JobCategoryManager {
 
                     if (mapLocation != null) {
                         var worldLocation: Location? = null
+                        val interactable: Boolean? = mapInteractable.get(i)
 
                         // Find the last non-null worldVector
                         for (j in i downTo 0) {
@@ -157,9 +163,9 @@ class JobCategoryManager {
                             }
                         }
 
-                        if (worldLocation == null) continue
+                        if (worldLocation == null || interactable == null) continue
 
-                        jobBoards.add(JobBoard(mapLocation, worldLocation))
+                        jobBoards.add(JobBoard(mapLocation, worldLocation, interactable))
                     }
                 }
             }
@@ -297,7 +303,11 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     }
 }
 
-data class JobBoard(val mapLocation: Location, val worldLocation: Location) {
+data class JobBoard(
+        val mapLocation: Location,
+        val worldLocation: Location,
+        val interactable: Boolean
+) {
     /** Checks if an item frame is part of this job board. */
     fun isPartOfBoard(itemFrame: ItemFrame): Boolean {
         val frameLocation = itemFrame.location.block.location
