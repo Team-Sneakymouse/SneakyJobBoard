@@ -100,7 +100,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
                     ?: JobCategoryManager().also { instance?.jobCategoryManager = it }
         }
 
-        /** Retrieves the dispatch manager instance, creating a new one if necessary. */
+        /** Retrieves the job manager instance, creating a new one if necessary. */
         fun getJobManager(): JobManager {
             return instance?.jobManager ?: JobManager().also { instance?.jobManager = it }
         }
