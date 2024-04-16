@@ -76,7 +76,7 @@ class ItemFrameListener : Listener {
             val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
 
             jobBoards.forEach { jobBoard ->
-                if (jobBoard.isPartOfBoard(entity)) {
+                if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
                     CommandJobBoard.openJobBoard(event.player)
                     event.setCancelled(true)
                     return

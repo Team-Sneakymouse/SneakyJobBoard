@@ -333,8 +333,6 @@ data class JobBoard(
      * Iterate over both axes and ensure that there are item frames on every location in between.
      */
     private fun checkPath(start: Location, end: Location, axis1: Char, axis2: Char): Boolean {
-        SneakyJobBoard.log(start.toString() + ", " + end.toString())
-
         val increment1 = if (start.getBlock(axis1) < end.getBlock(axis1)) 1 else -1
         val increment2 = if (start.getBlock(axis2) < end.getBlock(axis2)) 1 else -1
 
