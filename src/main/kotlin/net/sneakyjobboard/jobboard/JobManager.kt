@@ -191,7 +191,7 @@ class JobManager {
 
             // Find the ItemFrame at the centre of the job board
             val itemFrame =
-                    displayLocation.world?.getNearbyEntities(displayLocation, 1.0, 1.0, 1.0)
+                    displayLocation.world?.getNearbyEntities(displayLocation, 0.5, 0.5, 0.5)
                             ?.firstOrNull {
                                 (it is ItemFrame || it is GlowItemFrame) &&
                                         it.location.blockX == displayLocation.blockX &&
@@ -255,7 +255,7 @@ class JobManager {
                 val xTemp = horizOffset
                 val yTemp = vertOffset
 
-                horizOffset = xTemp * Math.cos((Math.PI / 2) - radianAngle) + yTemp * Math.sin(radianAngle)
+                horizOffset = xTemp * Math.cos((Math.PI / 2) - radianAngle) + yTemp * Math.sin(radianAngle) - 0.5
                 vertOffset = -xTemp * Math.sin((Math.PI / 2) - radianAngle) + yTemp * Math.cos(radianAngle)
 
                 vertOffset += (jobLocation.y - worldLocation.y) / scale
