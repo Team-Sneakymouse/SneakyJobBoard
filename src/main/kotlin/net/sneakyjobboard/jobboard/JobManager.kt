@@ -227,12 +227,16 @@ class JobManager {
             }
 
             val scale: Int =
-                    when (mapView.scale) {
-                        MapView.Scale.CLOSE -> 256
-                        MapView.Scale.NORMAL -> 512
-                        MapView.Scale.FAR -> 1024
-                        MapView.Scale.FARTHEST -> 2048
-                        else -> 128
+                    when {
+                        jobBoard.mapScaleOverride > 0 -> jobBoard.mapScaleOverride
+                        else ->
+                                when (mapView.scale) {
+                                    MapView.Scale.CLOSE -> 256
+                                    MapView.Scale.NORMAL -> 512
+                                    MapView.Scale.FAR -> 1024
+                                    MapView.Scale.FARTHEST -> 2048
+                                    else -> 128
+                                }
                     }
 
             val worldLocation =
