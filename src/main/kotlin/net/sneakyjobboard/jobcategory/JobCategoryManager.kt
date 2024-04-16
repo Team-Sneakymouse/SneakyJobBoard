@@ -11,7 +11,9 @@ import org.bukkit.NamespacedKey
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Display.Brightness
+import org.bukkit.entity.GlowItemFrame
 import org.bukkit.entity.ItemDisplay
+import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
@@ -295,4 +297,88 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     }
 }
 
-data class JobBoard(val mapLocation: Location, val worldLocation: Location)
+data class JobBoard(val mapLocation: Location, val worldLocation: Location) {
+    /** Checks if an item frame is part of this job board. */
+    fun isPartOfBoard(itemFrame: ItemFrame): Boolean {
+        val frameLocation = itemFrame.location.block.location
+
+        return checkAlignmentAndPath(frameLocation, mapLocation.block.location)
+    }
+
+    /** Checkss which axes to iterate over, and run those checks. */
+    private fun checkAlignmentAndPath(start: Location, end: Location): Boolean {
+        if (start.world != end.world) return false
+
+        if (start.x == end.x) {
+            return checkPath(start, end, 'y', 'z')
+        } else if (start.y == end.y) {
+            return checkPath(start, end, 'x', 'z')
+        } else if (start.z == end.z) {
+            return checkPath(start, end, 'x', 'y')
+        }
+        return false
+    }
+
+    /**
+     * Iterate over both axes and ensure that there are item frames on every location in between.
+     */
+    private fun checkPath(start: Location, end: Location, axis1: Char, axis2: Char): Boolean {
+        SneakyJobBoard.log(start.toString() + ", " + end.toString())
+
+        val increment1 = if (start.getBlock(axis1) < end.getBlock(axis1)) 1 else -1
+        val increment2 = if (start.getBlock(axis2) < end.getBlock(axis2)) 1 else -1
+
+        var currentPos1 = start.getBlock(axis1)
+        var currentPos2 = start.getBlock(axis2)
+
+        while (currentPos1 != end.getBlock(axis1)) {
+            currentPos1 += increment1
+
+            val currentLocation = start.clone()
+            currentLocation.setBlock(axis1, currentPos1)
+
+            if (!locationHasItemFrame(currentLocation)) {
+                return false
+            }
+        }
+
+        while (currentPos2 != end.getBlock(axis2)) {
+            currentPos2 += increment2
+
+            val currentLocation = start.clone()
+            currentLocation.setBlock(axis2, currentPos2)
+
+            if (!locationHasItemFrame(currentLocation)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    /** Get the axis value of a block location. */
+    private fun Location.getBlock(axis: Char): Int {
+        return when (axis) {
+            'x' -> this.blockX
+            'y' -> this.blockY
+            'z' -> this.blockZ
+            else -> throw IllegalArgumentException("Invalid axis")
+        }
+    }
+
+    /** Set the axis value of a block location. */
+    private fun Location.setBlock(axis: Char, value: Int) {
+        when (axis) {
+            'x' -> this.x = value.toDouble()
+            'y' -> this.y = value.toDouble()
+            'z' -> this.z = value.toDouble()
+            else -> throw IllegalArgumentException("Invalid axis")
+        }
+    }
+
+    /** Check a specified location for item frames. */
+    private fun locationHasItemFrame(location: Location): Boolean {
+        val entitiesAtLocation =
+                location.world.getNearbyEntities(location.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5)
+        return entitiesAtLocation.any { entity -> entity is ItemFrame || entity is GlowItemFrame }
+    }
+}
