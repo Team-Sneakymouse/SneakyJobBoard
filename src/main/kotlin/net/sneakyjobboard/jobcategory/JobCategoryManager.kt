@@ -91,6 +91,7 @@ class JobCategoryManager {
             val mapCentralLocations = mutableListOf<Location?>()
             val mapInteractables = mutableListOf<Boolean?>()
             val mapScaleOverrides = mutableListOf<Int?>()
+            val isometricAngles = mutableListOf<Double?>()
             val worldCentralLocations = mutableListOf<Location?>()
 
             val mapCentralVectorStrings: List<String> = config.getStringList("map-central-vectors")
@@ -107,12 +108,14 @@ class JobCategoryManager {
                     val z = components[3].toDouble()
                     val interactable = components.getOrNull(4)?.toBoolean() ?: true
                     val scaleOverride = components.getOrNull(5)?.toInt() ?: 0
+                    val isometricAngle = components.getOrNull(6)?.toDouble() ?: 0.0
 
                     if (world != null) {
                         val location = Location(world, x, y, z)
                         mapCentralLocations.add(location)
                         mapInteractables.add(interactable)
                         mapScaleOverrides.add(scaleOverride)
+                        isometricAngles.add(isometricAngle)
                     } else {
                         SneakyJobBoard.log(
                                 "Error parsing map central vector: World '${components[1]}' not found."
@@ -120,11 +123,13 @@ class JobCategoryManager {
                         mapCentralLocations.add(null)
                         mapInteractables.add(null)
                         mapScaleOverrides.add(null)
+                        isometricAngles.add(null)
                     }
                 } else {
                     mapCentralLocations.add(null)
                     mapInteractables.add(null)
                     mapScaleOverrides.add(null)
+                    isometricAngles.add(null)
                 }
             }
 
@@ -159,6 +164,7 @@ class JobCategoryManager {
                         var worldLocation: Location? = null
                         val interactable = mapInteractables.get(i)
                         val scaleOverride = mapScaleOverrides.get(i)
+                        val isometricAngle = isometricAngles.get(i)
 
                         // Find the last non-null worldVector
                         for (j in i downTo 0) {
@@ -169,11 +175,21 @@ class JobCategoryManager {
                             }
                         }
 
-                        if (worldLocation == null || interactable == null || scaleOverride == null)
+                        if (worldLocation == null ||
+                                        interactable == null ||
+                                        scaleOverride == null ||
+                                        isometricAngle == null
+                        )
                                 continue
 
                         jobBoards.add(
-                                JobBoard(mapLocation, worldLocation, interactable, scaleOverride)
+                                JobBoard(
+                                        mapLocation,
+                                        worldLocation,
+                                        interactable,
+                                        scaleOverride,
+                                        isometricAngle
+                                )
                         )
                     }
                 }
@@ -316,7 +332,8 @@ data class JobBoard(
         val mapLocation: Location,
         val worldLocation: Location,
         val interactable: Boolean,
-        val mapScaleOverride: Int
+        val mapScaleOverride: Int,
+        val isometricAngle: Double
 ) {
     /** Checks if an item frame is part of this job board. */
     fun isPartOfBoard(itemFrame: ItemFrame): Boolean {

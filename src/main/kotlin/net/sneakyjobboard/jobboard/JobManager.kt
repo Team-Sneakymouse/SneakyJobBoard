@@ -246,7 +246,20 @@ class JobManager {
 
             // Calculate correct horizontal and vertical offsets
             var horizOffset = (jobLocation.x - worldLocation.x) / scale
-            var vertOffset = (jobLocation.z - worldLocation.z) / scale
+            var vertOffset = -(jobLocation.z - worldLocation.z) / scale
+
+            // Apply isometry
+            if (jobBoard.isometricAngle > 0) {
+                val radianAngle = Math.toRadians(jobBoard.isometricAngle)
+
+                val xTemp = horizOffset
+                val yTemp = vertOffset
+
+                horizOffset = xTemp * Math.cos((Math.PI / 2) - radianAngle) + yTemp * Math.sin(radianAngle)
+                vertOffset = -xTemp * Math.sin((Math.PI / 2) - radianAngle) + yTemp * Math.cos(radianAngle)
+
+                vertOffset += (jobLocation.y - worldLocation.y) / scale
+            }
 
             val frameRotation = itemFrame.rotation
 
@@ -254,8 +267,8 @@ class JobManager {
             when (frameRotation) {
                 Rotation.CLOCKWISE_45, Rotation.FLIPPED_45 -> {
                     val temp = horizOffset
-                    horizOffset = -vertOffset
-                    vertOffset = temp
+                    horizOffset = vertOffset
+                    vertOffset = -temp
                 }
                 Rotation.CLOCKWISE, Rotation.COUNTER_CLOCKWISE -> {
                     horizOffset = -horizOffset
@@ -263,8 +276,8 @@ class JobManager {
                 }
                 Rotation.CLOCKWISE_135, Rotation.COUNTER_CLOCKWISE_45 -> {
                     val temp = horizOffset
-                    horizOffset = vertOffset
-                    vertOffset = -temp
+                    horizOffset = -vertOffset
+                    vertOffset = temp
                 }
                 else -> {}
             }
@@ -280,39 +293,39 @@ class JobManager {
                     displayLocation.pitch = 180F
                     xOffset = horizOffset
                     yOffset = 0.5
-                    zOffset = -vertOffset
+                    zOffset = vertOffset
                 }
                 BlockFace.NORTH -> {
                     displayLocation.pitch = 90F
                     xOffset = horizOffset
-                    yOffset = -vertOffset
+                    yOffset = vertOffset
                     zOffset = -0.5
                 }
                 BlockFace.EAST -> {
                     displayLocation.pitch = 90F
                     displayLocation.yaw = 90F
                     xOffset = 0.5
-                    yOffset = -vertOffset
+                    yOffset = vertOffset
                     zOffset = horizOffset
                 }
                 BlockFace.SOUTH -> {
                     displayLocation.pitch = 90F
                     displayLocation.yaw = 180F
                     xOffset = -horizOffset
-                    yOffset = -vertOffset
+                    yOffset = vertOffset
                     zOffset = 0.5
                 }
                 BlockFace.WEST -> {
                     displayLocation.pitch = 90F
                     displayLocation.yaw = 270F
                     xOffset = -0.5
-                    yOffset = -vertOffset
+                    yOffset = vertOffset
                     zOffset = -horizOffset
                 }
                 else -> {
                     xOffset = horizOffset
                     yOffset = -0.5
-                    zOffset = vertOffset
+                    zOffset = -vertOffset
                 }
             }
 
