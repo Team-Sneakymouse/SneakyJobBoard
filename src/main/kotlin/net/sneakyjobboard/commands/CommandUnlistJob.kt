@@ -40,7 +40,7 @@ class CommandUnlistJob : CommandBase("unlistjob") {
 
         // Unlist that job
         CommandListJob.unregisterListener(sender)
-        SneakyJobBoard.getJobManager().unlist(lastJob.uuid)
+		lastJob.unlist()
         sender.sendMessage(
                 TextUtility.convertToComponent("&aYour job ${lastJob.name} has been unlisted.")
         )

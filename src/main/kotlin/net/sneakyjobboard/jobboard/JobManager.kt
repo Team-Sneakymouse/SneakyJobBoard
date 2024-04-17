@@ -9,10 +9,12 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Rotation
 import org.bukkit.block.BlockFace
+import org.bukkit.entity.Display.Brightness
 import org.bukkit.entity.GlowItemFrame
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
+import org.bukkit.entity.TextDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.world.ChunkLoadEvent
@@ -22,7 +24,7 @@ import org.bukkit.map.MapView
 /** Manages listed jobs and dispatching. */
 class JobManager {
 
-    private val jobs: MutableMap<String, Job> = mutableMapOf()
+    public val jobs: MutableMap<String, Job> = mutableMapOf()
     val pendingSpawns: MutableMap<JobBoard, MutableList<Job>> = mutableMapOf()
 
     /** Adds a new job to the map. */
@@ -32,7 +34,7 @@ class JobManager {
         // Spawn item displays
         for (jobBoard in SneakyJobBoard.getJobCategoryManager().jobBoards) {
             if (jobBoard.mapLocation.chunk.isLoaded) {
-                spawnItemDisplays(jobBoard, job)
+                spawnIcons(jobBoard, job)
             } else {
                 val list: MutableList<Job> = pendingSpawns.getOrDefault(jobBoard, mutableListOf())
                 list.add(job)
@@ -83,7 +85,7 @@ class JobManager {
         Bukkit.getScheduler()
                 .runTaskLater(
                         SneakyJobBoard.getInstance(),
-                        Runnable { unlist(job.uuid) },
+                        Runnable { job.unlist() },
                         20 * job.durationMilis / 1000
                 )
     }
@@ -106,8 +108,8 @@ class JobManager {
 
     /** Clean up all listed jobs. */
     fun cleanup() {
-        val jobIdsToRemove = jobs.keys.toList()
-        jobIdsToRemove.forEach { unlist(it) }
+        val jobIdsToRemove = jobs.values.toList()
+        jobIdsToRemove.forEach { it.unlist() }
 
         // Clean up dynmap markers
         if (SneakyJobBoard.isDynmapActive()) {
@@ -132,36 +134,6 @@ class JobManager {
         }
     }
 
-    /** Unlist a job and kill off its item displays. */
-    fun unlist(uuid: String) {
-        val job = jobs[uuid] ?: return
-
-        job.itemDisplays.forEach { entity -> entity.remove() }
-
-        if (SneakyJobBoard.isDynmapActive()) {
-            val markerAPI = SneakyJobBoard.getInstance().markerAPI
-
-            val markerSet =
-                    markerAPI?.getMarkerSet("SneakyJobBoard")
-                            ?: run {
-                                markerAPI?.createMarkerSet(
-                                        "SneakyJobBoard",
-                                        "SneakyJobBoard",
-                                        null,
-                                        false
-                                )
-                                        ?: run {
-                                            SneakyJobBoard.log("Failed to create a new marker set.")
-                                            return
-                                        }
-                            }
-
-            markerSet.findMarker(uuid)?.deleteMarker()
-        }
-
-        jobs.remove(uuid)
-    }
-
     /** Dispatch a player to a listed job. */
     fun dispatch(uuid: String, pl: Player) {
         val job = jobs.get(uuid)
@@ -183,7 +155,7 @@ class JobManager {
     }
 
     companion object {
-        fun spawnItemDisplays(jobBoard: JobBoard, job: Job) {
+        fun spawnIcons(jobBoard: JobBoard, job: Job) {
             if (job.isExpired()) return
 
             val jobLocation = job.location
@@ -335,6 +307,7 @@ class JobManager {
 
             displayLocation.add(xOffset, yOffset, zOffset)
 
+            // Spawn the ItemDisplay
             val itemDisplayEntity: ItemDisplay =
                     displayLocation.world!!.spawn(displayLocation, ItemDisplay::class.java)
 
@@ -345,6 +318,19 @@ class JobManager {
             itemDisplayEntity.addScoreboardTag("JobBoardIcon")
 
             job.itemDisplays.add(itemDisplayEntity)
+
+            // Spawn the TextDisplay
+            val textDisplayEntity: TextDisplay =
+                    displayLocation.world!!.spawn(displayLocation, TextDisplay::class.java)
+
+            textDisplayEntity.setBrightness(Brightness(15, 15))
+            textDisplayEntity.setAlignment(TextDisplay.TextAlignment.LEFT)
+
+            textDisplayEntity.addScoreboardTag("JobBoardIcon")
+
+            job.textDisplays.add(textDisplayEntity)
+
+			job.updateTextDisplays()
         }
     }
 }
@@ -357,7 +343,7 @@ class JobManagerListener : Listener {
         jobManager.pendingSpawns.entries.removeIf { entry ->
             val jobBoard = entry.key
             if (jobBoard.mapLocation.chunk == event.chunk) {
-                entry.value.forEach { job -> JobManager.spawnItemDisplays(jobBoard, job) }
+                entry.value.forEach { job -> JobManager.spawnIcons(jobBoard, job) }
                 true
             } else {
                 false

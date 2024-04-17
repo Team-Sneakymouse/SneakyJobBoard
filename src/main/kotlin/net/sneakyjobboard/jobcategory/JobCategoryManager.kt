@@ -15,6 +15,7 @@ import org.bukkit.entity.GlowItemFrame
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
+import org.bukkit.entity.TextDisplay
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
@@ -270,13 +271,104 @@ data class JobCategory(
 data class Job(val category: JobCategory, val player: Player, val durationMilis: Long) {
     val uuid: String = UUID.randomUUID().toString()
     val location: Location = player.location
-    var name: String = category.name
-    var description: String = category.description
     val startTime: Long = System.currentTimeMillis()
     val itemDisplays: MutableList<ItemDisplay> = mutableListOf()
+    val textDisplays: MutableList<TextDisplay> = mutableListOf()
+    var name: String = category.name
+        set(value) {
+            field = value
+            updateTextDisplays()
+            if (SneakyJobBoard.isDynmapActive()) {
+                val markerAPI = SneakyJobBoard.getInstance().markerAPI
+
+                val markerSet =
+                        markerAPI?.getMarkerSet("SneakyJobBoard")
+                                ?: run {
+                                    markerAPI?.createMarkerSet(
+                                            "SneakyJobBoard",
+                                            "SneakyJobBoard",
+                                            null,
+                                            false
+                                    )
+                                            ?: run {
+                                                SneakyJobBoard.log(
+                                                        "Failed to create a new marker set."
+                                                )
+                                                return
+                                            }
+                                }
+
+                markerSet.findMarker(uuid)?.label = value
+            }
+        }
+    var description: String = category.description
+        set(value) {
+            field = value
+            updateTextDisplays()
+        }
 
     fun isExpired(): Boolean {
         return (System.currentTimeMillis() >= startTime + durationMilis)
+    }
+
+    fun unlist() {
+        itemDisplays.forEach { entity -> entity.remove() }
+        textDisplays.forEach { entity -> entity.remove() }
+        SneakyJobBoard.getJobManager().jobs.remove(uuid)
+
+        if (SneakyJobBoard.isDynmapActive()) {
+            val markerAPI = SneakyJobBoard.getInstance().markerAPI
+
+            val markerSet =
+                    markerAPI?.getMarkerSet("SneakyJobBoard")
+                            ?: run {
+                                markerAPI?.createMarkerSet(
+                                        "SneakyJobBoard",
+                                        "SneakyJobBoard",
+                                        null,
+                                        false
+                                )
+                                        ?: run {
+                                            SneakyJobBoard.log("Failed to create a new marker set.")
+                                            return
+                                        }
+                            }
+
+            markerSet.findMarker(uuid)?.deleteMarker()
+        }
+    }
+
+    fun updateTextDisplays() {
+        for (textDisplayEntity in textDisplays) {
+            val text: MutableList<String> = mutableListOf("&a${name}")
+
+            for (line in TextUtility.splitIntoLines(description, 30)) {
+                text.add("&e$line")
+            }
+
+            var posterString =
+                    (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
+                                    ?: "&ePosted by: &b[playerName]").replace(
+                            "[playerName]",
+                            player.name
+                    )
+
+            if (SneakyJobBoard.isPapiActive()) {
+                posterString = PlaceholderAPI.setPlaceholders(player, posterString)
+            }
+
+            text.add(posterString)
+
+            textDisplayEntity.text(TextUtility.convertToComponent(text.joinToString("\n")))
+            textDisplayEntity.setTransformation(
+                    Transformation(
+                            Vector3f(0F, 0.3F, 0.025F + (0.025F * text.size)),
+                            Quaternionf(-1F, 0F, 0F, 1F),
+                            Vector3f(0.1F, 0.1F, 0.1F),
+                            Quaternionf(0F, 0F, 0F, 1F)
+                    )
+            )
+        }
     }
 
     fun getIconItem(): ItemStack {

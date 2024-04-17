@@ -138,29 +138,6 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
                     )
             )
 
-            if (SneakyJobBoard.isDynmapActive()) {
-                val markerAPI = SneakyJobBoard.getInstance().markerAPI
-
-                val markerSet =
-                        markerAPI?.getMarkerSet("SneakyJobBoard")
-                                ?: run {
-                                    markerAPI?.createMarkerSet(
-                                            "SneakyJobBoard",
-                                            "SneakyJobBoard",
-                                            null,
-                                            false
-                                    )
-                                            ?: run {
-                                                SneakyJobBoard.log(
-                                                        "Failed to create a new marker set."
-                                                )
-                                                return
-                                            }
-                                }
-
-                markerSet.findMarker(job.uuid)?.label = event.message
-            }
-
             CommandListJob.registerListener(sender, JobDescriptionInputListener(sender, job))
         }
     }
