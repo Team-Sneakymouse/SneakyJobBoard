@@ -207,36 +207,36 @@ class JobManager {
                 return
             }
 
-            // Retrieve the scale from the map item
-            val frameItem = itemFrame.item
-
-            if (frameItem.type != Material.FILLED_MAP) {
-                SneakyJobBoard.log(
-                        "One of the job boards listed in map-central-vectors does not have a filled map item in the item frame: ${displayLocation.toString()}"
-                )
-                return
-            }
-
-            val mapView = (frameItem.itemMeta as? MapMeta)?.mapView
-
-            if (mapView == null) {
-                SneakyJobBoard.log(
-                        "One of the job boards listed in map-central-vectors does not have a valid map item in the item frame: ${displayLocation.toString()}"
-                )
-                return
-            }
-
             val scale: Int =
                     when {
                         jobBoard.mapScaleOverride > 0 -> jobBoard.mapScaleOverride
-                        else ->
-                                when (mapView.scale) {
-                                    MapView.Scale.CLOSE -> 256
-                                    MapView.Scale.NORMAL -> 512
-                                    MapView.Scale.FAR -> 1024
-                                    MapView.Scale.FARTHEST -> 2048
-                                    else -> 128
-                                }
+                        else -> {
+                            // Retrieve the scale from the map item
+                            val frameItem = itemFrame.item
+
+                            if (frameItem.type != Material.FILLED_MAP) {
+                                SneakyJobBoard.log(
+                                        "One of the job boards listed in map-central-vectors does not have a filled map item in the item frame: ${displayLocation.toString()}"
+                                )
+                                return
+                            }
+
+                            val mapView = (frameItem.itemMeta as? MapMeta)?.mapView
+
+                            if (mapView == null) {
+                                SneakyJobBoard.log(
+                                        "One of the job boards listed in map-central-vectors does not have a valid map item in the item frame: ${displayLocation.toString()}"
+                                )
+                                return
+                            }
+                            when (mapView.scale) {
+                                MapView.Scale.CLOSE -> 256
+                                MapView.Scale.NORMAL -> 512
+                                MapView.Scale.FAR -> 1024
+                                MapView.Scale.FARTHEST -> 2048
+                                else -> 128
+                            }
+                        }
                     }
 
             val worldLocation =
@@ -255,8 +255,12 @@ class JobManager {
                 val xTemp = horizOffset
                 val yTemp = vertOffset
 
-                horizOffset = xTemp * Math.cos((Math.PI / 2) - radianAngle) + yTemp * Math.sin(radianAngle) - 0.5
-                vertOffset = -xTemp * Math.sin((Math.PI / 2) - radianAngle) + yTemp * Math.cos(radianAngle)
+                horizOffset =
+                        xTemp * Math.cos((Math.PI / 2) - radianAngle) +
+                                yTemp * Math.sin(radianAngle) - 0.5
+                vertOffset =
+                        -xTemp * Math.sin((Math.PI / 2) - radianAngle) +
+                                yTemp * Math.cos(radianAngle)
 
                 vertOffset += (jobLocation.y - worldLocation.y) / scale
             }
