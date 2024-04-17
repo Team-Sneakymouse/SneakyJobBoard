@@ -21,7 +21,9 @@ import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
+import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.ItemStack
@@ -523,13 +525,18 @@ class JobBoardListener : Listener {
     fun onRightClickItemFrame(event: PlayerInteractAtEntityEvent) {
         val entity = event.rightClicked
         if (entity is ItemFrame) {
-            val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
+            val player = event.player
+            if (dispatchViaIcon(player)) {
+                event.setCancelled(true)
+            } else {
+                val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
 
-            jobBoards.forEach { jobBoard ->
-                if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
-                    CommandJobBoard.openJobBoard(event.player)
-                    event.setCancelled(true)
-                    return
+                jobBoards.forEach { jobBoard ->
+                    if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
+                        CommandJobBoard.openJobBoard(event.player)
+                        event.setCancelled(true)
+                        return
+                    }
                 }
             }
         }
@@ -558,6 +565,30 @@ class JobBoardListener : Listener {
                 event.player.hideEntity(SneakyJobBoard.getInstance(), entity)
             }
         }
+    }
+
+    /** Handle right-clicking the job board entities. */
+    @EventHandler
+    fun onInteract(event: PlayerInteractEvent) {
+        if (event.action != Action.RIGHT_CLICK_BLOCK && event.action != Action.RIGHT_CLICK_AIR)
+                return
+
+        val player = event.player
+        event.setCancelled(dispatchViaIcon(player))
+    }
+
+    private fun dispatchViaIcon(player: Player): Boolean {
+        val entity = SneakyJobBoard.getInstance().jobBoardUpdater.shownIcons[player]
+
+        if (entity != null) {
+            for (job in SneakyJobBoard.getJobManager().jobs.values) {
+                if (job.textDisplays.containsValue(entity)) {
+                    SneakyJobBoard.getJobManager().dispatch(job.uuid, player)
+                    return true
+                }
+            }
+        }
+        return false
     }
 }
 

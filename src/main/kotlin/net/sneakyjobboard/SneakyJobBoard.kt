@@ -15,6 +15,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.permissions.Permission
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.scheduler.BukkitRunnable
 import org.dynmap.DynmapAPI
 import org.dynmap.markers.MarkerAPI
 
@@ -24,6 +25,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     lateinit var jobManager: JobManager
     var papiActive: Boolean = false
     var markerAPI: MarkerAPI? = null
+	val jobBoardUpdater: JobBoardUpdater = JobBoardUpdater()
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -42,8 +44,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))
 
-        val task = JobBoardUpdater()
-        task.runTaskTimer(this, 0L, 1L)
+        jobBoardUpdater.runTaskTimer(this, 0L, 1L)
 
         val papiPlugin = Bukkit.getServer().pluginManager.getPlugin("PlaceholderAPI")
         if (papiPlugin != null && papiPlugin.isEnabled) {
