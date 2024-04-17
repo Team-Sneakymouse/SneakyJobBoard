@@ -317,7 +317,7 @@ class JobManager {
 
             itemDisplayEntity.addScoreboardTag("JobBoardIcon")
 
-            job.itemDisplays.add(itemDisplayEntity)
+            job.itemDisplays.put(jobBoard, itemDisplayEntity)
 
             // Spawn the TextDisplay
             val textDisplayEntity: TextDisplay =
@@ -328,7 +328,7 @@ class JobManager {
 
             textDisplayEntity.addScoreboardTag("JobBoardIcon")
 
-            job.textDisplays.add(textDisplayEntity)
+            job.textDisplays.put(jobBoard, textDisplayEntity)
 
 			job.updateTextDisplays()
 

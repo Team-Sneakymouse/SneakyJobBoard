@@ -7,6 +7,7 @@ import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.jobboard.JobInventoryListener
 import net.sneakyjobboard.jobboard.JobManager
 import net.sneakyjobboard.jobcategory.JobBoardListener
+import net.sneakyjobboard.jobcategory.JobBoardUpdater
 import net.sneakyjobboard.jobcategory.JobCategoryManager
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
@@ -40,6 +41,9 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))
+
+        val task = JobBoardUpdater()
+        task.runTaskTimer(this, 0L, 1L)
 
         val papiPlugin = Bukkit.getServer().pluginManager.getPlugin("PlaceholderAPI")
         if (papiPlugin != null && papiPlugin.isEnabled) {

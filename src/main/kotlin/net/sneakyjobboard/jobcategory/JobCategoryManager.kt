@@ -13,6 +13,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Display.Brightness
+import org.bukkit.entity.Entity
 import org.bukkit.entity.GlowItemFrame
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
@@ -24,6 +25,7 @@ import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Transformation
 import org.joml.Quaternionf
 import org.joml.Vector3f
@@ -255,10 +257,7 @@ class JobCategoryManager {
         return Transformation(translation, leftRotation, scale, rightRotation)
     }
 
-    /**
-     * Retrieves a read-only map of job categories.
-     * @return A map of job category keys to their corresponding JobCategory objects.
-     */
+    /** Retrieves a read-only map of job categories. */
     fun getJobCategories(): Map<String, JobCategory> {
         return jobCategories
     }
@@ -278,8 +277,8 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     val uuid: String = UUID.randomUUID().toString()
     val location: Location = player.location
     val startTime: Long = System.currentTimeMillis()
-    val itemDisplays: MutableList<ItemDisplay> = mutableListOf()
-    val textDisplays: MutableList<TextDisplay> = mutableListOf()
+    val itemDisplays: MutableMap<JobBoard, ItemDisplay> = mutableMapOf()
+    val textDisplays: MutableMap<JobBoard, TextDisplay> = mutableMapOf()
     var name: String = category.name
         set(value) {
             field = value
@@ -318,8 +317,8 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     }
 
     fun unlist() {
-        itemDisplays.forEach { entity -> entity.remove() }
-        textDisplays.forEach { entity -> entity.remove() }
+        itemDisplays.values.forEach { entity -> entity.remove() }
+        textDisplays.values.forEach { entity -> entity.remove() }
         SneakyJobBoard.getJobManager().jobs.remove(uuid)
 
         if (SneakyJobBoard.isDynmapActive()) {
@@ -345,7 +344,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     }
 
     fun updateTextDisplays() {
-        for (textDisplayEntity in textDisplays) {
+        for (textDisplayEntity in textDisplays.values) {
             val text: MutableList<String> = mutableListOf("&a${name}")
 
             for (line in TextUtility.splitIntoLines(description, 30)) {
@@ -548,5 +547,93 @@ class JobBoardListener : Listener {
                 false
             }
         }
+    }
+}
+
+class JobBoardUpdater : BukkitRunnable() {
+    val shownIcons: MutableMap<Player, Entity> = mutableMapOf()
+
+    override fun run() {
+        var players: MutableList<Player> = mutableListOf()
+        for (jobBoard in SneakyJobBoard.getJobCategoryManager().jobBoards) {
+            for (player in
+                    jobBoard.mapLocation.world?.entities?.filterIsInstance<Player>()?.filter {
+                        it.location.distanceSquared(jobBoard.mapLocation) <= 10.0 * 10.0
+                    }
+                            ?: emptyList()) {
+                players.add(player)
+            }
+        }
+
+        for (player in shownIcons.keys) {
+            if (!players.contains(player)) {
+                hide(player)
+            }
+        }
+
+        for (player in players) {
+            var entity = getLookedAtIcon(player)
+            if (entity == null) {
+                hide(player)
+            } else {}
+            if (entity !is TextDisplay) {
+                for (job in SneakyJobBoard.getJobManager().jobs.values) {
+                    if (job.itemDisplays.containsValue(entity)) {
+                        entity =
+                                job.textDisplays[
+                                        job.itemDisplays.entries.first { it.value == entity }.key]
+                        break // Exit the loop after finding the corresponding text display
+                    }
+                }
+            }
+            if (entity != null) show(player, entity)
+        }
+    }
+
+    /** Hide the textdisplay. */
+    private fun hide(player: Player) {
+        val entity: Entity? = shownIcons.remove(player)
+        if (entity != null) player.hideEntity(SneakyJobBoard.getInstance(), entity)
+    }
+
+    /** Show the textdisplay. */
+    private fun show(player: Player, entity: Entity) {
+        if (shownIcons.get(player) == entity) return
+
+        hide(player)
+        shownIcons[player] = entity
+        player.showEntity(SneakyJobBoard.getInstance(), entity)
+    }
+
+    /** Get the first JobBoardIcon that the player is looking at. */
+    private fun getLookedAtIcon(player: Player): Entity? {
+        val playerEyeLocation = player.eyeLocation
+        val direction = playerEyeLocation.direction.normalize()
+        val maxDistanceInBlocks = 5
+        val stepSize = 0.3
+        val maxSteps = (maxDistanceInBlocks / stepSize).toInt()
+
+        var entity: Entity? = null
+
+        for (step in 0 until maxSteps) {
+            val targetLocation =
+                    playerEyeLocation.clone().add(direction.clone().multiply(step * stepSize))
+            entity = getLocationIcons(targetLocation, stepSize)
+
+            if (entity != null) {
+                break
+            }
+        }
+
+        return entity
+    }
+
+    /** Get the first JobBoardIcon at the specified location. */
+    private fun getLocationIcons(location: Location, stepSize: Double): Entity? {
+        val nearbyEntities =
+                location.world.getNearbyEntities(location, stepSize / 1.5, stepSize / 1.5, stepSize / 1.5).filter {
+                    it.scoreboardTags.contains("JobBoardIcon")
+                }
+        return nearbyEntities.firstOrNull()
     }
 }
