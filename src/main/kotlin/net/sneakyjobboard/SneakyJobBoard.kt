@@ -4,10 +4,9 @@ import java.io.File
 import net.sneakyjobboard.commands.CommandJobBoard
 import net.sneakyjobboard.commands.CommandListJob
 import net.sneakyjobboard.commands.CommandUnlistJob
-import net.sneakyjobboard.commands.ItemFrameListener
 import net.sneakyjobboard.jobboard.JobInventoryListener
 import net.sneakyjobboard.jobboard.JobManager
-import net.sneakyjobboard.jobboard.JobManagerListener
+import net.sneakyjobboard.jobcategory.JobBoardListener
 import net.sneakyjobboard.jobcategory.JobCategoryManager
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
@@ -37,8 +36,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
         getServer().getPluginManager().registerEvents(PluginListener(this), this)
         getServer().getPluginManager().registerEvents(JobInventoryListener(), this)
-        getServer().getPluginManager().registerEvents(JobManagerListener(), this)
-        getServer().getPluginManager().registerEvents(ItemFrameListener(), this)
+        getServer().getPluginManager().registerEvents(JobBoardListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))

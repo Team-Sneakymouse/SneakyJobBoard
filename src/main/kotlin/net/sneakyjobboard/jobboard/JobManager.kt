@@ -331,23 +331,10 @@ class JobManager {
             job.textDisplays.add(textDisplayEntity)
 
 			job.updateTextDisplays()
-        }
-    }
-}
 
-class JobManagerListener : Listener {
-
-    @EventHandler
-    fun onChunkLoad(event: ChunkLoadEvent) {
-        val jobManager = SneakyJobBoard.getJobManager()
-        jobManager.pendingSpawns.entries.removeIf { entry ->
-            val jobBoard = entry.key
-            if (jobBoard.mapLocation.chunk == event.chunk) {
-                entry.value.forEach { job -> JobManager.spawnIcons(jobBoard, job) }
-                true
-            } else {
-                false
-            }
+			for (player in Bukkit.getOnlinePlayers()) {
+				player.hideEntity(SneakyJobBoard.getInstance(), textDisplayEntity)
+			}
         }
     }
 }

@@ -1,15 +1,10 @@
 package net.sneakyjobboard.commands
 
-import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobInventoryHolder
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerInteractAtEntityEvent
 
 class CommandJobBoard : CommandBase("jobboard") {
 
@@ -64,24 +59,6 @@ class CommandJobBoard : CommandBase("jobboard") {
             val holder = JobInventoryHolder()
             holder.populateInventory()
             player.openInventory(holder.inventory)
-        }
-    }
-}
-
-class ItemFrameListener : Listener {
-    @EventHandler
-    fun onRightClickItemFrame(event: PlayerInteractAtEntityEvent) {
-        val entity = event.rightClicked
-        if (entity is ItemFrame) {
-            val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
-
-            jobBoards.forEach { jobBoard ->
-                if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
-                    CommandJobBoard.openJobBoard(event.player)
-                    event.setCancelled(true)
-                    return
-                }
-            }
         }
     }
 }

@@ -3,6 +3,8 @@ package net.sneakyjobboard.jobcategory
 import java.util.UUID
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.commands.CommandJobBoard
+import net.sneakyjobboard.jobboard.JobManager
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -16,6 +18,10 @@ import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerInteractAtEntityEvent
+import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
@@ -507,5 +513,40 @@ data class JobBoard(
         val entitiesAtLocation =
                 location.world.getNearbyEntities(location.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5)
         return entitiesAtLocation.any { entity -> entity is ItemFrame || entity is GlowItemFrame }
+    }
+}
+
+class JobBoardListener : Listener {
+
+    /** Handles right-clicking the job board. */
+    @EventHandler
+    fun onRightClickItemFrame(event: PlayerInteractAtEntityEvent) {
+        val entity = event.rightClicked
+        if (entity is ItemFrame) {
+            val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
+
+            jobBoards.forEach { jobBoard ->
+                if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
+                    CommandJobBoard.openJobBoard(event.player)
+                    event.setCancelled(true)
+                    return
+                }
+            }
+        }
+    }
+
+    /** Handles lazy spawning of job board icons. */
+    @EventHandler
+    fun onChunkLoad(event: ChunkLoadEvent) {
+        val jobManager = SneakyJobBoard.getJobManager()
+        jobManager.pendingSpawns.entries.removeIf { entry ->
+            val jobBoard = entry.key
+            if (jobBoard.mapLocation.chunk == event.chunk) {
+                entry.value.forEach { job -> JobManager.spawnIcons(jobBoard, job) }
+                true
+            } else {
+                false
+            }
+        }
     }
 }
