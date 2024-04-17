@@ -22,6 +22,7 @@ import org.bukkit.entity.TextDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
@@ -548,6 +549,16 @@ class JobBoardListener : Listener {
             }
         }
     }
+
+    /** Hide text displays to joining players. */
+    @EventHandler
+    fun onJoin(event: PlayerJoinEvent) {
+        for (job in SneakyJobBoard.getJobManager().jobs.values) {
+            for (entity in job.textDisplays.values) {
+                event.player.hideEntity(SneakyJobBoard.getInstance(), entity)
+            }
+        }
+    }
 }
 
 class JobBoardUpdater : BukkitRunnable() {
@@ -631,9 +642,13 @@ class JobBoardUpdater : BukkitRunnable() {
     /** Get the first JobBoardIcon at the specified location. */
     private fun getLocationIcons(location: Location, stepSize: Double): Entity? {
         val nearbyEntities =
-                location.world.getNearbyEntities(location, stepSize / 1.5, stepSize / 1.5, stepSize / 1.5).filter {
-                    it.scoreboardTags.contains("JobBoardIcon")
-                }
+                location.world.getNearbyEntities(
+                                location,
+                                stepSize / 1.5,
+                                stepSize / 1.5,
+                                stepSize / 1.5
+                        )
+                        .filter { it.scoreboardTags.contains("JobBoardIcon") }
         return nearbyEntities.firstOrNull()
     }
 }
