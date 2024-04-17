@@ -426,40 +426,6 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
     }
 }
 
-class JobBoardListener : Listener {
-    /** Handles right-clicking the job board. */
-    @EventHandler
-    fun onRightClickItemFrame(event: PlayerInteractAtEntityEvent) {
-        val entity = event.rightClicked
-        if (entity is ItemFrame) {
-            val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
-
-            jobBoards.forEach { jobBoard ->
-                if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
-                    CommandJobBoard.openJobBoard(event.player)
-                    event.setCancelled(true)
-                    return
-                }
-            }
-        }
-    }
-
-    /** Handles lazy spawning of job board icons. */
-    @EventHandler
-    fun onChunkLoad(event: ChunkLoadEvent) {
-        val jobManager = SneakyJobBoard.getJobManager()
-        jobManager.pendingSpawns.entries.removeIf { entry ->
-            val jobBoard = entry.key
-            if (jobBoard.mapLocation.chunk == event.chunk) {
-                entry.value.forEach { job -> JobManager.spawnIcons(jobBoard, job) }
-                true
-            } else {
-                false
-            }
-        }
-    }
-}
-
 data class JobBoard(
         val mapLocation: Location,
         val worldLocation: Location,
@@ -547,5 +513,40 @@ data class JobBoard(
         val entitiesAtLocation =
                 location.world.getNearbyEntities(location.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5)
         return entitiesAtLocation.any { entity -> entity is ItemFrame || entity is GlowItemFrame }
+    }
+}
+
+class JobBoardListener : Listener {
+
+    /** Handles right-clicking the job board. */
+    @EventHandler
+    fun onRightClickItemFrame(event: PlayerInteractAtEntityEvent) {
+        val entity = event.rightClicked
+        if (entity is ItemFrame) {
+            val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
+
+            jobBoards.forEach { jobBoard ->
+                if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
+                    CommandJobBoard.openJobBoard(event.player)
+                    event.setCancelled(true)
+                    return
+                }
+            }
+        }
+    }
+
+    /** Handles lazy spawning of job board icons. */
+    @EventHandler
+    fun onChunkLoad(event: ChunkLoadEvent) {
+        val jobManager = SneakyJobBoard.getJobManager()
+        jobManager.pendingSpawns.entries.removeIf { entry ->
+            val jobBoard = entry.key
+            if (jobBoard.mapLocation.chunk == event.chunk) {
+                entry.value.forEach { job -> JobManager.spawnIcons(jobBoard, job) }
+                true
+            } else {
+                false
+            }
+        }
     }
 }
