@@ -667,6 +667,8 @@ class JobBoardUpdater : BukkitRunnable() {
                     else -> return null
                 }
 
+        if (distanceToIntersection < 0) return null
+
         val intersectionPoint =
                 playerEyeLocation.clone().add(direction.multiply(distanceToIntersection))
 
