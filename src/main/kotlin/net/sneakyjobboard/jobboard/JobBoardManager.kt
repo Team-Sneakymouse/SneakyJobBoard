@@ -272,12 +272,24 @@ data class JobBoard(
         return scale
     }
 
-    /** Gets the axis that the board is aligned across */
+    /** Gets the axis that the board is aligned across. */
     fun getAxis(): Char {
         return when (attachedFace) {
             BlockFace.NORTH, BlockFace.SOUTH -> 'z'
             BlockFace.WEST, BlockFace.EAST -> 'x'
             else -> 'y'
+        }
+    }
+
+    /** Gets the coordinate value that all item frames have on the aligned axis. */
+    fun getAxisIntersection(): Double {
+        return when (attachedFace) {
+            BlockFace.UP -> mapLocation.y() + 1
+            BlockFace.NORTH -> mapLocation.z()
+            BlockFace.EAST -> mapLocation.x() + 1
+            BlockFace.SOUTH -> mapLocation.z() + 1
+            BlockFace.WEST -> mapLocation.x()
+            else -> mapLocation.y()
         }
     }
 
@@ -569,42 +581,54 @@ class JobBoardListener : Listener {
 }
 
 class JobBoardUpdater : BukkitRunnable() {
-    val shownIcons: MutableMap<Player, Entity> = mutableMapOf()
+    val shownIcons: MutableMap<Player, TextDisplay> = mutableMapOf()
 
     override fun run() {
-        var players: MutableList<Player> = mutableListOf()
+        val players: MutableMap<JobBoard, MutableList<Player>> = mutableMapOf()
+
+        // Build a map of players who are nearby a JobBoard
         for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
-            for (player in
+            val nearbyPlayers =
                     jobBoard.mapLocation.world?.entities?.filterIsInstance<Player>()?.filter {
                         it.location.distanceSquared(jobBoard.mapLocation) <= 10.0 * 10.0
                     }
-                            ?: emptyList()) {
-                players.add(player)
-            }
+                            ?: emptyList()
+
+            players[jobBoard] = nearbyPlayers.toMutableList()
         }
 
+        // Hide icons for players who are no longer nearby
         for (player in shownIcons.keys) {
-            if (!players.contains(player)) {
+            val isInProximity = players.any { it.value.contains(player) }
+            if (!isInProximity) {
                 hide(player)
             }
         }
 
-        for (player in players) {
-            var entity = getLookedAtIcon(player)
-            if (entity == null) {
-                hide(player)
-            } else {}
-            if (entity !is TextDisplay) {
-                for (job in SneakyJobBoard.getJobManager().jobs.values) {
-                    if (job.itemDisplays.containsValue(entity)) {
-                        entity =
-                                job.textDisplays[
-                                        job.itemDisplays.entries.first { it.value == entity }.key]
-                        break
-                    }
+        val lookedAtIcons: MutableMap<Player, TextDisplay?> = mutableMapOf()
+
+        // Find the icon that each of these players is looking at, or null
+        for ((jobBoard, playerList) in players) {
+            for (player in playerList) {
+                if (lookedAtIcons[player] != null) continue
+
+                var entity = getLookedAtIcon(jobBoard, player)
+
+                if (entity != null || !lookedAtIcons.keys.contains(player)) {
+                    lookedAtIcons[player] = entity
                 }
             }
-            if (entity != null) show(player, entity)
+        }
+
+        // Show the looked at icon to the player if it exists
+        for ((player, entity) in lookedAtIcons) {
+            var icon = entity
+
+            if (icon == null) {
+                hide(player)
+            } else {
+                show(player, icon)
+            }
         }
     }
 
@@ -615,7 +639,7 @@ class JobBoardUpdater : BukkitRunnable() {
     }
 
     /** Show the textdisplay. */
-    private fun show(player: Player, entity: Entity) {
+    private fun show(player: Player, entity: TextDisplay) {
         if (shownIcons.get(player) == entity) return
 
         hide(player)
@@ -624,38 +648,36 @@ class JobBoardUpdater : BukkitRunnable() {
     }
 
     /** Get the first JobBoardIcon that the player is looking at. */
-    private fun getLookedAtIcon(player: Player): Entity? {
+    private fun getLookedAtIcon(jobBoard: JobBoard, player: Player): TextDisplay? {
         val playerEyeLocation = player.eyeLocation
         val direction = playerEyeLocation.direction.normalize()
-        val maxDistanceInBlocks = 5
-        val stepSize = 0.3
-        val maxSteps = (maxDistanceInBlocks / stepSize).toInt()
 
-        var entity: Entity? = null
+        val axis = jobBoard.getAxis()
 
-        for (step in 0 until maxSteps) {
-            val targetLocation =
-                    playerEyeLocation.clone().add(direction.clone().multiply(step * stepSize))
-            entity = getLocationIcons(targetLocation, stepSize)
+        // Determine the coordinate value of the axis intersection point
+        val axisIntersection = jobBoard.getAxisIntersection()
 
-            if (entity != null) {
-                break
-            }
-        }
+        // Calculate the distance along the player's line of sight direction to the axis
+        // intersection point
+        val distanceToIntersection =
+                when (axis) {
+                    'x' -> (axisIntersection - playerEyeLocation.x) / direction.x
+                    'y' -> (axisIntersection - playerEyeLocation.y) / direction.y
+                    'z' -> (axisIntersection - playerEyeLocation.z) / direction.z
+                    else -> return null
+                }
 
-        return entity
-    }
+        val intersectionPoint =
+                playerEyeLocation.clone().add(direction.multiply(distanceToIntersection))
 
-    /** Get the first JobBoardIcon at the specified location. */
-    private fun getLocationIcons(location: Location, stepSize: Double): Entity? {
         val nearbyEntities =
-                location.world.getNearbyEntities(
-                                location,
-                                stepSize / 1.5,
-                                stepSize / 1.5,
-                                stepSize / 1.5
-                        )
-                        .filter { it.scoreboardTags.contains("JobBoardIcon") }
-        return nearbyEntities.firstOrNull()
+                intersectionPoint
+                        .world
+                        ?.getNearbyEntities(intersectionPoint, 0.3, 0.3, 0.3)
+                        ?.filterIsInstance<TextDisplay>()
+                        ?.filter { it.scoreboardTags.contains("JobBoardIcon") }
+                        ?.sortedBy { it.location.distanceSquared(intersectionPoint) }
+
+        return nearbyEntities?.firstOrNull()
     }
 }
