@@ -4,33 +4,35 @@ import java.io.File
 import net.sneakyjobboard.commands.CommandJobBoard
 import net.sneakyjobboard.commands.CommandListJob
 import net.sneakyjobboard.commands.CommandUnlistJob
+import net.sneakyjobboard.job.JobCategoryManager
+import net.sneakyjobboard.job.JobManager
+import net.sneakyjobboard.jobboard.JobBoardListener
+import net.sneakyjobboard.jobboard.JobBoardManager
+import net.sneakyjobboard.jobboard.JobBoardUpdater
 import net.sneakyjobboard.jobboard.JobInventoryListener
-import net.sneakyjobboard.jobboard.JobManager
-import net.sneakyjobboard.jobcategory.JobBoardListener
-import net.sneakyjobboard.jobcategory.JobBoardUpdater
-import net.sneakyjobboard.jobcategory.JobCategoryManager
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.permissions.Permission
 import org.bukkit.plugin.java.JavaPlugin
-import org.bukkit.scheduler.BukkitRunnable
 import org.dynmap.DynmapAPI
 import org.dynmap.markers.MarkerAPI
 
 class SneakyJobBoard : JavaPlugin(), Listener {
 
     lateinit var jobCategoryManager: JobCategoryManager
+    lateinit var JobBoardManager: JobBoardManager
     lateinit var jobManager: JobManager
     var papiActive: Boolean = false
     var markerAPI: MarkerAPI? = null
-	val jobBoardUpdater: JobBoardUpdater = JobBoardUpdater()
+    val jobBoardUpdater: JobBoardUpdater = JobBoardUpdater()
 
     override fun onEnable() {
         saveDefaultConfig()
 
         jobCategoryManager = JobCategoryManager()
+        JobBoardManager = JobBoardManager()
         jobManager = JobManager()
 
         getServer().getCommandMap().register(IDENTIFIER, CommandListJob())
@@ -104,6 +106,12 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         fun getJobCategoryManager(): JobCategoryManager {
             return instance?.jobCategoryManager
                     ?: JobCategoryManager().also { instance?.jobCategoryManager = it }
+        }
+
+        /** Retrieves the job category manager instance, creating a new one if necessary. */
+        fun getJobBoardManager(): JobBoardManager {
+            return instance?.JobBoardManager
+                    ?: JobBoardManager().also { instance?.JobBoardManager = it }
         }
 
         /** Retrieves the job manager instance, creating a new one if necessary. */

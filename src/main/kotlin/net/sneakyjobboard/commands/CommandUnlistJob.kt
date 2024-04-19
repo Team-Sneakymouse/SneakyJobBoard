@@ -1,7 +1,7 @@
 package net.sneakyjobboard.commands
 
 import net.sneakyjobboard.SneakyJobBoard
-import net.sneakyjobboard.jobcategory.Job
+import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player

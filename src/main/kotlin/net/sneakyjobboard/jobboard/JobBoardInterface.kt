@@ -41,7 +41,7 @@ class JobInventoryHolder() : InventoryHolder {
         val uuid =
                 meta.getPersistentDataContainer()
                         .get(
-                                SneakyJobBoard.getJobCategoryManager().IDKEY,
+                                SneakyJobBoard.getJobManager().IDKEY,
                                 PersistentDataType.STRING
                         )
 

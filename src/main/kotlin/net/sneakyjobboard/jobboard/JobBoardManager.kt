@@ -1,21 +1,13 @@
-package net.sneakyjobboard.jobcategory
+package net.sneakyjobboard.jobboard
 
-import java.util.UUID
-import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.commands.CommandJobBoard
-import net.sneakyjobboard.jobboard.JobManager
-import net.sneakyjobboard.util.TextUtility
+import net.sneakyjobboard.job.JobManager
 import org.bukkit.Bukkit
 import org.bukkit.Location
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
-import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
-import org.bukkit.entity.Display.Brightness
 import org.bukkit.entity.Entity
 import org.bukkit.entity.GlowItemFrame
-import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
@@ -26,30 +18,19 @@ import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.world.ChunkLoadEvent
-import org.bukkit.inventory.ItemStack
-import org.bukkit.persistence.PersistentDataType
 import org.bukkit.scheduler.BukkitRunnable
-import org.bukkit.util.Transformation
-import org.joml.Quaternionf
-import org.joml.Vector3f
 
-/** Manages job categories and their configurations. */
-class JobCategoryManager {
+/** Manages jobboards and their configurations. */
+class JobBoardManager {
 
-    public val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
-
-    private val jobCategories: MutableMap<String, JobCategory> = mutableMapOf()
     public val jobBoards: MutableList<JobBoard> = mutableListOf()
 
-    /** Loads job categories from the configuration file on initialization. */
+    /** Loads job boards from the configuration file on initialization. */
     init {
         parseConfig()
     }
 
-    /**
-     * Loads job categories from the configuration file. If an error occurs during loading, it's
-     * logged and the categories are cleared.
-     */
+    /** Loads job boards from the configuration file. */
     public fun parseConfig() {
         try {
             val configFile = SneakyJobBoard.getConfigFile()
@@ -58,47 +39,6 @@ class JobCategoryManager {
             }
 
             val config = YamlConfiguration.loadConfiguration(configFile)
-            val jobCategoriesSection = config.getConfigurationSection("job-categories") ?: return
-
-            jobCategories.clear()
-
-            for (key in jobCategoriesSection.getKeys(false)) {
-                val name = jobCategoriesSection.getString("$key.name") ?: key
-                val description = jobCategoriesSection.getString("$key.description") ?: key
-                val iconMaterialString = jobCategoriesSection.getString("$key.icon-material") ?: ""
-                val iconCustomModelData = jobCategoriesSection.getInt("$key.icon-custom-model-data")
-
-                val iconMaterial =
-                        Material.matchMaterial(iconMaterialString) ?: Material.MUSIC_DISC_CAT
-
-                val dynmapMapIcon = jobCategoriesSection.getString("$key.dynmap-map-icon") ?: key
-
-                val brightnessBlock =
-                        jobCategoriesSection.getInt("$key.item-display-brightness.block")
-                val brightnessSky = jobCategoriesSection.getInt("$key.item-display-brightness.sky")
-                val brightness = Brightness(brightnessBlock, brightnessSky)
-
-                val transformation =
-                        with(jobCategoriesSection.getVectorTransformation(key)) {
-                            Transformation(
-                                    this.translation,
-                                    this.leftRotation,
-                                    this.scale,
-                                    this.rightRotation
-                            )
-                        }
-
-                jobCategories[key] =
-                        JobCategory(
-                                name,
-                                description,
-                                iconMaterial,
-                                iconCustomModelData,
-                                brightness,
-                                transformation,
-                                dynmapMapIcon
-                        )
-            }
 
             val mapCentralLocations = mutableListOf<Location?>()
             val mapInteractables = mutableListOf<Boolean?>()
@@ -209,222 +149,8 @@ class JobCategoryManager {
         } catch (e: IllegalStateException) {
             SneakyJobBoard.log("Error: ${e.message}")
         } catch (e: Exception) {
-            SneakyJobBoard.log(
-                    "An unexpected error occurred while loading job categories: ${e.message}"
-            )
+            SneakyJobBoard.log("An unexpected error occurred while loading jobboards: ${e.message}")
         }
-    }
-
-    /** Parse a Transformation from our config section. */
-    fun ConfigurationSection.getVectorTransformation(key: String): Transformation {
-        val leftRotationString =
-                getString("$key.item-display-transformation.left-rotation")?.split(",")
-                        ?: listOf("0", "0", "0", "1")
-        val rightRotationString =
-                getString("$key.item-display-transformation.right-rotation")?.split(",")
-                        ?: listOf("0", "0", "0", "1")
-        val translationString =
-                getString("$key.item-display-transformation.translation")?.split(",")
-                        ?: listOf("0.0", "0.0", "0.0")
-        val scaleString =
-                getString("$key.item-display-transformation.scale")?.split(",")
-                        ?: listOf("0.1", "0.1", "0.1")
-
-        val translation =
-                Vector3f(
-                        translationString[0].toFloat(),
-                        translationString[1].toFloat(),
-                        translationString[2].toFloat()
-                )
-        val leftRotation =
-                Quaternionf(
-                        leftRotationString[0].toFloat(),
-                        leftRotationString[1].toFloat(),
-                        leftRotationString[2].toFloat(),
-                        leftRotationString[3].toFloat()
-                )
-        val rightRotation =
-                Quaternionf(
-                        rightRotationString[0].toFloat(),
-                        rightRotationString[1].toFloat(),
-                        rightRotationString[2].toFloat(),
-                        rightRotationString[3].toFloat()
-                )
-        val scale =
-                Vector3f(
-                        scaleString[0].toFloat(),
-                        scaleString[1].toFloat(),
-                        scaleString[2].toFloat()
-                )
-
-        return Transformation(translation, leftRotation, scale, rightRotation)
-    }
-
-    /** Retrieves a read-only map of job categories. */
-    fun getJobCategories(): Map<String, JobCategory> {
-        return jobCategories
-    }
-}
-
-data class JobCategory(
-        val name: String,
-        val description: String,
-        val iconMaterial: Material,
-        val iconCustomModelData: Int,
-        val brightness: Brightness,
-        val transformation: Transformation,
-        val dynmapMapIcon: String
-)
-
-data class Job(val category: JobCategory, val player: Player, val durationMilis: Long) {
-    val uuid: String = UUID.randomUUID().toString()
-    val location: Location = player.location
-    val startTime: Long = System.currentTimeMillis()
-    val itemDisplays: MutableMap<JobBoard, ItemDisplay> = mutableMapOf()
-    val textDisplays: MutableMap<JobBoard, TextDisplay> = mutableMapOf()
-    var name: String = category.name
-        set(value) {
-            field = value
-            updateTextDisplays()
-            if (SneakyJobBoard.isDynmapActive()) {
-                val markerAPI = SneakyJobBoard.getInstance().markerAPI
-
-                val markerSet =
-                        markerAPI?.getMarkerSet("SneakyJobBoard")
-                                ?: run {
-                                    markerAPI?.createMarkerSet(
-                                            "SneakyJobBoard",
-                                            "SneakyJobBoard",
-                                            null,
-                                            false
-                                    )
-                                            ?: run {
-                                                SneakyJobBoard.log(
-                                                        "Failed to create a new marker set."
-                                                )
-                                                return
-                                            }
-                                }
-
-                markerSet.findMarker(uuid)?.label = value
-            }
-        }
-    var description: String = category.description
-        set(value) {
-            field = value
-            updateTextDisplays()
-        }
-
-    fun isExpired(): Boolean {
-        return (System.currentTimeMillis() >= startTime + durationMilis)
-    }
-
-    fun unlist() {
-        itemDisplays.values.forEach { entity -> entity.remove() }
-        textDisplays.values.forEach { entity -> entity.remove() }
-        SneakyJobBoard.getJobManager().jobs.remove(uuid)
-
-        if (SneakyJobBoard.isDynmapActive()) {
-            val markerAPI = SneakyJobBoard.getInstance().markerAPI
-
-            val markerSet =
-                    markerAPI?.getMarkerSet("SneakyJobBoard")
-                            ?: run {
-                                markerAPI?.createMarkerSet(
-                                        "SneakyJobBoard",
-                                        "SneakyJobBoard",
-                                        null,
-                                        false
-                                )
-                                        ?: run {
-                                            SneakyJobBoard.log("Failed to create a new marker set.")
-                                            return
-                                        }
-                            }
-
-            markerSet.findMarker(uuid)?.deleteMarker()
-        }
-    }
-
-    fun updateTextDisplays() {
-        for (textDisplayEntity in textDisplays.values) {
-            val text: MutableList<String> = mutableListOf("&a${name}")
-
-            for (line in TextUtility.splitIntoLines(description, 30)) {
-                text.add("&e$line")
-            }
-
-            var posterString =
-                    (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-                                    ?: "&ePosted by: &b[playerName]").replace(
-                            "[playerName]",
-                            player.name
-                    )
-
-            if (SneakyJobBoard.isPapiActive()) {
-                posterString = PlaceholderAPI.setPlaceholders(player, posterString)
-            }
-
-            text.add(posterString)
-
-            textDisplayEntity.text(TextUtility.convertToComponent(text.joinToString("\n")))
-            textDisplayEntity.setTransformation(
-                    Transformation(
-                            Vector3f(0F, 0.3F, 0.025F + (0.025F * text.size)),
-                            Quaternionf(-1F, 0F, 0F, 1F),
-                            Vector3f(0.1F, 0.1F, 0.1F),
-                            Quaternionf(0F, 0F, 0F, 1F)
-                    )
-            )
-        }
-    }
-
-    fun getIconItem(): ItemStack {
-        var itemStack: ItemStack = ItemStack(category.iconMaterial)
-        var customModelData: Int = category.iconCustomModelData
-
-        val meta = itemStack.itemMeta
-
-        // Set custom model data, display name, and lore.
-        meta.setCustomModelData(customModelData)
-        meta.displayName(TextUtility.convertToComponent("&a${name}"))
-
-        val lore = mutableListOf<String>()
-
-        // Split the description into lines of a maximum length
-        val descriptionLines = TextUtility.splitIntoLines(description, 30)
-
-        // Add each line of the description to the lore
-        for (line in descriptionLines) {
-            lore.add("&e$line")
-        }
-
-        // Add poster line
-        var posterString =
-                (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-                                ?: "&ePosted by: &b[playerName]").replace(
-                        "[playerName]",
-                        player.name
-                )
-
-        if (SneakyJobBoard.isPapiActive()) {
-            posterString = PlaceholderAPI.setPlaceholders(player, posterString)
-        }
-
-        lore.add(posterString)
-
-        meta.lore(lore.map { TextUtility.convertToComponent(it) })
-
-        // Set persistent data.
-        val persistentData = meta.persistentDataContainer
-        persistentData.set(
-                SneakyJobBoard.getJobCategoryManager().IDKEY,
-                PersistentDataType.STRING,
-                uuid
-        )
-
-        itemStack.itemMeta = meta
-        return itemStack
     }
 }
 
@@ -529,7 +255,7 @@ class JobBoardListener : Listener {
             if (dispatchViaIcon(player)) {
                 event.setCancelled(true)
             } else {
-                val jobBoards = SneakyJobBoard.getJobCategoryManager().jobBoards
+                val jobBoards = SneakyJobBoard.getJobBoardManager().jobBoards
 
                 jobBoards.forEach { jobBoard ->
                     if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
@@ -597,7 +323,7 @@ class JobBoardUpdater : BukkitRunnable() {
 
     override fun run() {
         var players: MutableList<Player> = mutableListOf()
-        for (jobBoard in SneakyJobBoard.getJobCategoryManager().jobBoards) {
+        for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
             for (player in
                     jobBoard.mapLocation.world?.entities?.filterIsInstance<Player>()?.filter {
                         it.location.distanceSquared(jobBoard.mapLocation) <= 10.0 * 10.0

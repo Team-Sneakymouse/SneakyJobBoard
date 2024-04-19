@@ -1,8 +1,8 @@
 package net.sneakyjobboard.commands
 
 import net.sneakyjobboard.SneakyJobBoard
-import net.sneakyjobboard.jobcategory.Job
-import net.sneakyjobboard.jobcategory.JobCategory
+import net.sneakyjobboard.job.Job
+import net.sneakyjobboard.job.JobCategory
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
