@@ -1,5 +1,6 @@
 package net.sneakyjobboard.commands
 
+import net.kyori.adventure.text.minimessage.MiniMessage
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobCategory
@@ -126,11 +127,17 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
     @EventHandler
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (event.player == sender) {
-            job.name = event.message
+            val name =
+                    MiniMessage.miniMessage()
+                            .escapeTags(
+                                    TextUtility.replaceFormatCodes(event.message.replace("|", ""))
+                            )
+
+            job.name = name
             event.isCancelled = true
             sender.sendMessage(
                     TextUtility.convertToComponent(
-                            "&aJob name set to: &b'${event.message}'\n&aNow please type the description of the job."
+                            "&aJob name set to: &b'$name'\n&aNow please type the description of the job."
                     )
             )
 
@@ -155,10 +162,14 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
     @EventHandler
     fun onPlayerChat(event: AsyncPlayerChatEvent) {
         if (event.player == sender) {
-            job.description = event.message
+            val description =
+                    MiniMessage.miniMessage()
+                            .escapeTags(TextUtility.replaceFormatCodes(event.message))
+
+            job.description = description
             event.isCancelled = true
             sender.sendMessage(
-                    TextUtility.convertToComponent("&aJob description set to: &b'${event.message}'")
+                    TextUtility.convertToComponent("&aJob description set to: &b'$description'")
             )
             // Unregister this listener after receiving the input
             unregisterListener()

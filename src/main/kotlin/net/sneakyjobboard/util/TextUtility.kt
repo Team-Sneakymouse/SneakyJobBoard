@@ -6,37 +6,43 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 
 object TextUtility {
 
+    // * Replaces legacy format codes and returns a Component. */
     fun convertToComponent(message: String): Component {
-        var convertedMessage =
-                message.replace("&1", "<dark_blue>")
-                        .replace("&2", "<dark_green>")
-                        .replace("&3", "<dark_aqua>")
-                        .replace("&4", "<dark_red>")
-                        .replace("&5", "<dark_purple>")
-                        .replace("&6", "<gold>")
-                        .replace("&7", "<gray>")
-                        .replace("&8", "<dark_gray>")
-                        .replace("&9", "<blue>")
-                        .replace("&0", "<black>")
-                        .replace("&a", "<green>")
-                        .replace("&b", "<aqua>")
-                        .replace("&c", "<red>")
-                        .replace("&d", "<light_purple>")
-                        .replace("&e", "<yellow>")
-                        .replace("&f", "<white>")
-                        .replace("&k", "<obf>")
-                        .replace("&l", "<b>")
-                        .replace("&m", "<st>")
-                        .replace("&n", "<u>")
-                        .replace("&o", "<i>")
-                        .replace("&r", "<reset>")
-                        .replace("&#([A-Fa-f0-9]{6})".toRegex(), "<color:#$1>")
-
         return MiniMessage.miniMessage()
-                .deserialize(convertedMessage)
+                .deserialize(replaceFormatCodes(message))
                 .decoration(TextDecoration.ITALIC, false)
     }
 
+    // * Replaces legacy format codes. */
+    fun replaceFormatCodes(message: String): String {
+        return message.replace("\u00BA", "&")
+                .replace("\u00A7", "&")
+                .replace("&1", "<dark_blue>")
+                .replace("&2", "<dark_green>")
+                .replace("&3", "<dark_aqua>")
+                .replace("&4", "<dark_red>")
+                .replace("&5", "<dark_purple>")
+                .replace("&6", "<gold>")
+                .replace("&7", "<gray>")
+                .replace("&8", "<dark_gray>")
+                .replace("&9", "<blue>")
+                .replace("&0", "<black>")
+                .replace("&a", "<green>")
+                .replace("&b", "<aqua>")
+                .replace("&c", "<red>")
+                .replace("&d", "<light_purple>")
+                .replace("&e", "<yellow>")
+                .replace("&f", "<white>")
+                .replace("&k", "<obf>")
+                .replace("&l", "<b>")
+                .replace("&m", "<st>")
+                .replace("&n", "<u>")
+                .replace("&o", "<i>")
+                .replace("&r", "<reset>")
+                .replace("&#([A-Fa-f0-9]{6})".toRegex(), "<color:#$1>")
+    }
+
+    // * Split a line up as evenly as possible. */
     fun splitIntoLines(text: String, maxLineLength: Int): List<String> {
         val words = text.split("\\s+".toRegex())
         val lines = mutableListOf<String>()

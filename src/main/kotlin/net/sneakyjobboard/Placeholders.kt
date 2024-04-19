@@ -26,6 +26,16 @@ class Placeholders : PlaceholderExpansion() {
         val placeholder = params.lowercase()
 
         return when (placeholder) {
+            "listed_jobs" -> {
+                val jobs =
+                        SneakyJobBoard.getJobManager()
+                                .jobs
+                                .values
+                                .filter { it.player.equals(player) }
+                                .map { it.name }
+
+                jobs.takeIf { it.isNotEmpty() }?.joinToString("|") ?: "none"
+            }
             else -> null
         }
     }
