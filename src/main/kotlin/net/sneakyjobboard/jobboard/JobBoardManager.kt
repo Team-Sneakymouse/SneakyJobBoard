@@ -165,7 +165,7 @@ data class JobBoard(
         val mapLocation: Location,
         val worldLocation: Location,
         val interactable: Boolean,
-        val mapScaleOverride: Int,
+        private var scale: Int,
         val isometricAngle: Double
 ) {
     val attachedFace: BlockFace? by lazy {
@@ -218,7 +218,6 @@ data class JobBoard(
         (itemFrame as ItemFrame).rotation
     }
 
-    private var scale: Int = mapScaleOverride
     fun getScale(): Int {
         if (scale <= 0) {
             val itemFrame =
@@ -286,20 +285,18 @@ data class JobBoard(
     fun isPartOfBoard(itemFrame: ItemFrame): Boolean {
         if (!mapLocation.chunk.isLoaded) return false
 
-        val frameLocation = itemFrame.location.block.location
-
-        return checkAlignmentAndPath(frameLocation, mapLocation.block.location)
+        return checkAlignmentAndPath(itemFrame.location.block.location, mapLocation.block.location)
     }
 
     /** Checkss which axes to iterate over, and run those checks. */
     private fun checkAlignmentAndPath(start: Location, end: Location): Boolean {
         if (start.world != end.world) return false
 
-        if (getAxis().equals("x") && start.x == end.x) {
+        if (getAxis().equals('x') && start.x == end.x) {
             return checkPath(start, end, 'y', 'z')
-        } else if (getAxis().equals("y") && start.y == end.y) {
+        } else if (getAxis().equals('y') && start.y == end.y) {
             return checkPath(start, end, 'x', 'z')
-        } else if (getAxis().equals("z") && start.z == end.z) {
+        } else if (getAxis().equals('z') && start.z == end.z) {
             return checkPath(start, end, 'x', 'y')
         }
 
