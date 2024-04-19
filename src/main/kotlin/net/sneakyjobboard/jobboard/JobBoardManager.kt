@@ -2,15 +2,17 @@ package net.sneakyjobboard.jobboard
 
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.commands.CommandJobBoard
-import net.sneakyjobboard.job.JobManager
+import net.sneakyjobboard.job.Job
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.Rotation
 import org.bukkit.block.BlockFace
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.Display.Brightness
 import org.bukkit.entity.Entity
 import org.bukkit.entity.GlowItemFrame
+import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
@@ -274,8 +276,8 @@ data class JobBoard(
     /** Gets the axis that the board is aligned across */
     fun getAxis(): Char {
         return when (attachedFace) {
-            BlockFace.NORTH, BlockFace.SOUTH -> 'x'
-            BlockFace.WEST, BlockFace.EAST -> 'z'
+            BlockFace.NORTH, BlockFace.SOUTH -> 'z'
+            BlockFace.WEST, BlockFace.EAST -> 'x'
             else -> 'y'
         }
     }
@@ -364,6 +366,134 @@ data class JobBoard(
                 location.world.getNearbyEntities(location.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5)
         return entitiesAtLocation.any { entity -> entity is ItemFrame || entity is GlowItemFrame }
     }
+
+    /** Spawn a jobs icons on this JobBoards. */
+    fun spawnIcons(job: Job) {
+        if (job.isExpired()) return
+
+        val jobLocation = job.location
+        val displayLocation = mapLocation.clone().add(0.5, 0.5, 0.5)
+
+        val worldLocation =
+                worldLocation
+                        .clone()
+                        .add((getScale() / 2).toDouble(), 0.0, (getScale() / 2).toDouble())
+
+        // Calculate correct horizontal and vertical offsets
+        var horizOffset = (jobLocation.x - worldLocation.x) / getScale()
+        var vertOffset = -(jobLocation.z - worldLocation.z) / getScale()
+
+        // Apply isometry
+        if (isometricAngle > 0) {
+            val radianAngle = Math.toRadians(isometricAngle)
+
+            val xTemp = horizOffset
+            val yTemp = vertOffset
+
+            horizOffset =
+                    xTemp * Math.cos((Math.PI / 2) - radianAngle) + yTemp * Math.sin(radianAngle) -
+                            0.5
+            vertOffset =
+                    -xTemp * Math.sin((Math.PI / 2) - radianAngle) + yTemp * Math.cos(radianAngle)
+
+            vertOffset += (jobLocation.y - worldLocation.y) / getScale()
+        }
+
+        // Handle frame rotations
+        when (frameRotation) {
+            Rotation.CLOCKWISE_45, Rotation.FLIPPED_45 -> {
+                val temp = horizOffset
+                horizOffset = vertOffset
+                vertOffset = -temp
+            }
+            Rotation.CLOCKWISE, Rotation.COUNTER_CLOCKWISE -> {
+                horizOffset = -horizOffset
+                vertOffset = -vertOffset
+            }
+            Rotation.CLOCKWISE_135, Rotation.COUNTER_CLOCKWISE_45 -> {
+                val temp = horizOffset
+                horizOffset = -vertOffset
+                vertOffset = temp
+            }
+            else -> {}
+        }
+
+        var xOffset: Double
+        var yOffset: Double
+        var zOffset: Double
+
+        when (attachedFace) {
+            BlockFace.UP -> {
+                displayLocation.pitch = 180F
+                xOffset = horizOffset
+                yOffset = 0.5
+                zOffset = vertOffset
+            }
+            BlockFace.NORTH -> {
+                displayLocation.pitch = 90F
+                xOffset = horizOffset
+                yOffset = vertOffset
+                zOffset = -0.5
+            }
+            BlockFace.EAST -> {
+                displayLocation.pitch = 90F
+                displayLocation.yaw = 90F
+                xOffset = 0.5
+                yOffset = vertOffset
+                zOffset = horizOffset
+            }
+            BlockFace.SOUTH -> {
+                displayLocation.pitch = 90F
+                displayLocation.yaw = 180F
+                xOffset = -horizOffset
+                yOffset = vertOffset
+                zOffset = 0.5
+            }
+            BlockFace.WEST -> {
+                displayLocation.pitch = 90F
+                displayLocation.yaw = 270F
+                xOffset = -0.5
+                yOffset = vertOffset
+                zOffset = -horizOffset
+            }
+            else -> {
+                xOffset = horizOffset
+                yOffset = -0.5
+                zOffset = -vertOffset
+            }
+        }
+
+        displayLocation.add(xOffset, yOffset, zOffset)
+
+        // Spawn the ItemDisplay
+        val itemDisplayEntity: ItemDisplay =
+                displayLocation.world!!.spawn(displayLocation, ItemDisplay::class.java)
+
+        itemDisplayEntity.setItemStack(job.getIconItem())
+        itemDisplayEntity.setTransformation(job.category.transformation)
+        itemDisplayEntity.setBrightness(job.category.brightness)
+
+        itemDisplayEntity.addScoreboardTag("JobBoardIcon")
+
+        job.itemDisplays.put(this, itemDisplayEntity)
+
+        // Spawn the TextDisplay
+        val textDisplayEntity: TextDisplay =
+                displayLocation.world!!.spawn(displayLocation, TextDisplay::class.java)
+
+        textDisplayEntity.setBrightness(Brightness(15, 15))
+        textDisplayEntity.setAlignment(TextDisplay.TextAlignment.LEFT)
+
+        textDisplayEntity.addScoreboardTag("JobBoardIcon")
+
+        job.textDisplays.put(this, textDisplayEntity)
+
+        job.updateTextDisplays()
+
+        for (player in Bukkit.getOnlinePlayers()) {
+            player.hideEntity(SneakyJobBoard.getInstance(), textDisplayEntity)
+        }
+    }
 }
 
 class JobBoardListener : Listener {
@@ -397,7 +527,7 @@ class JobBoardListener : Listener {
         jobManager.pendingSpawns.entries.removeIf { entry ->
             val jobBoard = entry.key
             if (jobBoard.mapLocation.chunk == event.chunk) {
-                entry.value.forEach { job -> JobManager.spawnIcons(jobBoard, job) }
+                entry.value.forEach { job -> jobBoard.spawnIcons(job) }
                 true
             } else {
                 false
@@ -425,6 +555,7 @@ class JobBoardListener : Listener {
         event.setCancelled(dispatchViaIcon(player))
     }
 
+    /** Dispatch a player via right-clicking a map icon. */
     private fun dispatchViaIcon(player: Player): Boolean {
         val entity = SneakyJobBoard.getInstance().jobBoardUpdater.shownIcons[player]
 

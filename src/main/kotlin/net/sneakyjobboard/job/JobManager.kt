@@ -9,9 +9,6 @@ import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.NamespacedKey
-import org.bukkit.Rotation
-import org.bukkit.block.BlockFace
-import org.bukkit.entity.Display.Brightness
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
@@ -36,7 +33,7 @@ class JobManager {
         // Spawn item displays
         for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
             if (jobBoard.mapLocation.chunk.isLoaded) {
-                spawnIcons(jobBoard, job)
+                jobBoard.spawnIcons(job)
             } else {
                 val list: MutableList<Job> = pendingSpawns.getOrDefault(jobBoard, mutableListOf())
                 list.add(job)
@@ -158,140 +155,6 @@ class JobManager {
                                 " " +
                                 Math.floor(job.location.getZ())
                 )
-    }
-
-    companion object {
-        fun spawnIcons(jobBoard: JobBoard, job: Job) {
-            if (job.isExpired()) return
-
-            val jobLocation = job.location
-            val displayLocation = jobBoard.mapLocation.clone().add(0.5, 0.5, 0.5)
-
-            val worldLocation =
-                    jobBoard.worldLocation
-                            .clone()
-                            .add(
-                                    (jobBoard.getScale() / 2).toDouble(),
-                                    0.0,
-                                    (jobBoard.getScale() / 2).toDouble()
-                            )
-
-            // Calculate correct horizontal and vertical offsets
-            var horizOffset = (jobLocation.x - worldLocation.x) / jobBoard.getScale()
-            var vertOffset = -(jobLocation.z - worldLocation.z) / jobBoard.getScale()
-
-            // Apply isometry
-            if (jobBoard.isometricAngle > 0) {
-                val radianAngle = Math.toRadians(jobBoard.isometricAngle)
-
-                val xTemp = horizOffset
-                val yTemp = vertOffset
-
-                horizOffset =
-                        xTemp * Math.cos((Math.PI / 2) - radianAngle) +
-                                yTemp * Math.sin(radianAngle) - 0.5
-                vertOffset =
-                        -xTemp * Math.sin((Math.PI / 2) - radianAngle) +
-                                yTemp * Math.cos(radianAngle)
-
-                vertOffset += (jobLocation.y - worldLocation.y) / jobBoard.getScale()
-            }
-
-            // Handle frame rotations
-            when (jobBoard.frameRotation) {
-                Rotation.CLOCKWISE_45, Rotation.FLIPPED_45 -> {
-                    val temp = horizOffset
-                    horizOffset = vertOffset
-                    vertOffset = -temp
-                }
-                Rotation.CLOCKWISE, Rotation.COUNTER_CLOCKWISE -> {
-                    horizOffset = -horizOffset
-                    vertOffset = -vertOffset
-                }
-                Rotation.CLOCKWISE_135, Rotation.COUNTER_CLOCKWISE_45 -> {
-                    val temp = horizOffset
-                    horizOffset = -vertOffset
-                    vertOffset = temp
-                }
-                else -> {}
-            }
-
-            var xOffset: Double
-            var yOffset: Double
-            var zOffset: Double
-
-            when (jobBoard.attachedFace) {
-                BlockFace.UP -> {
-                    displayLocation.pitch = 180F
-                    xOffset = horizOffset
-                    yOffset = 0.5
-                    zOffset = vertOffset
-                }
-                BlockFace.NORTH -> {
-                    displayLocation.pitch = 90F
-                    xOffset = horizOffset
-                    yOffset = vertOffset
-                    zOffset = -0.5
-                }
-                BlockFace.EAST -> {
-                    displayLocation.pitch = 90F
-                    displayLocation.yaw = 90F
-                    xOffset = 0.5
-                    yOffset = vertOffset
-                    zOffset = horizOffset
-                }
-                BlockFace.SOUTH -> {
-                    displayLocation.pitch = 90F
-                    displayLocation.yaw = 180F
-                    xOffset = -horizOffset
-                    yOffset = vertOffset
-                    zOffset = 0.5
-                }
-                BlockFace.WEST -> {
-                    displayLocation.pitch = 90F
-                    displayLocation.yaw = 270F
-                    xOffset = -0.5
-                    yOffset = vertOffset
-                    zOffset = -horizOffset
-                }
-                else -> {
-                    xOffset = horizOffset
-                    yOffset = -0.5
-                    zOffset = -vertOffset
-                }
-            }
-
-            displayLocation.add(xOffset, yOffset, zOffset)
-
-            // Spawn the ItemDisplay
-            val itemDisplayEntity: ItemDisplay =
-                    displayLocation.world!!.spawn(displayLocation, ItemDisplay::class.java)
-
-            itemDisplayEntity.setItemStack(job.getIconItem())
-            itemDisplayEntity.setTransformation(job.category.transformation)
-            itemDisplayEntity.setBrightness(job.category.brightness)
-
-            itemDisplayEntity.addScoreboardTag("JobBoardIcon")
-
-            job.itemDisplays.put(jobBoard, itemDisplayEntity)
-
-            // Spawn the TextDisplay
-            val textDisplayEntity: TextDisplay =
-                    displayLocation.world!!.spawn(displayLocation, TextDisplay::class.java)
-
-            textDisplayEntity.setBrightness(Brightness(15, 15))
-            textDisplayEntity.setAlignment(TextDisplay.TextAlignment.LEFT)
-
-            textDisplayEntity.addScoreboardTag("JobBoardIcon")
-
-            job.textDisplays.put(jobBoard, textDisplayEntity)
-
-            job.updateTextDisplays()
-
-            for (player in Bukkit.getOnlinePlayers()) {
-                player.hideEntity(SneakyJobBoard.getInstance(), textDisplayEntity)
-            }
-        }
     }
 }
 
