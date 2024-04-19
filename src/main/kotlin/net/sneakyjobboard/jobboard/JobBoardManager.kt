@@ -282,7 +282,7 @@ data class JobBoard(
 
     /** Checks if an item frame is part of this job board. */
     fun isPartOfBoard(itemFrame: ItemFrame): Boolean {
-        if (mapLocation.chunk.isLoaded) return false
+        if (!mapLocation.chunk.isLoaded) return false
 
         val frameLocation = itemFrame.location.block.location
 
