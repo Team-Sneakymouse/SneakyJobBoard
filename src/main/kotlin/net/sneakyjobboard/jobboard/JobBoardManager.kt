@@ -5,6 +5,9 @@ import net.sneakyjobboard.commands.CommandJobBoard
 import net.sneakyjobboard.job.JobManager
 import org.bukkit.Bukkit
 import org.bukkit.Location
+import org.bukkit.Material
+import org.bukkit.Rotation
+import org.bukkit.block.BlockFace
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Entity
 import org.bukkit.entity.GlowItemFrame
@@ -18,6 +21,8 @@ import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.world.ChunkLoadEvent
+import org.bukkit.inventory.meta.MapMeta
+import org.bukkit.map.MapView
 import org.bukkit.scheduler.BukkitRunnable
 
 /** Manages jobboards and their configurations. */
@@ -161,8 +166,124 @@ data class JobBoard(
         val mapScaleOverride: Int,
         val isometricAngle: Double
 ) {
+    val attachedFace: BlockFace? by lazy {
+        val itemFrame =
+                mapLocation.world?.getNearbyEntities(
+                                mapLocation.clone().add(0.5, 0.5, 0.5),
+                                0.5,
+                                0.5,
+                                0.5
+                        )
+                        ?.firstOrNull {
+                            (it is ItemFrame || it is GlowItemFrame) &&
+                                    it.location.blockX == mapLocation.blockX &&
+                                    it.location.blockY == mapLocation.blockY &&
+                                    it.location.blockZ == mapLocation.blockZ
+                        }
+
+        if (itemFrame == null) {
+            SneakyJobBoard.log(
+                    "One of the jobboards listed in map-central-vectors does not have an item frame on it: ${mapLocation.toString()}"
+            )
+            return@lazy null
+        }
+
+        (itemFrame as ItemFrame).attachedFace
+    }
+
+    val frameRotation: Rotation? by lazy {
+        val itemFrame =
+                mapLocation.world?.getNearbyEntities(
+                                mapLocation.clone().add(0.5, 0.5, 0.5),
+                                0.5,
+                                0.5,
+                                0.5
+                        )
+                        ?.firstOrNull {
+                            (it is ItemFrame || it is GlowItemFrame) &&
+                                    it.location.blockX == mapLocation.blockX &&
+                                    it.location.blockY == mapLocation.blockY &&
+                                    it.location.blockZ == mapLocation.blockZ
+                        }
+
+        if (itemFrame == null) {
+            SneakyJobBoard.log(
+                    "One of the jobboards listed in map-central-vectors does not have an item frame on it: ${mapLocation.toString()}"
+            )
+            return@lazy null
+        }
+
+        (itemFrame as ItemFrame).rotation
+    }
+
+    private var scale: Int = mapScaleOverride
+    fun getScale(): Int {
+        if (scale <= 0) {
+            val itemFrame =
+                    mapLocation.world?.getNearbyEntities(
+                                    mapLocation.clone().add(0.5, 0.5, 0.5),
+                                    0.5,
+                                    0.5,
+                                    0.5
+                            )
+                            ?.firstOrNull {
+                                (it is ItemFrame || it is GlowItemFrame) &&
+                                        it.location.blockX == mapLocation.blockX &&
+                                        it.location.blockY == mapLocation.blockY &&
+                                        it.location.blockZ == mapLocation.blockZ
+                            } as?
+                            ItemFrame
+
+            if (itemFrame == null) {
+                SneakyJobBoard.log(
+                        "One of the job boards listed in map-central-vectors does not have an item frame on it: ${mapLocation.toString()}"
+                )
+                scale = 128
+            } else {
+                val frameItem = itemFrame.item
+                if (frameItem.type != Material.FILLED_MAP) {
+                    SneakyJobBoard.log(
+                            "One of the job boards listed in map-central-vectors does not have a filled map item in the item frame: ${mapLocation.toString()}"
+                    )
+                    scale = 128
+                } else {
+                    val mapView = (frameItem.itemMeta as? MapMeta)?.mapView
+
+                    if (mapView == null) {
+                        SneakyJobBoard.log(
+                                "One of the job boards listed in map-central-vectors does not have a valid map item in the item frame: ${mapLocation.toString()}"
+                        )
+                        scale = 128
+                    } else {
+                        scale =
+                                when (mapView.scale) {
+                                    MapView.Scale.CLOSE -> 256
+                                    MapView.Scale.NORMAL -> 512
+                                    MapView.Scale.FAR -> 1024
+                                    MapView.Scale.FARTHEST -> 2048
+                                    else -> 128
+                                }
+                    }
+                }
+            }
+        }
+
+        return scale
+    }
+
+    /** Gets the axis that the board is aligned across */
+    fun getAxis(): Char {
+        return when (attachedFace) {
+            BlockFace.NORTH, BlockFace.SOUTH -> 'x'
+            BlockFace.WEST, BlockFace.EAST -> 'z'
+            else -> 'y'
+        }
+    }
+
     /** Checks if an item frame is part of this job board. */
     fun isPartOfBoard(itemFrame: ItemFrame): Boolean {
+        if (mapLocation.chunk.isLoaded) return false
+
         val frameLocation = itemFrame.location.block.location
 
         return checkAlignmentAndPath(frameLocation, mapLocation.block.location)
@@ -172,13 +293,14 @@ data class JobBoard(
     private fun checkAlignmentAndPath(start: Location, end: Location): Boolean {
         if (start.world != end.world) return false
 
-        if (start.x == end.x) {
+        if (getAxis().equals("x") && start.x == end.x) {
             return checkPath(start, end, 'y', 'z')
-        } else if (start.y == end.y) {
+        } else if (getAxis().equals("y") && start.y == end.y) {
             return checkPath(start, end, 'x', 'z')
-        } else if (start.z == end.z) {
+        } else if (getAxis().equals("z") && start.z == end.z) {
             return checkPath(start, end, 'x', 'y')
         }
+
         return false
     }
 

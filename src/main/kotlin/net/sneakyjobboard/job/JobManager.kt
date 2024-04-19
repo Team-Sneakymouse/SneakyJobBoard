@@ -4,26 +4,20 @@ import java.util.*
 import kotlin.collections.mutableListOf
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
-import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
-import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.Rotation
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.Display.Brightness
-import org.bukkit.entity.GlowItemFrame
 import org.bukkit.entity.ItemDisplay
-import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.MapMeta
-import org.bukkit.map.MapView
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
-import org.bukkit.NamespacedKey
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
@@ -173,64 +167,18 @@ class JobManager {
             val jobLocation = job.location
             val displayLocation = jobBoard.mapLocation.clone().add(0.5, 0.5, 0.5)
 
-            // Find the ItemFrame at the centre of the job board
-            val itemFrame =
-                    displayLocation.world?.getNearbyEntities(displayLocation, 0.5, 0.5, 0.5)
-                            ?.firstOrNull {
-                                (it is ItemFrame || it is GlowItemFrame) &&
-                                        it.location.blockX == displayLocation.blockX &&
-                                        it.location.blockY == displayLocation.blockY &&
-                                        it.location.blockZ == displayLocation.blockZ
-                            } as?
-                            ItemFrame
-
-            if (itemFrame == null) {
-                SneakyJobBoard.log(
-                        "One of the jobboards listed in map-central-vectors does not have an item frame on it: ${displayLocation.toString()}"
-                )
-                return
-            }
-
-            val scale: Int =
-                    when {
-                        jobBoard.mapScaleOverride > 0 -> jobBoard.mapScaleOverride
-                        else -> {
-                            // Retrieve the scale from the map item
-                            val frameItem = itemFrame.item
-
-                            if (frameItem.type != Material.FILLED_MAP) {
-                                SneakyJobBoard.log(
-                                        "One of the job boards listed in map-central-vectors does not have a filled map item in the item frame: ${displayLocation.toString()}"
-                                )
-                                return
-                            }
-
-                            val mapView = (frameItem.itemMeta as? MapMeta)?.mapView
-
-                            if (mapView == null) {
-                                SneakyJobBoard.log(
-                                        "One of the job boards listed in map-central-vectors does not have a valid map item in the item frame: ${displayLocation.toString()}"
-                                )
-                                return
-                            }
-                            when (mapView.scale) {
-                                MapView.Scale.CLOSE -> 256
-                                MapView.Scale.NORMAL -> 512
-                                MapView.Scale.FAR -> 1024
-                                MapView.Scale.FARTHEST -> 2048
-                                else -> 128
-                            }
-                        }
-                    }
-
             val worldLocation =
                     jobBoard.worldLocation
                             .clone()
-                            .add((scale / 2).toDouble(), 0.0, (scale / 2).toDouble())
+                            .add(
+                                    (jobBoard.getScale() / 2).toDouble(),
+                                    0.0,
+                                    (jobBoard.getScale() / 2).toDouble()
+                            )
 
             // Calculate correct horizontal and vertical offsets
-            var horizOffset = (jobLocation.x - worldLocation.x) / scale
-            var vertOffset = -(jobLocation.z - worldLocation.z) / scale
+            var horizOffset = (jobLocation.x - worldLocation.x) / jobBoard.getScale()
+            var vertOffset = -(jobLocation.z - worldLocation.z) / jobBoard.getScale()
 
             // Apply isometry
             if (jobBoard.isometricAngle > 0) {
@@ -246,13 +194,11 @@ class JobManager {
                         -xTemp * Math.sin((Math.PI / 2) - radianAngle) +
                                 yTemp * Math.cos(radianAngle)
 
-                vertOffset += (jobLocation.y - worldLocation.y) / scale
+                vertOffset += (jobLocation.y - worldLocation.y) / jobBoard.getScale()
             }
 
-            val frameRotation = itemFrame.rotation
-
             // Handle frame rotations
-            when (frameRotation) {
+            when (jobBoard.frameRotation) {
                 Rotation.CLOCKWISE_45, Rotation.FLIPPED_45 -> {
                     val temp = horizOffset
                     horizOffset = vertOffset
@@ -270,13 +216,11 @@ class JobManager {
                 else -> {}
             }
 
-            val facing = itemFrame.attachedFace
-
             var xOffset: Double
             var yOffset: Double
             var zOffset: Double
 
-            when (facing) {
+            when (jobBoard.attachedFace) {
                 BlockFace.UP -> {
                     displayLocation.pitch = 180F
                     xOffset = horizOffset
@@ -492,11 +436,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
 
         // Set persistent data.
         val persistentData = meta.persistentDataContainer
-        persistentData.set(
-                SneakyJobBoard.getJobManager().IDKEY,
-                PersistentDataType.STRING,
-                uuid
-        )
+        persistentData.set(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING, uuid)
 
         itemStack.itemMeta = meta
         return itemStack
