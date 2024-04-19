@@ -15,9 +15,6 @@ import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
-import org.bukkit.event.EventHandler
-import org.bukkit.event.Listener
-import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapView
 
@@ -97,13 +94,17 @@ class JobManager {
 
     /** Get the last job that was listed by player. */
     fun getLastListedJob(player: Player): Job? {
-        // Iterate through the jobs in reverse order to find the last job listed by the player
         for (job in jobs.values.reversed()) {
             if (job.player == player) {
                 return job
             }
         }
         return null
+    }
+
+    /** Get a listed job by its name. */
+    fun getJobByName(name: String): Job? {
+        return jobs.values.find { it.name.equals(name, ignoreCase = true) }
     }
 
     /** Clean up all listed jobs. */
@@ -330,11 +331,11 @@ class JobManager {
 
             job.textDisplays.put(jobBoard, textDisplayEntity)
 
-			job.updateTextDisplays()
+            job.updateTextDisplays()
 
-			for (player in Bukkit.getOnlinePlayers()) {
-				player.hideEntity(SneakyJobBoard.getInstance(), textDisplayEntity)
-			}
+            for (player in Bukkit.getOnlinePlayers()) {
+                player.hideEntity(SneakyJobBoard.getInstance(), textDisplayEntity)
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package net.sneakyjobboard.commands
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.jobcategory.Job
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -8,10 +9,7 @@ import org.bukkit.entity.Player
 class CommandUnlistJob : CommandBase("unlistjob") {
 
     init {
-        this.usageMessage = buildString {
-            append("/")
-            append(this@CommandUnlistJob.name)
-        }
+        this.usageMessage = "/${this@CommandUnlistJob.name} (Job Name (admin only))"
         this.description = "Unlist the last job that you listed."
     }
 
@@ -20,7 +18,6 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             commandLabel: String,
             args: Array<out String>
     ): Boolean {
-        // Check if sender is player
         if (sender !is Player) {
             sender.sendMessage(
                     TextUtility.convertToComponent(
@@ -30,19 +27,24 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             return false
         }
 
-        // Find the last job that was listed by this player
-        val lastJob = SneakyJobBoard.getJobManager().getLastListedJob(sender)
+        var job: Job?
 
-        if (lastJob == null) {
-            sender.sendMessage(TextUtility.convertToComponent("&4You haven't listed any jobs yet."))
+        if (sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin") && args.isNotEmpty()) {
+            val name = args.joinToString(" ")
+            job = SneakyJobBoard.getJobManager().getJobByName(name)
+        } else {
+            job = SneakyJobBoard.getJobManager().getLastListedJob(sender)
+            CommandListJob.unregisterListener(sender)
+        }
+
+        if (job == null) {
+            sender.sendMessage(TextUtility.convertToComponent("&4No listed job found."))
             return false
         }
 
-        // Unlist that job
-        CommandListJob.unregisterListener(sender)
-		lastJob.unlist()
+        job.unlist()
         sender.sendMessage(
-                TextUtility.convertToComponent("&aYour job ${lastJob.name} has been unlisted.")
+                TextUtility.convertToComponent("&aThe job &b'${job.name}' &ahas been unlisted.")
         )
 
         return true
@@ -53,6 +55,15 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             alias: String,
             args: Array<String>
     ): List<String> {
-        return emptyList()
+        if (sender !is Player || !sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin")) {
+            return emptyList()
+        }
+
+        val prefix = args.joinToString(" ").lowercase()
+        return SneakyJobBoard.getJobManager()
+                .jobs
+                .values
+                .filter { it.name.lowercase().startsWith(prefix, ignoreCase = true) }
+                .map { it.name }
     }
 }

@@ -33,11 +33,7 @@ class CommandListJob : CommandBase("listjob") {
     }
 
     init {
-        this.usageMessage = buildString {
-            append("/")
-            append(this@CommandListJob.name)
-            append(" [jobCategory] [durationMilis]")
-        }
+        this.usageMessage = "/${this@CommandListJob.name} [jobCategory] [durationMilis]"
         this.description = "List a job to the job board."
     }
 
@@ -134,7 +130,7 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
             event.isCancelled = true
             sender.sendMessage(
                     TextUtility.convertToComponent(
-                            "&aJob name set to: ${event.message}\nNow please type the description of the job."
+                            "&aJob name set to: &b'${event.message}'\n&aNow please type the description of the job."
                     )
             )
 
@@ -162,7 +158,7 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
             job.description = event.message
             event.isCancelled = true
             sender.sendMessage(
-                    TextUtility.convertToComponent("&aJob description set to: ${event.message}")
+                    TextUtility.convertToComponent("&aJob description set to: &b'${event.message}'")
             )
             // Unregister this listener after receiving the input
             unregisterListener()

@@ -42,6 +42,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         getServer().getPluginManager().registerEvents(JobBoardListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
+        server.pluginManager.addPermission(Permission("$IDENTIFIER.admin"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))
 
         jobBoardUpdater.runTaskTimer(this, 0L, 1L)

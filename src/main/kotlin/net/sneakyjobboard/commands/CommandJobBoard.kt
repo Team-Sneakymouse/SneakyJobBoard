@@ -9,10 +9,7 @@ import org.bukkit.entity.Player
 class CommandJobBoard : CommandBase("jobboard") {
 
     init {
-        this.usageMessage = buildString {
-            append("/")
-            append(this@CommandJobBoard.name)
-        }
+        this.usageMessage = "/${this@CommandJobBoard.name}"
         this.description = "Opens the job board."
     }
 

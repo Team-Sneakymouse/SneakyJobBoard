@@ -624,7 +624,7 @@ class JobBoardUpdater : BukkitRunnable() {
                         entity =
                                 job.textDisplays[
                                         job.itemDisplays.entries.first { it.value == entity }.key]
-                        break // Exit the loop after finding the corresponding text display
+                        break
                     }
                 }
             }
