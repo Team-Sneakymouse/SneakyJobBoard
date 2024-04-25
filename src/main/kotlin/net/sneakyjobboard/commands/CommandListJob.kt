@@ -5,6 +5,7 @@ import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobCategory
 import net.sneakyjobboard.util.TextUtility
+import net.sneakyjobboard.util.WebhookUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -167,6 +168,7 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
                             .escapeTags(TextUtility.replaceFormatCodes(event.message))
 
             job.description = description
+            WebhookUtility.listJob(job)
             event.isCancelled = true
             sender.sendMessage(
                     TextUtility.convertToComponent("&aJob description set to: &b'$description'")
