@@ -1,5 +1,6 @@
 package net.sneakyjobboard.util
 
+import com.destroystokyo.paper.ClientOption
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -78,7 +79,13 @@ object WebhookUtility {
                 skinURL?.let {
                     val skinImage = downloadImage(it)
                     skinImage?.let {
-                        val faceIcon = createPlayerIcon(it)
+                        val faceIcon =
+                                createPlayerIcon(
+                                        it,
+                                        job.player
+                                                .getClientOption(ClientOption.SKIN_PARTS)
+                                                .hasHatsEnabled()
+                                )
                         encodeImageToBase64(faceIcon)
                     }
                 }
@@ -112,7 +119,7 @@ object WebhookUtility {
      * Creates a player icon by extracting the face and overlaying the helmet layer from a Minecraft
      * skin.
      */
-    private fun createPlayerIcon(skin: BufferedImage): BufferedImage {
+    private fun createPlayerIcon(skin: BufferedImage, hatVisible: Boolean): BufferedImage {
         val icon = BufferedImage(72, 72, BufferedImage.TYPE_INT_ARGB)
         val g: Graphics2D = icon.createGraphics()
 
@@ -135,7 +142,7 @@ object WebhookUtility {
             dispose()
         }
 
-        if (!isFullyTransparent(helmetBufferedImage)) {
+        if (!isFullyTransparent(helmetBufferedImage) && hatVisible) {
             g.drawImage(helmetBufferedImage, 0, 0, null)
         }
 
