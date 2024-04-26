@@ -6,6 +6,7 @@ import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.TextUtility
+import net.sneakyjobboard.util.WebhookUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.NamespacedKey
@@ -28,6 +29,8 @@ class JobManager {
 
     /** Adds a new job to the map. */
     fun list(job: Job) {
+        job.startTime = System.currentTimeMillis()
+        WebhookUtility.listJob(job)
         jobs[job.uuid] = job
 
         // Spawn item displays
@@ -161,7 +164,7 @@ class JobManager {
 data class Job(val category: JobCategory, val player: Player, val durationMilis: Long) {
     val uuid: String = UUID.randomUUID().toString()
     val location: Location = player.location
-    val startTime: Long = System.currentTimeMillis()
+    var startTime: Long = 0
     val itemDisplays: MutableMap<JobBoard, ItemDisplay> = mutableMapOf()
     val textDisplays: MutableMap<JobBoard, TextDisplay> = mutableMapOf()
     var name: String = category.name

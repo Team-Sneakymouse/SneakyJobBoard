@@ -5,7 +5,6 @@ import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobCategory
 import net.sneakyjobboard.util.TextUtility
-import net.sneakyjobboard.util.WebhookUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -89,12 +88,7 @@ class CommandListJob : CommandBase("listjob") {
 
         val job = Job(category = jobcategory, player = player, durationMilis = durationMilis)
 
-        SneakyJobBoard.getJobManager().list(job)
-        player.sendMessage(
-                TextUtility.convertToComponent(
-                        "&aYour job has been listed. Please type the name of the job."
-                )
-        )
+        player.sendMessage(TextUtility.convertToComponent("&aPlease type the name of the job."))
 
         CommandListJob.registerListener(player, JobNameInputListener(player, job))
 
@@ -168,12 +162,22 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
                             .escapeTags(TextUtility.replaceFormatCodes(event.message))
 
             job.description = description
-            WebhookUtility.listJob(job)
             event.isCancelled = true
-            sender.sendMessage(
-                    TextUtility.convertToComponent("&aJob description set to: &b'$description'")
-            )
-            // Unregister this listener after receiving the input
+
+            Bukkit.getScheduler()
+                    .runTask(
+                            SneakyJobBoard.getInstance(),
+                            Runnable {
+                                SneakyJobBoard.getJobManager().list(job)
+
+                                sender.sendMessage(
+                                        TextUtility.convertToComponent(
+                                                "&aJob listed. description set to: &b'$description'"
+                                        )
+                                )
+                            }
+                    )
+
             unregisterListener()
         }
     }

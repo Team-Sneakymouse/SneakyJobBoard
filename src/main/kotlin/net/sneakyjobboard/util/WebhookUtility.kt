@@ -17,7 +17,7 @@ object WebhookUtility {
 
     fun listJob(job: Job) {
         val jobData = createJobDataData(job)
-        println("jobData: $jobData")
+
         val jsonRequestBody =
                 JSONObject(jobData).toString().toRequestBody("application/json".toMediaType())
 
