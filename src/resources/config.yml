@@ -1,7 +1,10 @@
-## The string that is used to append the poster to a listing. Supports placehodlers and color codes. "[playerName]" will also work, even without PAPI installed.
-poster-string: "&ePosted by: &b%sneakycharacters_character_name%"
-## The poster name that is provided to the discord webhook. Supports placehodlers. "[playerName]" will also work, even without PAPI installed.
-poster-string-webhook: "%sneakycharacters_character_name%"
+## The string that is used to append the poster to a listing. Supports placeholders and color codes. "[playerName]" will also work, even without PAPI installed.
+poster-string: "&ePosted by: &b%sneakycharacters_character_name_noformat%"
+
+## The poster display string that is provided to the discord webhook. Supports placeholders. "[playerName]" will also work, even without PAPI installed.
+webhook-poster: "%sneakycharacters_character_name_noformat%"
+## The location display string that is provided to the discord webhook. Supports placeholders. "[x]", "[y]", "[z]" will also work, even without PAPI installed.
+webhook-location: "%dipp_district_name%"
 
 ## The block coordinates of the central point on the map itemframe. Used to determine itemsdisplay positions
 ## The scale, rotation and facing of the map itemframe are determined automatically
