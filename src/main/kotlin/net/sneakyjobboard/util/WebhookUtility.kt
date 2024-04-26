@@ -70,6 +70,7 @@ object WebhookUtility {
         if (SneakyJobBoard.isPapiActive()) {
             locationStringWebhook =
                     PlaceholderAPI.setPlaceholders(job.player, locationStringWebhook)
+                            .replace("none", "Dinky Dank")
         }
 
         // Base64 face icon
