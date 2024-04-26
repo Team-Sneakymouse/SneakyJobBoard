@@ -34,7 +34,7 @@ class CommandListJob : CommandBase("listjob") {
     }
 
     init {
-        this.usageMessage = "/${this@CommandListJob.name} [jobCategory] [durationMilis]"
+        this.usageMessage = "/${this@CommandListJob.name} [jobCategory] [durationMillis]"
         this.description = "List a job to the job board."
     }
 
@@ -75,7 +75,7 @@ class CommandListJob : CommandBase("listjob") {
             return false
         }
 
-        val durationMilis: Long =
+        val durationMillis: Long =
                 remainingArgs[1].toLongOrNull()
                         ?: run {
                             sender.sendMessage(
@@ -86,7 +86,7 @@ class CommandListJob : CommandBase("listjob") {
                             return false
                         }
 
-        val job = Job(category = jobcategory, player = player, durationMilis = durationMilis)
+        val job = Job(category = jobcategory, player = player, durationMillis = durationMillis)
 
         player.sendMessage(TextUtility.convertToComponent("&aPlease type the name of the job."))
 

@@ -1,17 +1,17 @@
-package net.sneakyjobboard.util
+package net.sneakyjobboard
 
 import com.destroystokyo.paper.ClientOption
+import com.google.gson.Gson
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
-import java.net.ConnectException
 import java.net.URL
 import java.util.Base64
 import javax.imageio.ImageIO
 import me.clip.placeholderapi.PlaceholderAPI
-import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -19,57 +19,120 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.bukkit.Bukkit
 import org.json.JSONObject
 
-object WebhookUtility {
+class PocketbaseManager {
 
+    var authToken: String = ""
+
+    init {
+        Bukkit.getScheduler()
+                .runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable { auth() })
+    }
+
+    /** Get a PocketBase auth token. Only run this asynchronously! */
+    @Synchronized
+    private fun auth() {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-auth-url")
+        val email = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-email")
+        val password = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-password")
+
+        if (url == null || email == null || password == null) return
+
+        try {
+            val client = OkHttpClient()
+            val authRequestBody =
+                    FormBody.Builder().add("identity", email).add("password", password).build()
+            val authRequest = Request.Builder().url("$url").post(authRequestBody).build()
+            val authResponse = client.newCall(authRequest).execute()
+
+            if (authResponse.isSuccessful) {
+                val responseBody = authResponse.body?.string()
+                val jsonResponse = JSONObject(responseBody)
+
+                authToken = jsonResponse.optString("token", "")
+
+                if (authToken.isEmpty()) {
+                    SneakyJobBoard.log(
+                            "Pocketbase authentication was succesfull but there was no token in the response."
+                    )
+                }
+                authResponse.close()
+            } else {
+                SneakyJobBoard.log("Pocketbase authentication failed: ${authResponse.code}")
+            }
+        } catch (e: Exception) {
+            println("Error occurred: ${e.message}")
+        }
+    }
+
+    /** Add the job to the pocketbase collection. */
+    @Synchronized
     fun listJob(job: Job) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+
+        if (url == null) return
+
         Bukkit.getScheduler()
                 .runTaskAsynchronously(
                         SneakyJobBoard.getInstance(),
                         Runnable {
-                            val jobData = createJobDataData(job)
-
-                            val jsonRequestBody =
-                                    JSONObject(jobData)
-                                            .toString()
-                                            .toRequestBody("application/json".toMediaType())
-
-                            val client = OkHttpClient()
-
-                            val request =
-                                    Request.Builder()
-                                            .url("http://localhost:80/lom2jobboard")
-                                            .post(jsonRequestBody)
-                                            .build()
-
                             try {
-                                client.newCall(request).execute()
-                            } catch (e: ConnectException) {} catch (e: Exception) {}
+                                if (authToken.isEmpty()) auth()
+
+                                if (authToken.isNotEmpty()) {
+                                    val client = OkHttpClient()
+
+                                    val jobData = createJobDataMap(job)
+
+                                    val jsonRequestBody =
+                                            Gson().toJson(jobData)
+                                                    .toRequestBody("application/json".toMediaType())
+
+                                    val request =
+                                            Request.Builder()
+                                                    .url("$url")
+                                                    .header("Authorization", authToken)
+                                                    .post(jsonRequestBody)
+                                                    .build()
+
+                                    val response = client.newCall(request).execute()
+
+                                    if (!response.isSuccessful) {
+                                        println("Pocketbase request unsuccessful: ${response.code}")
+                                    }
+                                    response.close()
+                                }
+                            } catch (e: Exception) {
+                                println("Error occurred: ${e.message}")
+                            }
                         }
                 )
     }
 
+    /** Add an endtime to the pocketbase record. */
+    @Synchronized fun unlistJob(job: Job) {}
+
     /** Converts a Job into a json-ready map. */
-    private fun createJobDataData(job: Job): Map<String, Any> {
+    private fun createJobDataMap(job: Job): Map<String, Any> {
         // Poster display string
-        var posterStringWebhook =
-                (SneakyJobBoard.getInstance().getConfig().getString("webhook-poster")
+        var displayStringPoster =
+                (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-poster")
                                 ?: "[playerName]").replace("[playerName]", job.player.name)
 
         if (SneakyJobBoard.isPapiActive()) {
-            posterStringWebhook = PlaceholderAPI.setPlaceholders(job.player, posterStringWebhook)
+            displayStringPoster = PlaceholderAPI.setPlaceholders(job.player, displayStringPoster)
         }
 
         // Location display string
-        var locationStringWebhook =
-                (SneakyJobBoard.getInstance().getConfig().getString("webhook-location")
+        var displayStringLocation =
+                (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location")
                                 ?: "[x],[y],[z]")
                         .replace("[x]", job.location.blockX.toString())
                         .replace("[y]", job.location.blockY.toString())
                         .replace("[z]", job.location.blockZ.toString())
 
         if (SneakyJobBoard.isPapiActive()) {
-            locationStringWebhook =
-                    PlaceholderAPI.setPlaceholders(job.player, locationStringWebhook)
+            displayStringLocation =
+                    PlaceholderAPI.setPlaceholders(job.player, displayStringLocation)
                             .replace("none", "Dinky Dank")
         }
 
@@ -95,12 +158,12 @@ object WebhookUtility {
         return mapOf(
                 "uuid" to job.uuid,
                 "category" to job.category.name,
-                "poster" to posterStringWebhook,
-                "posterIcon" to faceIconBase64,
+                "posterDisplayString" to displayStringPoster,
+                "posterIconBase64" to faceIconBase64,
                 "location" to job.location.toString(),
-                "locationDisplayString" to locationStringWebhook,
+                "locationDisplayString" to displayStringLocation,
                 "startTime" to job.startTime,
-                "durationMilis" to job.durationMilis,
+                "durationMillis" to job.durationMillis,
                 "name" to job.name,
                 "description" to job.description,
                 "discordEmbedIcon" to job.category.discordEmbedIcon,

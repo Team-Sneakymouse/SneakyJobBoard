@@ -1,10 +1,16 @@
 ## The string that is used to append the poster to a listing. Supports placeholders and color codes. "[playerName]" will also work, even without PAPI installed.
 poster-string: "&ePosted by: &b%sneakycharacters_character_name_noformat%"
 
-## The poster display string that is provided to the discord webhook. Supports placeholders. "[playerName]" will also work, even without PAPI installed.
-webhook-poster: "Posted by: %sneakycharacters_character_name_noformat%"
-## The location display string that is provided to the discord webhook. Supports placeholders. "[x]", "[y]", "[z]" will also work, even without PAPI installed.
-webhook-location: "%dipp_district_name%"
+## The api URL of your pocketbase collection, in case you want to track job listings and build listeners for social media integration.
+pocketbase-url: "http://127.0.0.1:8090/api/collections/collectionIdOrName/records"
+## The authorization for your pocketbase collection.
+pocketbase-auth-url: "http://127.0.0.1:8090/api/admins/auth-with-password"
+pocketbase-email: ""
+pocketbase-password: ""
+## The poster display string that is provided to the pocketbase. Supports placeholders. "[playerName]" will also work, even without PAPI installed.
+pocketbase-poster: "Posted by: %sneakycharacters_character_name_noformat%"
+## The location display string that is provided to the pocketbase. Supports placeholders. "[x]", "[y]", "[z]" will also work, even without PAPI installed.
+pocketbase-location: "%dipp_district_name%"
 
 ## The block coordinates of the central point on the map itemframe. Used to determine itemsdisplay positions
 ## The scale, rotation and facing of the map itemframe are determined automatically

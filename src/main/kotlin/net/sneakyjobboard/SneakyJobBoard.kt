@@ -24,6 +24,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     lateinit var jobCategoryManager: JobCategoryManager
     lateinit var JobBoardManager: JobBoardManager
     lateinit var jobManager: JobManager
+    lateinit var pocketBaseManager: PocketbaseManager
     var papiActive: Boolean = false
     var markerAPI: MarkerAPI? = null
     val jobBoardUpdater: JobBoardUpdater = JobBoardUpdater()
@@ -34,6 +35,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         jobCategoryManager = JobCategoryManager()
         JobBoardManager = JobBoardManager()
         jobManager = JobManager()
+        pocketBaseManager = PocketbaseManager()
 
         getServer().getCommandMap().register(IDENTIFIER, CommandListJob())
         getServer().getCommandMap().register(IDENTIFIER, CommandJobBoard())
@@ -117,6 +119,12 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         /** Retrieves the job manager instance, creating a new one if necessary. */
         fun getJobManager(): JobManager {
             return instance?.jobManager ?: JobManager().also { instance?.jobManager = it }
+        }
+
+        /** Retrieves the job manager instance, creating a new one if necessary. */
+        fun getPocketbaseManager(): PocketbaseManager {
+            return instance?.pocketBaseManager
+                    ?: PocketbaseManager().also { instance?.pocketBaseManager = it }
         }
     }
 

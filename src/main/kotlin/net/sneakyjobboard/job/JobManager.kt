@@ -6,7 +6,6 @@ import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.TextUtility
-import net.sneakyjobboard.util.WebhookUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.NamespacedKey
@@ -30,7 +29,7 @@ class JobManager {
     /** Adds a new job to the map. */
     fun list(job: Job) {
         job.startTime = System.currentTimeMillis()
-        WebhookUtility.listJob(job)
+        SneakyJobBoard.getPocketbaseManager().listJob(job)
         jobs[job.uuid] = job
 
         // Spawn item displays
@@ -88,7 +87,7 @@ class JobManager {
                 .runTaskLater(
                         SneakyJobBoard.getInstance(),
                         Runnable { job.unlist() },
-                        20 * job.durationMilis / 1000
+                        20 * job.durationMillis / 1000
                 )
     }
 
@@ -161,7 +160,7 @@ class JobManager {
     }
 }
 
-data class Job(val category: JobCategory, val player: Player, val durationMilis: Long) {
+data class Job(val category: JobCategory, val player: Player, val durationMillis: Long) {
     val uuid: String = UUID.randomUUID().toString()
     val location: Location = player.location
     var startTime: Long = 0
@@ -201,7 +200,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMilis:
         }
 
     fun isExpired(): Boolean {
-        return (System.currentTimeMillis() >= startTime + durationMilis)
+        return (System.currentTimeMillis() >= startTime + durationMillis)
     }
 
     fun unlist() {
