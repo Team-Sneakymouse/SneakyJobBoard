@@ -102,10 +102,9 @@ object WebhookUtility {
         val face = skin.getSubimage(8, 8, 8, 8)
         val helmet = skin.getSubimage(40, 8, 8, 8)
 
-        g.drawImage(face, 0, 0, 8, 8, null)
-
+        g.drawImage(face, 0, 0, null)
         if (!isFullyTransparent(helmet)) {
-            g.drawImage(helmet, 0, 0, 8, 8, null)
+            g.drawImage(helmet, 0, 0, null)
         }
 
         g.dispose()
@@ -113,26 +112,18 @@ object WebhookUtility {
     }
 
     /** Checks if an image is fully transparent. */
-    private fun isFullyTransparent(image: BufferedImage): Boolean {
-        for (x in 0 until image.width) {
-            for (y in 0 until image.height) {
-                val pixel = image.getRGB(x, y)
-                if ((pixel shr 24) and 0xff > 0) {
-                    return false
-                }
+    private fun isFullyTransparent(image: BufferedImage): Boolean =
+            (0 until image.width).none { x ->
+                (0 until image.height).any { y -> (image.getRGB(x, y) ushr 24) != 0 }
             }
-        }
-        return true
-    }
 
     /** Encode an image to a base64 String. */
     private fun encodeImageToBase64(image: BufferedImage): String {
         val outputStream = ByteArrayOutputStream()
-        try {
+        return try {
             ImageIO.write(image, "png", outputStream)
             val imageBytes = outputStream.toByteArray()
-            val base64Encoder = Base64.getEncoder()
-            return base64Encoder.encodeToString(imageBytes)
+            Base64.getEncoder().encodeToString(imageBytes)
         } finally {
             outputStream.close()
         }
