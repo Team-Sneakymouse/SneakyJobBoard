@@ -103,6 +103,7 @@ object WebhookUtility {
                 "durationMilis" to job.durationMilis,
                 "name" to job.name,
                 "description" to job.description,
+                "discordEmbedIcon" to job.category.discordEmbedIcon,
         )
     }
 

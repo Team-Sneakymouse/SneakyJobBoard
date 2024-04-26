@@ -41,7 +41,9 @@ class JobCategoryManager {
                 val iconMaterial =
                         Material.matchMaterial(iconMaterialString) ?: Material.MUSIC_DISC_CAT
 
-                val dynmapMapIcon = jobCategoriesSection.getString("$key.dynmap-map-icon") ?: key
+                val dynmapMapIcon = jobCategoriesSection.getString("$key.dynmap-map-icon") ?: ""
+                val discordEmbedIcon =
+                        jobCategoriesSection.getString("$key.discord-embed-icon") ?: ""
 
                 val brightnessBlock =
                         jobCategoriesSection.getInt("$key.item-display-brightness.block")
@@ -66,7 +68,8 @@ class JobCategoryManager {
                                 iconCustomModelData,
                                 brightness,
                                 transformation,
-                                dynmapMapIcon
+                                dynmapMapIcon,
+                                discordEmbedIcon
                         )
             }
         } catch (e: IllegalStateException) {
@@ -136,5 +139,6 @@ data class JobCategory(
         val iconCustomModelData: Int,
         val brightness: Brightness,
         val transformation: Transformation,
-        val dynmapMapIcon: String
+        val dynmapMapIcon: String,
+        val discordEmbedIcon: String
 )

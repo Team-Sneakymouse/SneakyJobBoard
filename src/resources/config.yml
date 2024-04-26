@@ -2,7 +2,7 @@
 poster-string: "&ePosted by: &b%sneakycharacters_character_name_noformat%"
 
 ## The poster display string that is provided to the discord webhook. Supports placeholders. "[playerName]" will also work, even without PAPI installed.
-webhook-poster: "%sneakycharacters_character_name_noformat%"
+webhook-poster: "Posted by: %sneakycharacters_character_name_noformat%"
 ## The location display string that is provided to the discord webhook. Supports placeholders. "[x]", "[y]", "[z]" will also work, even without PAPI installed.
 webhook-location: "%dipp_district_name%"
 
@@ -30,6 +30,7 @@ job-categories:
         icon-material: "jigsaw"
         icon-custom-model-data: 1
         dynmap-map-icon: "building"
+        discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
             block: 15
             sky: 15
@@ -44,6 +45,7 @@ job-categories:
         icon-material: "jigsaw"
         icon-custom-model-data: 2
         dynmap-map-icon: "building"
+        discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
             block: 15
             sky: 15
@@ -58,6 +60,7 @@ job-categories:
         icon-material: "jigsaw"
         icon-custom-model-data: 3
         dynmap-map-icon: "building"
+        discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
             block: 15
             sky: 15
@@ -72,6 +75,7 @@ job-categories:
         icon-material: "jigsaw"
         icon-custom-model-data: 4
         dynmap-map-icon: "building"
+        discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
             block: 15
             sky: 15
@@ -86,6 +90,7 @@ job-categories:
         icon-material: "jigsaw"
         icon-custom-model-data: 5
         dynmap-map-icon: "building"
+        discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
             block: 15
             sky: 15
