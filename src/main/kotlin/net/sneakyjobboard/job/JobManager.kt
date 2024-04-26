@@ -162,6 +162,7 @@ class JobManager {
 
 data class Job(val category: JobCategory, val player: Player, val durationMillis: Long) {
     val uuid: String = UUID.randomUUID().toString()
+    var recordID: String = ""
     val location: Location = player.location
     var startTime: Long = 0
     val itemDisplays: MutableMap<JobBoard, ItemDisplay> = mutableMapOf()
@@ -204,6 +205,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMillis
     }
 
     fun unlist() {
+        SneakyJobBoard.getPocketbaseManager().unlistJob(this)
         itemDisplays.values.forEach { entity -> entity.remove() }
         textDisplays.values.forEach { entity -> entity.remove() }
         SneakyJobBoard.getJobManager().jobs.remove(uuid)

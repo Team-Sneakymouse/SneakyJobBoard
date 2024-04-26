@@ -96,8 +96,14 @@ class PocketbaseManager {
 
                                     val response = client.newCall(request).execute()
 
-                                    if (!response.isSuccessful) {
-                                        println("Pocketbase request unsuccessful: ${response.code}")
+                                    if (response.isSuccessful) {
+                                        val responseBody = response.body?.string()
+                                        val jsonResponse = JSONObject(responseBody)
+                                        job.recordID = jsonResponse.getString("id")
+                                    } else {
+                                        println(
+                                                "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                                        )
                                     }
                                     response.close()
                                 }
@@ -109,7 +115,51 @@ class PocketbaseManager {
     }
 
     /** Add an endtime to the pocketbase record. */
-    @Synchronized fun unlistJob(job: Job) {}
+    @Synchronized
+    fun unlistJob(job: Job) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+
+        if (url == null || job.recordID.isEmpty()) return
+
+        Bukkit.getScheduler()
+                .runTaskAsynchronously(
+                        SneakyJobBoard.getInstance(),
+                        Runnable {
+                            try {
+                                if (authToken.isEmpty()) auth()
+
+                                if (authToken.isNotEmpty()) {
+                                    val client = OkHttpClient()
+
+                                    val jobData = mapOf("endTime" to System.currentTimeMillis())
+                                    val jsonRequestBody =
+                                            Gson().toJson(jobData)
+                                                    .toRequestBody("application/json".toMediaType())
+
+                                    val request =
+                                            Request.Builder()
+                                                    .url("$url/${job.recordID}")
+                                                    .header("Authorization", authToken)
+                                                    .patch(jsonRequestBody)
+                                                    .build()
+
+                                    SneakyJobBoard.log(request.url.toString())
+
+                                    val response = client.newCall(request).execute()
+
+                                    if (!response.isSuccessful) {
+                                        println(
+                                                "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                                        )
+                                    }
+                                    response.close()
+                                }
+                            } catch (e: Exception) {
+                                println("Error occurred: ${e.message}")
+                            }
+                        }
+                )
+    }
 
     /** Converts a Job into a json-ready map. */
     private fun createJobDataMap(job: Job): Map<String, Any> {
