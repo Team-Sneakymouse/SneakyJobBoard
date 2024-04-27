@@ -143,8 +143,6 @@ class PocketbaseManager {
                                                     .patch(jsonRequestBody)
                                                     .build()
 
-                                    SneakyJobBoard.log(request.url.toString())
-
                                     val response = client.newCall(request).execute()
 
                                     if (!response.isSuccessful) {
