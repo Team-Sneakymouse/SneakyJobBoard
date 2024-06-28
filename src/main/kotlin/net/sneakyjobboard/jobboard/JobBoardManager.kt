@@ -4,6 +4,7 @@ import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.commands.CommandJobBoard
 import net.sneakyjobboard.job.Job
 import org.bukkit.Bukkit
+import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.Rotation
@@ -402,6 +403,7 @@ data class JobBoard(
 
         textDisplayEntity.setBrightness(Brightness(15, 15))
         textDisplayEntity.setAlignment(TextDisplay.TextAlignment.LEFT)
+        textDisplayEntity.backgroundColor = Color.fromARGB(200, 0, 0, 0)
 
         textDisplayEntity.addScoreboardTag("JobBoardIcon")
 
