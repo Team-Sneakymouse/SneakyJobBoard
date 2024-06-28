@@ -221,7 +221,7 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
 }
 
 fun String?.toBooleanOrNull(): Boolean? {
-    return when (this?.toLowerCase()) {
+    return when (this?.lowercase()) {
         "true" -> true
         "false" -> false
         else -> null

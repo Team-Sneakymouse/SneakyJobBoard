@@ -12,12 +12,15 @@ import java.util.Base64
 import javax.imageio.ImageIO
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.job.Job
+import net.sneakyjobboard.job.JobHistoryInventoryHolder
+import net.sneakyjobboard.util.TextUtility
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 import org.json.JSONObject
 
 class PocketbaseManager {
@@ -248,6 +251,143 @@ class PocketbaseManager {
                 )
     }
 
+    /**
+     * Get the 9 most recent unique job listings from the pocketbase, and open the job history UI
+     */
+    @Synchronized
+    fun getJobHistory(player: Player, durationMillis: Long) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+
+        if (url == null || url.isEmpty()) return
+
+        Bukkit.getScheduler()
+                .runTaskAsynchronously(
+                        SneakyJobBoard.getInstance(),
+                        Runnable {
+                            try {
+                                if (authToken.isEmpty()) auth()
+
+                                if (authToken.isNotEmpty()) {
+                                    val client = OkHttpClient()
+
+                                    val requestGet =
+                                            Request.Builder()
+                                                    .url("$url?filter=(poster='${player.name}')")
+                                                    .header("Authorization", authToken)
+                                                    .get()
+                                                    .build()
+
+                                    val responseGet = client.newCall(requestGet).execute()
+                                    val responseBody = responseGet.body?.string()
+
+                                    if (!responseGet.isSuccessful || responseBody == null) {
+                                        SneakyJobBoard.log(
+                                                "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
+                                        )
+                                        responseGet.close()
+                                        return@Runnable
+                                    }
+
+                                    val categories =
+                                            JsonParser.parseString(responseBody)
+                                                    .asJsonObject
+                                                    .getAsJsonArray("items")
+                                                    .map {
+                                                        it.asJsonObject.get("category").asString
+                                                    }
+
+                                    val names =
+                                            JsonParser.parseString(responseBody)
+                                                    .asJsonObject
+                                                    .getAsJsonArray("items")
+                                                    .map { it.asJsonObject.get("name").asString }
+
+                                    val trackings =
+                                            JsonParser.parseString(responseBody)
+                                                    .asJsonObject
+                                                    .getAsJsonArray("items")
+                                                    .map {
+                                                        it.asJsonObject.get("tracking").asString
+                                                    }
+
+                                    val descriptions =
+                                            JsonParser.parseString(responseBody)
+                                                    .asJsonObject
+                                                    .getAsJsonArray("items")
+                                                    .map {
+                                                        it.asJsonObject.get("description").asString
+                                                    }
+
+                                    val jobHistory = mutableListOf<Job>()
+
+                                    for (i in (categories.size - 1) downTo 0) {
+                                        if (jobHistory.size >= 9) break
+
+                                        var duplicate = false
+                                        for (j in (categories.size - 1) downTo (i + 1)) {
+                                            if (categories[i] == categories[j] &&
+                                                            names[i] == names[j] &&
+                                                            trackings[i] == trackings[j] &&
+                                                            descriptions[i] == descriptions[j]
+                                            ) {
+                                                duplicate = true
+                                                break
+                                            }
+                                        }
+                                        if (duplicate) continue
+
+                                        val category =
+                                                SneakyJobBoard.getJobCategoryManager()
+                                                        .getJobCategories()
+                                                        .values
+                                                        .find { it.name.equals(categories[i]) }
+                                                        ?: SneakyJobBoard.getJobCategoryManager()
+                                                                .getJobCategories()
+                                                                .values
+                                                                .first()
+                                        val job =
+                                                Job(
+                                                        category = category,
+                                                        player = player,
+                                                        durationMillis = durationMillis,
+                                                        tracking = trackings[i].toBooleanOrNull()
+                                                                        ?: false
+                                                )
+                                        job.name = names[i]
+                                        job.description = descriptions[i]
+
+                                        jobHistory.add(job)
+                                    }
+
+                                    Bukkit.getScheduler()
+                                            .runTask(
+                                                    SneakyJobBoard.getInstance(),
+                                                    Runnable {
+                                                        if (jobHistory.size > 0) {
+                                                            player.openInventory(
+                                                                    JobHistoryInventoryHolder(
+                                                                                    jobHistory
+                                                                                            .reversed()
+                                                                            )
+                                                                            .inventory
+                                                            )
+                                                        } else {
+                                                            player.sendMessage(
+                                                                    TextUtility.convertToComponent(
+                                                                            "&4You do not have a job posting history."
+                                                                    )
+                                                            )
+                                                        }
+                                                    }
+                                            )
+                                }
+                            } catch (e: Exception) {
+                                SneakyJobBoard.log("Error occurred: ${e.message}")
+                            }
+                        }
+                )
+    }
+
     /** Converts a Job into a json-ready map. */
     private fun createJobDataMap(job: Job): Map<String, Any> {
         // Poster display string
@@ -302,6 +442,7 @@ class PocketbaseManager {
                 "locationDisplayString" to displayStringLocation,
                 "startTime" to job.startTime,
                 "durationMillis" to job.durationMillis,
+                "tracking" to job.tracking,
                 "name" to job.name,
                 "description" to job.description,
                 "discordEmbedIcon" to job.category.discordEmbedIcon,
@@ -370,5 +511,13 @@ class PocketbaseManager {
         } finally {
             outputStream.close()
         }
+    }
+}
+
+fun String.toBooleanOrNull(): Boolean? {
+    return when (this.lowercase()) {
+        "true" -> true
+        "false" -> false
+        else -> null
     }
 }

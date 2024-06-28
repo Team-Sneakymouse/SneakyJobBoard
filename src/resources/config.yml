@@ -1,6 +1,6 @@
 ## The string that is used to append the poster to a listing. Supports placeholders and color codes. "[playerName]" will also work, even without PAPI installed.
 poster-string: "&ePosted by: &b%sneakycharacters_character_name_noformat%"
-## The duration in milis that represents 100% scale on the duration-based scaling feature. Set to 0 to disable duration-based scaling.
+## The duration in millis that represents 100% scale on the duration-based scaling feature. Set to 0 to disable duration-based scaling.
 duration-scale-base-duration: 1800000
 ## The minimum and maximum multiplier that duration-based scaling is allowed to scale up to, if duration-based scaling is active.
 duration-scale-scale-min: 0.1

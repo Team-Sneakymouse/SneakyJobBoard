@@ -1,4 +1,4 @@
-package net.sneakyjobboard.jobboard
+package net.sneakyjobboard.job
 
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.util.TextUtility
@@ -14,16 +14,13 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-class JobInventoryHolder() : InventoryHolder {
+class JobHistoryInventoryHolder(val jobHistory: List<Job>) : InventoryHolder {
     private var inventory: Inventory
 
     init {
-        val jobs = SneakyJobBoard.getJobManager().getJobs()
-        val size = (((jobs.size + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
-        inventory =
-                Bukkit.createInventory(this, size, TextUtility.convertToComponent("&eJob Board"))
+        inventory = Bukkit.createInventory(this, 9, TextUtility.convertToComponent("&eJob History. Click to re-list."))
 
-        for (job in jobs) {
+        for (job in jobHistory) {
             if (inventory.firstEmpty() != -1) {
                 inventory.addItem(job.getIconItem())
             } else {
@@ -46,28 +43,32 @@ class JobInventoryHolder() : InventoryHolder {
 
         player.closeInventory()
 
-        SneakyJobBoard.getJobManager().dispatch(uuid, player)
+        val job = jobHistory.find { it.uuid == uuid }
+
+        if (job != null) {
+			SneakyJobBoard.getJobManager().list(job)
+		}
     }
 }
 
-class JobInventoryListener : Listener {
+class JobHistoryInventoryListener : Listener {
 
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
         val clickedInventory = event.clickedInventory ?: return
 
         val topInventoryHolder = event.view.topInventory.holder
-        if (topInventoryHolder is JobInventoryHolder) {
+        if (topInventoryHolder is JobHistoryInventoryHolder) {
             event.isCancelled = true
         }
 
-        if (clickedInventory.holder !is JobInventoryHolder) return
+        if (clickedInventory.holder !is JobHistoryInventoryHolder) return
 
         val clickedItem = event.currentItem ?: return
 
         when (event.click) {
             ClickType.LEFT -> {
-                val holder = clickedInventory.holder as? JobInventoryHolder ?: return
+                val holder = clickedInventory.holder as? JobHistoryInventoryHolder ?: return
                 val player = event.whoClicked as? Player ?: return
                 holder.clickedItem(clickedItem, player)
             }
@@ -78,7 +79,7 @@ class JobInventoryListener : Listener {
     @EventHandler
     fun onInventoryInteract(event: InventoryInteractEvent) {
         val topInventoryHolder = event.view.topInventory.holder
-        if (topInventoryHolder is JobInventoryHolder) {
+        if (topInventoryHolder is JobHistoryInventoryHolder) {
             event.isCancelled = true
         }
     }

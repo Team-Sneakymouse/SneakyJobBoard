@@ -2,10 +2,12 @@ package net.sneakyjobboard
 
 import java.io.File
 import net.sneakyjobboard.commands.CommandJobBoard
+import net.sneakyjobboard.commands.CommandJobHistory
 import net.sneakyjobboard.commands.CommandListJob
 import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.job.JobCategoryManager
 import net.sneakyjobboard.job.JobManager
+import net.sneakyjobboard.job.JobHistoryInventoryListener
 import net.sneakyjobboard.jobboard.JobBoardListener
 import net.sneakyjobboard.jobboard.JobBoardMaintenance
 import net.sneakyjobboard.jobboard.JobBoardManager
@@ -44,9 +46,11 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         getServer().getCommandMap().register(IDENTIFIER, CommandListJob())
         getServer().getCommandMap().register(IDENTIFIER, CommandJobBoard())
         getServer().getCommandMap().register(IDENTIFIER, CommandUnlistJob())
+        getServer().getCommandMap().register(IDENTIFIER, CommandJobHistory())
 
         getServer().getPluginManager().registerEvents(PluginListener(this), this)
         getServer().getPluginManager().registerEvents(JobInventoryListener(), this)
+        getServer().getPluginManager().registerEvents(JobHistoryInventoryListener(), this)
         getServer().getPluginManager().registerEvents(JobBoardListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))

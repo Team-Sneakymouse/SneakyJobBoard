@@ -53,9 +53,7 @@ class CommandJobBoard : CommandBase("jobboard") {
 
     companion object {
         fun openJobBoard(player: Player) {
-            val holder = JobInventoryHolder()
-            holder.populateInventory()
-            player.openInventory(holder.inventory)
+            player.openInventory(JobInventoryHolder().inventory)
         }
     }
 }
