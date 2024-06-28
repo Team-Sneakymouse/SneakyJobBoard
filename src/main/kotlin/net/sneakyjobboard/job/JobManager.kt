@@ -164,7 +164,7 @@ data class Job(val category: JobCategory, val player: Player, val durationMillis
     val uuid: String = UUID.randomUUID().toString()
     var recordID: String = ""
     val location: Location = player.location
-    var startTime: Long = 0
+    var startTime: Long = 0L
     val itemDisplays: MutableMap<JobBoard, ItemDisplay> = mutableMapOf()
     val textDisplays: MutableMap<JobBoard, TextDisplay> = mutableMapOf()
     var name: String = category.name
@@ -200,8 +200,12 @@ data class Job(val category: JobCategory, val player: Player, val durationMillis
             updateTextDisplays()
         }
 
+    fun remainingDurationMillis(): Long {
+        return ((startTime + durationMillis) - System.currentTimeMillis())
+    }
+
     fun isExpired(): Boolean {
-        return (System.currentTimeMillis() >= startTime + durationMillis)
+        return remainingDurationMillis() < 0L
     }
 
     fun unlist() {
@@ -307,5 +311,39 @@ data class Job(val category: JobCategory, val player: Player, val durationMillis
 
         itemStack.itemMeta = meta
         return itemStack
+    }
+
+    fun getTransformation(): Transformation {
+        val config = SneakyJobBoard.getInstance().getConfig()
+
+        val baseDuration = config.getLong("duration-scale-base-duration")
+
+        if (baseDuration > 0) {
+            val minScale = config.getDouble("duration-scale-scale-min").toFloat()
+            val maxScale = config.getDouble("duration-scale-scale-max").toFloat()
+
+            for (job in SneakyJobBoard.getJobManager().getJobs()) {
+                val remainingDuration = job.remainingDurationMillis()
+                val scaleFactor =
+                        (remainingDuration.toFloat() / baseDuration).coerceIn(minScale, maxScale)
+
+                val oldTransformation = job.category.transformation
+                val newScale =
+                        Vector3f(
+                                scaleFactor * oldTransformation.scale.x(),
+                                scaleFactor * oldTransformation.scale.y(),
+                                scaleFactor * oldTransformation.scale.z()
+                        )
+
+                return Transformation(
+                        oldTransformation.translation,
+                        oldTransformation.leftRotation,
+                        newScale,
+                        oldTransformation.rightRotation
+                )
+            }
+        }
+
+        return category.transformation
     }
 }

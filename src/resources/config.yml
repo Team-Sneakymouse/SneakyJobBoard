@@ -1,5 +1,10 @@
 ## The string that is used to append the poster to a listing. Supports placeholders and color codes. "[playerName]" will also work, even without PAPI installed.
 poster-string: "&ePosted by: &b%sneakycharacters_character_name_noformat%"
+## The duration in milis that represents 100% scale on the duration-based scaling feature. Set to 0 to disable duration-based scaling.
+duration-scale-base-duration: 1800000
+## The minimum and maximum multiplier that duration-based scaling is allowed to scale up to, if duration-based scaling is active.
+duration-scale-scale-min: 0.1
+duration-scale-scale-max: 2
 
 ## The api URL of your pocketbase collection, in case you want to track job listings and build listeners for social media integration.
 pocketbase-url: "http://127.0.0.1:8090/api/collections/collectionIdOrName/records"
@@ -47,7 +52,7 @@ job-categories:
             scale: 0.10,0.10,0.10
     service:
         name: "Service Industry"
-        description: "A special event is being hosted!"
+        description: "An establishment is currently open in this area."
         icon-material: "jigsaw"
         icon-custom-model-data: 2
         dynmap-map-icon: "building"

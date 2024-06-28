@@ -9,6 +9,7 @@ import org.bukkit.Material
 import org.bukkit.Rotation
 import org.bukkit.block.BlockFace
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.Display
 import org.bukkit.entity.Display.Brightness
 import org.bukkit.entity.Entity
 import org.bukkit.entity.GlowItemFrame
@@ -479,7 +480,7 @@ data class JobBoard(
                 displayLocation.world!!.spawn(displayLocation, ItemDisplay::class.java)
 
         itemDisplayEntity.setItemStack(job.getIconItem())
-        itemDisplayEntity.setTransformation(job.category.transformation)
+        itemDisplayEntity.setTransformation(job.getTransformation())
         itemDisplayEntity.setBrightness(job.category.brightness)
 
         itemDisplayEntity.addScoreboardTag("JobBoardIcon")
@@ -590,7 +591,7 @@ class JobBoardUpdater : BukkitRunnable() {
         for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
             val nearbyPlayers =
                     jobBoard.mapLocation.world?.entities?.filterIsInstance<Player>()?.filter {
-                        it.location.distanceSquared(jobBoard.mapLocation) <= 10.0 * 10.0
+                        it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
                     }
                             ?: emptyList()
 
@@ -621,9 +622,7 @@ class JobBoardUpdater : BukkitRunnable() {
         }
 
         // Show the looked at icon to the player if it exists
-        for ((player, entity) in lookedAtIcons) {
-            var icon = entity
-
+        for ((player, icon) in lookedAtIcons) {
             if (icon == null) {
                 hide(player)
             } else {
@@ -681,5 +680,65 @@ class JobBoardUpdater : BukkitRunnable() {
                         ?.sortedBy { it.location.distanceSquared(intersectionPoint) }
 
         return nearbyEntities?.firstOrNull()
+    }
+}
+
+class JobBoardMaintenance : BukkitRunnable() {
+    val shownIcons: MutableMap<Player, TextDisplay> = mutableMapOf()
+
+    override fun run() {
+        // Build a list of all Display Entities that have the JobBoardIcon tag
+        val worlds =
+                SneakyJobBoard.getJobBoardManager().jobBoards.map { it.mapLocation.world }.toSet()
+
+        val displays = mutableSetOf<Entity>()
+        for (world in worlds) {
+            displays.addAll(
+                    world.entities.filterIsInstance<Display>().filter {
+                        it.scoreboardTags.contains("JobBoardIcon")
+                    }
+            )
+        }
+
+        // If any of these entities do not belong to a listed job, remove them
+        SneakyJobBoard.getJobManager().jobs.values.forEach { job ->
+            displays.removeAll(job.itemDisplays.values)
+            displays.removeAll(job.textDisplays.values)
+        }
+
+        displays.forEach(Entity::remove)
+
+        // Build a list of players who aren't near a JobBoard
+        val players = Bukkit.getServer().onlinePlayers.toMutableSet()
+
+        for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
+            val nearbyPlayers =
+                    jobBoard.mapLocation.world?.players?.filter {
+                        it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
+                    }
+                            ?: emptyList()
+
+            players.removeAll(nearbyPlayers)
+        }
+
+        // Ensure that TextDisplay icons are hidden to them
+        val textDisplays =
+                SneakyJobBoard.getJobManager().getJobs().flatMap { it.textDisplays.values }
+        players.forEach { player ->
+            textDisplays.forEach { textDisplay ->
+                player.hideEntity(SneakyJobBoard.getInstance(), textDisplay)
+            }
+        }
+
+        // Update scaling of ItemDisplay icons
+        val baseDuration = SneakyJobBoard.getInstance().getConfig().getLong("duration-scale-base-duration")
+
+        if (baseDuration > 0) {
+            for (job in SneakyJobBoard.getJobManager().getJobs()) {
+                val newTransformation = job.getTransformation()
+
+                job.itemDisplays.values.forEach { it.setTransformation(newTransformation) }
+            }
+        }
     }
 }

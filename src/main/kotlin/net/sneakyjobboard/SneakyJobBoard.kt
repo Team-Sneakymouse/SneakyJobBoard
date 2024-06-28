@@ -10,6 +10,7 @@ import net.sneakyjobboard.jobboard.JobBoardListener
 import net.sneakyjobboard.jobboard.JobBoardManager
 import net.sneakyjobboard.jobboard.JobBoardUpdater
 import net.sneakyjobboard.jobboard.JobInventoryListener
+import net.sneakyjobboard.jobboard.JobBoardMaintenance
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -28,6 +29,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     var papiActive: Boolean = false
     var markerAPI: MarkerAPI? = null
     val jobBoardUpdater: JobBoardUpdater = JobBoardUpdater()
+    val jobBoardMaintenance: JobBoardMaintenance = JobBoardMaintenance()
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -50,6 +52,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))
 
         jobBoardUpdater.runTaskTimer(this, 0L, 1L)
+        jobBoardMaintenance.runTaskTimer(this, 0L, 100L)
 
         val papiPlugin = Bukkit.getServer().pluginManager.getPlugin("PlaceholderAPI")
         if (papiPlugin != null && papiPlugin.isEnabled) {
