@@ -779,12 +779,12 @@ class TrackingJobsUpdater : BukkitRunnable() {
                                                     SneakyJobBoard.log(
                                                             "Failed to create a new marker set."
                                                     )
-                                                    return
+                                                    null
                                                 }
                                     }
 
                     markerSet
-                            .findMarker(job.uuid)
+                            ?.findMarker(job.uuid)
                             ?.setLocation(
                                     job.location.world.name,
                                     job.location.x,

@@ -58,14 +58,14 @@ class JobManager {
                                 )
                                         ?: run {
                                             SneakyJobBoard.log("Failed to create a new marker set.")
-                                            return
+                                            null
                                         }
                             }
 
             val icon = markerAPI?.getMarkerIcon(job.category.dynmapMapIcon)
 
             val marker =
-                    markerSet.createMarker(
+                    markerSet?.createMarker(
                             job.uuid,
                             job.name,
                             jobLocation.world.name,
@@ -130,11 +130,11 @@ class JobManager {
                                 )
                                         ?: run {
                                             SneakyJobBoard.log("Failed to create a new marker set.")
-                                            return
+                                            null
                                         }
                             }
 
-            markerSet.deleteMarkerSet()
+            markerSet?.deleteMarkerSet()
         }
     }
 
@@ -159,7 +159,12 @@ class JobManager {
     }
 }
 
-data class Job(val category: JobCategory, val player: Player, val durationMillis: Long, val tracking: Boolean) {
+data class Job(
+        val category: JobCategory,
+        val player: Player,
+        val durationMillis: Long,
+        val tracking: Boolean
+) {
     val uuid = UUID.randomUUID().toString()
     var recordID = ""
     var location = player.location
@@ -186,11 +191,11 @@ data class Job(val category: JobCategory, val player: Player, val durationMillis
                                                 SneakyJobBoard.log(
                                                         "Failed to create a new marker set."
                                                 )
-                                                return
+                                                null
                                             }
                                 }
 
-                markerSet.findMarker(uuid)?.label = value
+                markerSet?.findMarker(uuid)?.label = value
             }
         }
     var description: String = category.description
@@ -227,11 +232,11 @@ data class Job(val category: JobCategory, val player: Player, val durationMillis
                                 )
                                         ?: run {
                                             SneakyJobBoard.log("Failed to create a new marker set.")
-                                            return
+                                            null
                                         }
                             }
 
-            markerSet.findMarker(uuid)?.deleteMarker()
+            markerSet?.findMarker(uuid)?.deleteMarker()
         }
     }
 
