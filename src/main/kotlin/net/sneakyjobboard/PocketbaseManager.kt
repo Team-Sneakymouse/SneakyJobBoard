@@ -86,7 +86,7 @@ class PocketbaseManager {
     fun listJob(job: Job) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
-        if (url == null || url.isEmpty()) return
+        if (url.isNullOrEmpty()) return
 
         Bukkit.getScheduler()
                 .runTaskAsynchronously(
@@ -136,7 +136,7 @@ class PocketbaseManager {
     fun unlistJob(job: Job) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
-        if (url == null || url.isEmpty() || job.recordID.isEmpty()) return
+        if (url.isNullOrEmpty() || job.recordID.isEmpty()) return
 
         Bukkit.getScheduler()
                 .runTaskAsynchronously(
@@ -181,7 +181,7 @@ class PocketbaseManager {
     fun unlistAllJobs() {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
-        if (url == null || url.isEmpty()) return
+        if (url.isNullOrEmpty()) return
 
         Bukkit.getScheduler()
                 .runTaskAsynchronously(
@@ -258,7 +258,7 @@ class PocketbaseManager {
     fun getJobHistory(player: Player, durationMillis: Long) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
-        if (url == null || url.isEmpty()) return
+        if (url.isNullOrEmpty()) return
 
         Bukkit.getScheduler()
                 .runTaskAsynchronously(
@@ -280,7 +280,7 @@ class PocketbaseManager {
                                     val responseGet = client.newCall(requestGet).execute()
                                     val responseBody = responseGet.body?.string()
 
-                                    if (!responseGet.isSuccessful || responseBody == null) {
+                                    if (!responseGet.isSuccessful || responseBody.isNullOrEmpty()) {
                                         SneakyJobBoard.log(
                                                 "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
                                         )
@@ -288,73 +288,54 @@ class PocketbaseManager {
                                         return@Runnable
                                     }
 
-                                    val categories =
+                                    val items =
                                             JsonParser.parseString(responseBody)
                                                     .asJsonObject
                                                     .getAsJsonArray("items")
-                                                    .map {
-                                                        it.asJsonObject.get("category").asString
-                                                    }
-
-                                    val names =
-                                            JsonParser.parseString(responseBody)
-                                                    .asJsonObject
-                                                    .getAsJsonArray("items")
-                                                    .map { it.asJsonObject.get("name").asString }
-
-                                    val trackings =
-                                            JsonParser.parseString(responseBody)
-                                                    .asJsonObject
-                                                    .getAsJsonArray("items")
-                                                    .map {
-                                                        it.asJsonObject.get("tracking").asString
-                                                    }
-
-                                    val descriptions =
-                                            JsonParser.parseString(responseBody)
-                                                    .asJsonObject
-                                                    .getAsJsonArray("items")
-                                                    .map {
-                                                        it.asJsonObject.get("description").asString
-                                                    }
+                                                    .map { it.asJsonObject }
 
                                     val jobHistory = mutableListOf<Job>()
+                                    val seenJobs =
+                                            mutableSetOf<
+                                                    Quadruple<String, String, String, String>>()
 
-                                    for (i in (categories.size - 1) downTo 0) {
+                                    for (item in items.reversed()) {
                                         if (jobHistory.size >= 9) break
 
-                                        var duplicate = false
-                                        for (j in (categories.size - 1) downTo (i + 1)) {
-                                            if (categories[i] == categories[j] &&
-                                                            names[i] == names[j] &&
-                                                            trackings[i] == trackings[j] &&
-                                                            descriptions[i] == descriptions[j]
-                                            ) {
-                                                duplicate = true
-                                                break
-                                            }
-                                        }
-                                        if (duplicate) continue
+                                        val category = item.get("category").asString
+                                        val name = item.get("name").asString
+                                        val tracking = item.get("tracking").asString
+                                        val description = item.get("description").asString
 
-                                        val category =
+                                        val jobKey =
+                                                Quadruple(category, name, tracking, description)
+                                        if (seenJobs.contains(jobKey)) continue
+
+                                        seenJobs.add(jobKey)
+
+                                        val jobCategory =
                                                 SneakyJobBoard.getJobCategoryManager()
                                                         .getJobCategories()
                                                         .values
-                                                        .find { it.name.equals(categories[i]) }
+                                                        .find { it.name == category }
                                                         ?: SneakyJobBoard.getJobCategoryManager()
                                                                 .getJobCategories()
                                                                 .values
                                                                 .first()
+
                                         val job =
                                                 Job(
-                                                        category = category,
-                                                        player = player,
-                                                        durationMillis = durationMillis,
-                                                        tracking = trackings[i].toBooleanOrNull()
-                                                                        ?: false
-                                                )
-                                        job.name = names[i]
-                                        job.description = descriptions[i]
+                                                                category = jobCategory,
+                                                                player = player,
+                                                                durationMillis = durationMillis,
+                                                                tracking =
+                                                                        tracking.toBooleanOrNull()
+                                                                                ?: false
+                                                        )
+                                                        .apply {
+                                                            this.name = name
+                                                            this.description = description
+                                                        }
 
                                         jobHistory.add(job)
                                     }
@@ -363,7 +344,7 @@ class PocketbaseManager {
                                             .runTask(
                                                     SneakyJobBoard.getInstance(),
                                                     Runnable {
-                                                        if (jobHistory.size > 0) {
+                                                        if (jobHistory.isNotEmpty()) {
                                                             player.openInventory(
                                                                     JobHistoryInventoryHolder(
                                                                                     jobHistory
@@ -521,3 +502,5 @@ fun String.toBooleanOrNull(): Boolean? {
         else -> null
     }
 }
+
+data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

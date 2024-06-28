@@ -20,7 +20,7 @@ class CommandJobHistory : CommandBase("jobhistory") {
     ): Boolean {
         val pocketbaseUrl = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
-        if (pocketbaseUrl == null || pocketbaseUrl.isEmpty()) {
+        if (pocketbaseUrl.isNullOrEmpty()) {
             sender.sendMessage(
                     TextUtility.convertToComponent(
                             "&4Job history cannot be viewed if Pocketbase is not set up."
