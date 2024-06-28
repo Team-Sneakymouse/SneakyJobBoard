@@ -380,7 +380,7 @@ data class JobBoard(
     /** Spawn a jobs icons on this JobBoards. */
     fun spawnIcons(job: Job) {
         if (job.isExpired()) return
-		if (job.location.world != worldLocation.world) return
+        if (job.location.world != worldLocation.world) return
 
         val displayLocation = getDisplayLocation(job)
 
@@ -691,8 +691,6 @@ class JobBoardUpdater : BukkitRunnable() {
 }
 
 class JobBoardMaintenance : BukkitRunnable() {
-    val shownIcons = mutableMapOf<Player, TextDisplay>()
-
     override fun run() {
         // Build a list of all Display Entities that have the JobBoardIcon tag
         val worlds =
@@ -737,31 +735,33 @@ class JobBoardMaintenance : BukkitRunnable() {
             }
         }
 
-        // Update scaling of ItemDisplay icons
-        val baseDuration =
-                SneakyJobBoard.getInstance().getConfig().getLong("duration-scale-base-duration")
-
-        for (job in SneakyJobBoard.getJobManager().getJobs()) {
-            if (baseDuration > 0) {
+        // Update duration-based scaling
+        if (SneakyJobBoard.getInstance().getConfig().getLong("duration-scale-base-duration") > 0) {
+            for (job in SneakyJobBoard.getJobManager().getJobs()) {
                 val newTransformation = job.getTransformation()
 
                 job.itemDisplays.values.forEach { it.setTransformation(newTransformation) }
             }
+        }
+    }
+}
 
-            // Update icon locations for tracking jobs
+class TrackingJobsUpdater : BukkitRunnable() {
+    override fun run() {
+        for (job in SneakyJobBoard.getJobManager().getJobs()) {
             if (job.tracking &&
                             job.player.isOnline() &&
                             job.player.location.world == job.location.world
             ) {
                 job.location = job.player.location
 
-				for ((jobBoard, itemDisplay) in job.itemDisplays) {
-					itemDisplay.teleport(jobBoard.getDisplayLocation(job))
-				}
+                for ((jobBoard, itemDisplay) in job.itemDisplays) {
+                    itemDisplay.teleport(jobBoard.getDisplayLocation(job))
+                }
 
-				for ((jobBoard, textDisplay) in job.textDisplays) {
-					textDisplay.teleport(jobBoard.getDisplayLocation(job))
-				}
+                for ((jobBoard, textDisplay) in job.textDisplays) {
+                    textDisplay.teleport(jobBoard.getDisplayLocation(job))
+                }
             }
         }
     }

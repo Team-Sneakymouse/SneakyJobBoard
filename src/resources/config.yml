@@ -5,6 +5,8 @@ duration-scale-base-duration: 1800000
 ## The minimum and maximum multiplier that duration-based scaling is allowed to scale up to, if duration-based scaling is active.
 duration-scale-scale-min: 0.1
 duration-scale-scale-max: 2
+## The interval (in ticks) that the location of job board icons will be updated for Tracking jobs
+tracking-jobs-update-interval: 100
 
 ## The api URL of your pocketbase collection, in case you want to track job listings and build listeners for social media integration.
 pocketbase-url: "http://127.0.0.1:8090/api/collections/collectionIdOrName/records"

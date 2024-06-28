@@ -7,10 +7,11 @@ import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.job.JobCategoryManager
 import net.sneakyjobboard.job.JobManager
 import net.sneakyjobboard.jobboard.JobBoardListener
+import net.sneakyjobboard.jobboard.JobBoardMaintenance
 import net.sneakyjobboard.jobboard.JobBoardManager
 import net.sneakyjobboard.jobboard.JobBoardUpdater
 import net.sneakyjobboard.jobboard.JobInventoryListener
-import net.sneakyjobboard.jobboard.JobBoardMaintenance
+import net.sneakyjobboard.jobboard.TrackingJobsUpdater
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -26,10 +27,11 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     lateinit var JobBoardManager: JobBoardManager
     lateinit var jobManager: JobManager
     lateinit var pocketBaseManager: PocketbaseManager
-    var papiActive: Boolean = false
+    var papiActive = false
     var markerAPI: MarkerAPI? = null
-    val jobBoardUpdater: JobBoardUpdater = JobBoardUpdater()
-    val jobBoardMaintenance: JobBoardMaintenance = JobBoardMaintenance()
+    val jobBoardUpdater = JobBoardUpdater()
+    val jobBoardMaintenance = JobBoardMaintenance()
+    val trackingJobsUpdater = TrackingJobsUpdater()
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -53,6 +55,11 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
         jobBoardUpdater.runTaskTimer(this, 0L, 1L)
         jobBoardMaintenance.runTaskTimer(this, 0L, 100L)
+        trackingJobsUpdater.runTaskTimer(
+                this,
+                0L,
+                getConfig().getLong("tracking-jobs-update-interval")
+        )
 
         val papiPlugin = Bukkit.getServer().pluginManager.getPlugin("PlaceholderAPI")
         if (papiPlugin != null && papiPlugin.isEnabled) {
