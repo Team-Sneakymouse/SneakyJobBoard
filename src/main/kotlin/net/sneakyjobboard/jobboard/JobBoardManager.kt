@@ -380,12 +380,13 @@ data class JobBoard(
     /** Spawn a jobs icons on this JobBoards. */
     fun spawnIcons(job: Job) {
         if (job.isExpired()) return
+		if (job.location.world != worldLocation.world) return
 
         val displayLocation = getDisplayLocation(job)
 
         // Spawn the ItemDisplay
         val itemDisplayEntity: ItemDisplay =
-                displayLocation.world!!.spawn(displayLocation, ItemDisplay::class.java)
+                displayLocation.world.spawn(displayLocation, ItemDisplay::class.java)
 
         itemDisplayEntity.setItemStack(job.getIconItem())
         itemDisplayEntity.setTransformation(job.getTransformation())
@@ -740,11 +741,27 @@ class JobBoardMaintenance : BukkitRunnable() {
         val baseDuration =
                 SneakyJobBoard.getInstance().getConfig().getLong("duration-scale-base-duration")
 
-        if (baseDuration > 0) {
-            for (job in SneakyJobBoard.getJobManager().getJobs()) {
+        for (job in SneakyJobBoard.getJobManager().getJobs()) {
+            if (baseDuration > 0) {
                 val newTransformation = job.getTransformation()
 
                 job.itemDisplays.values.forEach { it.setTransformation(newTransformation) }
+            }
+
+            // Update icon locations for tracking jobs
+            if (job.tracking &&
+                            job.player.isOnline() &&
+                            job.player.location.world == job.location.world
+            ) {
+                job.location = job.player.location
+
+				for ((jobBoard, itemDisplay) in job.itemDisplays) {
+					itemDisplay.teleport(jobBoard.getDisplayLocation(job))
+				}
+
+				for ((jobBoard, textDisplay) in job.textDisplays) {
+					textDisplay.teleport(jobBoard.getDisplayLocation(job))
+				}
             }
         }
     }

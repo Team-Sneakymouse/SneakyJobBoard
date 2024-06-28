@@ -159,14 +159,13 @@ class JobManager {
     }
 }
 
-data class Job(val category: JobCategory, val player: Player, val durationMillis: Long) {
+data class Job(val category: JobCategory, val player: Player, val durationMillis: Long, val tracking: Boolean) {
     val uuid = UUID.randomUUID().toString()
     var recordID = ""
-    val location = player.location
+    var location = player.location
     var startTime = 0L
     val itemDisplays = mutableMapOf<JobBoard, ItemDisplay>()
     val textDisplays = mutableMapOf<JobBoard, TextDisplay>()
-    var tracking = false
     var name: String = category.name
         set(value) {
             field = value

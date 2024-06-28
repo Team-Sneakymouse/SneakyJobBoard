@@ -86,7 +86,28 @@ class CommandListJob : CommandBase("listjob") {
                             return false
                         }
 
-        val job = Job(category = jobcategory, player = player, durationMillis = durationMillis)
+        val tracking =
+                if (remainingArgs.size > 2) {
+                    remainingArgs[2].toBooleanOrNull()
+                            ?: run {
+                                sender.sendMessage(
+                                        TextUtility.convertToComponent(
+                                                "&4Invalid boolean value '${remainingArgs[2]}'. Please provide 'true' or 'false'."
+                                        )
+                                )
+                                return false
+                            }
+                } else {
+                    false
+                }
+
+        val job =
+                Job(
+                        category = jobcategory,
+                        player = player,
+                        durationMillis = durationMillis,
+                        tracking = tracking
+                )
 
         player.sendMessage(TextUtility.convertToComponent("&aPlease type the name of the job."))
 
@@ -106,11 +127,16 @@ class CommandListJob : CommandBase("listjob") {
             args.size == 1 && sender !is Player -> {
                 Bukkit.getOnlinePlayers()
                         .filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
-                        .filter { it.name.startsWith(args[0], ignoreCase = true) }
+                        .filter { it.name.startsWith(args.last(), ignoreCase = true) }
                         .map { it.name }
             }
             args.size - startIndex == 1 -> {
-                SneakyJobBoard.getJobCategoryManager().getJobCategories().keys.toList()
+                SneakyJobBoard.getJobCategoryManager().getJobCategories().keys.toList().filter {
+                    it.startsWith(args.last(), ignoreCase = true)
+                }
+            }
+            args.size - startIndex == 3 -> {
+                listOf("TRUE", "FALSE").filter { it.startsWith(args.last(), ignoreCase = true) }
             }
             else -> emptyList()
         }
@@ -191,5 +217,13 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
 
     private fun unregisterListener() {
         CommandListJob.unregisterListener(sender)
+    }
+}
+
+fun String?.toBooleanOrNull(): Boolean? {
+    return when (this?.toLowerCase()) {
+        "true" -> true
+        "false" -> false
+        else -> null
     }
 }
