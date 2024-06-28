@@ -31,7 +31,7 @@ import org.bukkit.scheduler.BukkitRunnable
 /** Manages jobboards and their configurations. */
 class JobBoardManager {
 
-    public val jobBoards: MutableList<JobBoard> = mutableListOf()
+    public val jobBoards = mutableListOf<JobBoard>()
 
     /** Loads job boards from the configuration file on initialization. */
     init {
@@ -381,6 +381,39 @@ data class JobBoard(
     fun spawnIcons(job: Job) {
         if (job.isExpired()) return
 
+        val displayLocation = getDisplayLocation(job)
+
+        // Spawn the ItemDisplay
+        val itemDisplayEntity: ItemDisplay =
+                displayLocation.world!!.spawn(displayLocation, ItemDisplay::class.java)
+
+        itemDisplayEntity.setItemStack(job.getIconItem())
+        itemDisplayEntity.setTransformation(job.getTransformation())
+        itemDisplayEntity.setBrightness(job.category.brightness)
+
+        itemDisplayEntity.addScoreboardTag("JobBoardIcon")
+
+        job.itemDisplays.put(this, itemDisplayEntity)
+
+        // Spawn the TextDisplay
+        val textDisplayEntity: TextDisplay =
+                displayLocation.world!!.spawn(displayLocation, TextDisplay::class.java)
+
+        textDisplayEntity.setBrightness(Brightness(15, 15))
+        textDisplayEntity.setAlignment(TextDisplay.TextAlignment.LEFT)
+
+        textDisplayEntity.addScoreboardTag("JobBoardIcon")
+
+        job.textDisplays.put(this, textDisplayEntity)
+
+        job.updateTextDisplays()
+
+        for (player in Bukkit.getOnlinePlayers()) {
+            player.hideEntity(SneakyJobBoard.getInstance(), textDisplayEntity)
+        }
+    }
+
+    fun getDisplayLocation(job: Job): Location {
         val jobLocation = job.location
         val displayLocation = mapLocation.clone().add(0.5, 0.5, 0.5)
 
@@ -475,34 +508,7 @@ data class JobBoard(
 
         displayLocation.add(xOffset, yOffset, zOffset)
 
-        // Spawn the ItemDisplay
-        val itemDisplayEntity: ItemDisplay =
-                displayLocation.world!!.spawn(displayLocation, ItemDisplay::class.java)
-
-        itemDisplayEntity.setItemStack(job.getIconItem())
-        itemDisplayEntity.setTransformation(job.getTransformation())
-        itemDisplayEntity.setBrightness(job.category.brightness)
-
-        itemDisplayEntity.addScoreboardTag("JobBoardIcon")
-
-        job.itemDisplays.put(this, itemDisplayEntity)
-
-        // Spawn the TextDisplay
-        val textDisplayEntity: TextDisplay =
-                displayLocation.world!!.spawn(displayLocation, TextDisplay::class.java)
-
-        textDisplayEntity.setBrightness(Brightness(15, 15))
-        textDisplayEntity.setAlignment(TextDisplay.TextAlignment.LEFT)
-
-        textDisplayEntity.addScoreboardTag("JobBoardIcon")
-
-        job.textDisplays.put(this, textDisplayEntity)
-
-        job.updateTextDisplays()
-
-        for (player in Bukkit.getOnlinePlayers()) {
-            player.hideEntity(SneakyJobBoard.getInstance(), textDisplayEntity)
-        }
+        return displayLocation
     }
 }
 
@@ -582,10 +588,10 @@ class JobBoardListener : Listener {
 }
 
 class JobBoardUpdater : BukkitRunnable() {
-    val shownIcons: MutableMap<Player, TextDisplay> = mutableMapOf()
+    val shownIcons = mutableMapOf<Player, TextDisplay>()
 
     override fun run() {
-        val players: MutableMap<JobBoard, MutableList<Player>> = mutableMapOf()
+        val players = mutableMapOf<JobBoard, MutableList<Player>>()
 
         // Build a map of players who are nearby a JobBoard
         for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
@@ -606,7 +612,7 @@ class JobBoardUpdater : BukkitRunnable() {
             }
         }
 
-        val lookedAtIcons: MutableMap<Player, TextDisplay?> = mutableMapOf()
+        val lookedAtIcons = mutableMapOf<Player, TextDisplay?>()
 
         // Find the icon that each of these players is looking at, or null
         for ((jobBoard, playerList) in players) {
@@ -684,7 +690,7 @@ class JobBoardUpdater : BukkitRunnable() {
 }
 
 class JobBoardMaintenance : BukkitRunnable() {
-    val shownIcons: MutableMap<Player, TextDisplay> = mutableMapOf()
+    val shownIcons = mutableMapOf<Player, TextDisplay>()
 
     override fun run() {
         // Build a list of all Display Entities that have the JobBoardIcon tag
@@ -731,7 +737,8 @@ class JobBoardMaintenance : BukkitRunnable() {
         }
 
         // Update scaling of ItemDisplay icons
-        val baseDuration = SneakyJobBoard.getInstance().getConfig().getLong("duration-scale-base-duration")
+        val baseDuration =
+                SneakyJobBoard.getInstance().getConfig().getLong("duration-scale-base-duration")
 
         if (baseDuration > 0) {
             for (job in SneakyJobBoard.getJobManager().getJobs()) {

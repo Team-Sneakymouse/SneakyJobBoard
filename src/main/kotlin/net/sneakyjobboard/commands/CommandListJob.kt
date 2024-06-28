@@ -17,7 +17,7 @@ import org.bukkit.event.player.PlayerQuitEvent
 class CommandListJob : CommandBase("listjob") {
 
     companion object {
-        private val playerListeners: MutableMap<Player, Listener> = mutableMapOf()
+        private val playerListeners = mutableMapOf<Player, Listener>()
 
         fun unregisterListener(player: Player) {
             playerListeners[player]?.let {

@@ -12,7 +12,7 @@ import org.joml.Vector3f
 /** Manages job categories and their configurations. */
 class JobCategoryManager {
 
-    private val jobCategories: MutableMap<String, JobCategory> = mutableMapOf()
+    private val jobCategories = mutableMapOf<String, JobCategory>()
 
     /** Loads job categories from the configuration file on initialization. */
     init {

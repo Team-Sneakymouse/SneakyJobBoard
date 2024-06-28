@@ -7,7 +7,6 @@ import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
-import org.bukkit.Location
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
@@ -23,8 +22,8 @@ class JobManager {
 
     public val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
 
-    public val jobs: MutableMap<String, Job> = mutableMapOf()
-    val pendingSpawns: MutableMap<JobBoard, MutableList<Job>> = mutableMapOf()
+    public val jobs = mutableMapOf<String, Job>()
+    val pendingSpawns = mutableMapOf<JobBoard, MutableList<Job>>()
 
     /** Adds a new job to the map. */
     fun list(job: Job) {
@@ -37,7 +36,7 @@ class JobManager {
             if (jobBoard.mapLocation.chunk.isLoaded) {
                 jobBoard.spawnIcons(job)
             } else {
-                val list: MutableList<Job> = pendingSpawns.getOrDefault(jobBoard, mutableListOf())
+                val list = pendingSpawns.getOrDefault(jobBoard, mutableListOf<Job>())
                 list.add(job)
                 pendingSpawns[jobBoard] = list
             }
@@ -161,12 +160,13 @@ class JobManager {
 }
 
 data class Job(val category: JobCategory, val player: Player, val durationMillis: Long) {
-    val uuid: String = UUID.randomUUID().toString()
-    var recordID: String = ""
-    val location: Location = player.location
-    var startTime: Long = 0L
-    val itemDisplays: MutableMap<JobBoard, ItemDisplay> = mutableMapOf()
-    val textDisplays: MutableMap<JobBoard, TextDisplay> = mutableMapOf()
+    val uuid = UUID.randomUUID().toString()
+    var recordID = ""
+    val location = player.location
+    var startTime = 0L
+    val itemDisplays = mutableMapOf<JobBoard, ItemDisplay>()
+    val textDisplays = mutableMapOf<JobBoard, TextDisplay>()
+    var tracking = false
     var name: String = category.name
         set(value) {
             field = value
