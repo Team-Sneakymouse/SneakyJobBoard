@@ -69,7 +69,7 @@ class PocketbaseManager {
     fun listJob(job: Job) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
-        if (url == null) return
+        if (url == null || url.isEmpty()) return
 
         Bukkit.getScheduler()
                 .runTaskAsynchronously(
@@ -119,7 +119,7 @@ class PocketbaseManager {
     fun unlistJob(job: Job) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
-        if (url == null || job.recordID.isEmpty()) return
+        if (url == null || url.isEmpty() || job.recordID.isEmpty()) return
 
         Bukkit.getScheduler()
                 .runTaskAsynchronously(
