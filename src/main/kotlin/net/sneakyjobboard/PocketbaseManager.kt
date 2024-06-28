@@ -295,6 +295,7 @@ class PocketbaseManager {
         return mapOf(
                 "uuid" to job.uuid,
                 "category" to job.category.name,
+                "poster" to job.player.name,
                 "posterDisplayString" to displayStringPoster,
                 "posterIconBase64" to faceIconBase64,
                 "location" to job.location.toString(),
