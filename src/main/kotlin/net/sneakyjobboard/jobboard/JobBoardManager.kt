@@ -762,6 +762,36 @@ class TrackingJobsUpdater : BukkitRunnable() {
                 for ((jobBoard, textDisplay) in job.textDisplays) {
                     textDisplay.teleport(jobBoard.getDisplayLocation(job))
                 }
+
+                if (SneakyJobBoard.isDynmapActive()) {
+                    val markerAPI = SneakyJobBoard.getInstance().markerAPI
+
+                    val markerSet =
+                            markerAPI?.getMarkerSet("SneakyJobBoard")
+                                    ?: run {
+                                        markerAPI?.createMarkerSet(
+                                                "SneakyJobBoard",
+                                                "SneakyJobBoard",
+                                                null,
+                                                false
+                                        )
+                                                ?: run {
+                                                    SneakyJobBoard.log(
+                                                            "Failed to create a new marker set."
+                                                    )
+                                                    return
+                                                }
+                                    }
+
+                    markerSet
+                            .findMarker(job.uuid)
+                            ?.setLocation(
+                                    job.location.world.name,
+                                    job.location.x,
+                                    job.location.y,
+                                    job.location.z
+                            )
+                }
             }
         }
     }
