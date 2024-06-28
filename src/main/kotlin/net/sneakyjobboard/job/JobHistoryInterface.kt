@@ -18,7 +18,12 @@ class JobHistoryInventoryHolder(val jobHistory: List<Job>) : InventoryHolder {
     private var inventory: Inventory
 
     init {
-        inventory = Bukkit.createInventory(this, 9, TextUtility.convertToComponent("&eJob History. Click to re-list."))
+        inventory =
+                Bukkit.createInventory(
+                        this,
+                        9,
+                        TextUtility.convertToComponent("&eJob History. Click to re-list.")
+                )
 
         for (job in jobHistory) {
             if (inventory.firstEmpty() != -1) {
@@ -46,8 +51,16 @@ class JobHistoryInventoryHolder(val jobHistory: List<Job>) : InventoryHolder {
         val job = jobHistory.find { it.uuid == uuid }
 
         if (job != null) {
-			SneakyJobBoard.getJobManager().list(job)
-		}
+            SneakyJobBoard.getJobManager().list(job)
+            Bukkit.getServer()
+                    .dispatchCommand(
+                            Bukkit.getServer().getConsoleSender(),
+                            "cast forcecast " +
+                                    player.getName() +
+                                    " jobboard-history-listing " +
+                                    job.durationMillis
+                    )
+        }
     }
 }
 
