@@ -34,7 +34,7 @@ class CommandListJob : CommandBase("listjob") {
     }
 
     init {
-        this.usageMessage = "/${this@CommandListJob.name} [jobCategory] [durationMillis]"
+        this.usageMessage = "/${this@CommandListJob.name} [jobCategory] [durationMillis] (tracking)"
         this.description = "List a job to the job board."
     }
 
