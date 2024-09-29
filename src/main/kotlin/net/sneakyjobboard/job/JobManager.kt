@@ -313,6 +313,8 @@ data class Job(
         val persistentData = meta.persistentDataContainer
         persistentData.set(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING, uuid)
 
+        meta.setEnchantmentGlintOverride(true)
+
         itemStack.itemMeta = meta
         return itemStack
     }
