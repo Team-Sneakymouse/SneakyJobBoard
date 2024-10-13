@@ -6,6 +6,11 @@ import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
+/**
+ * Command for opening the job board for players.
+ *
+ * This command allows players to access the job board interface where they can view available jobs.
+ */
 class CommandJobBoard : CommandBase("jobboard") {
 
     init {
@@ -13,6 +18,14 @@ class CommandJobBoard : CommandBase("jobboard") {
         this.description = "Opens the job board."
     }
 
+    /**
+     * Executes the command to open the job board for a specified player.
+     *
+     * @param sender The entity that sent the command.
+     * @param commandLabel The label used to invoke the command.
+     * @param args The arguments provided with the command.
+     * @return True if the command was executed successfully, false otherwise.
+     */
     override fun execute(
         sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
@@ -32,6 +45,14 @@ class CommandJobBoard : CommandBase("jobboard") {
         return true
     }
 
+    /**
+     * Provides tab completion for the command arguments.
+     *
+     * @param sender The entity that sent the command.
+     * @param alias The alias used to invoke the command.
+     * @param args The arguments provided with the command.
+     * @return A list of possible completions based on the current input.
+     */
     override fun tabComplete(
         sender: CommandSender, alias: String, args: Array<String>
     ): List<String> {
@@ -46,7 +67,11 @@ class CommandJobBoard : CommandBase("jobboard") {
     }
 
     companion object {
-        /** Makes the provided player open the job board inventory UI. */
+        /**
+         * Opens the job board inventory UI for the provided player.
+         *
+         * @param player The player for whom to open the job board inventory.
+         */
         fun openJobBoard(player: Player) {
             player.openInventory(JobInventoryHolder().inventory)
         }

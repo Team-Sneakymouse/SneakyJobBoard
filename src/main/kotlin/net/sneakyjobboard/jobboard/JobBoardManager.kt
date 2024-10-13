@@ -21,17 +21,32 @@ import org.bukkit.scheduler.BukkitRunnable
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Manages jobboards and their configurations. */
+/**
+ * Manages job boards and their configurations.
+ *
+ * This class handles the loading and configuration of job boards
+ * from a specified configuration file during initialization.
+ * It maintains a list of job boards that can be accessed and manipulated.
+ */
 class JobBoardManager {
 
     val jobBoards = mutableListOf<JobBoard>()
 
-    /** Loads job boards from the configuration file on initialization. */
+    /**
+     * Initializes the JobBoardManager and loads job boards from the configuration file.
+     */
     init {
         parseConfig()
     }
 
-    /** Loads job boards from the configuration file. */
+    /**
+     * Loads job boards from the configuration file.
+     *
+     * This method reads the configuration file, parses the specified
+     * central vectors for maps and worlds, and constructs job board
+     * instances from the parsed data. Errors encountered during the
+     * loading process are logged.
+     */
     private fun parseConfig() {
         try {
             val configFile = SneakyJobBoard.getConfigFile()
@@ -144,6 +159,16 @@ class JobBoardManager {
     }
 }
 
+/**
+ * Represents a job board with its associated map and world locations,
+ * interactability, scale, and isometric angle.
+ *
+ * @property mapLocation The location of the job board on the map.
+ * @property worldLocation The location of the job board in the world.
+ * @property interactable Indicates if the job board is interactable.
+ * @property scale The scale of the map represented by this job board.
+ * @property isometricAngle The angle of the job board in isometric projection.
+ */
 data class JobBoard(
     val mapLocation: Location,
     val worldLocation: Location,
@@ -185,7 +210,15 @@ data class JobBoard(
         (itemFrame as ItemFrame).rotation
     }
 
-    /** Retrieves the minecraft scale value of the map in the center job board position. */
+    /**
+     * Retrieves the Minecraft scale value of the map at the center job board position.
+     *
+     * If the scale is not already set, it checks for the associated item frame
+     * and retrieves the scale based on the map view settings. If no valid scale
+     * can be determined, it defaults to 128.
+     *
+     * @return The current scale of the job board.
+     */
     private fun getScale(): Int {
         if (scale <= 0) {
             val itemFrame = mapLocation.world?.getNearbyEntities(
@@ -230,7 +263,14 @@ data class JobBoard(
         return scale
     }
 
-    /** Gets the axis that the board is aligned across. */
+    /**
+     * Gets the axis that the job board is aligned along.
+     *
+     * This method determines whether the board is aligned along the x, y,
+     * or z axis based on the attached face of the item frame.
+     *
+     * @return A character representing the aligned axis ('x', 'y', or 'z').
+     */
     fun getAxis(): Char {
         return when (attachedFace) {
             BlockFace.NORTH, BlockFace.SOUTH -> 'z'
@@ -239,7 +279,14 @@ data class JobBoard(
         }
     }
 
-    /** Gets the coordinate value that all item frames have on the aligned axis. */
+    /**
+     * Gets the coordinate value where all item frames align on the associated axis.
+     *
+     * This method retrieves the coordinate value for the aligned axis,
+     * which represents the position of all item frames connected to this job board.
+     *
+     * @return The coordinate value on the aligned axis.
+     */
     fun getAxisIntersection(): Double {
         return when (attachedFace) {
             BlockFace.UP -> mapLocation.y() + 1
@@ -251,14 +298,32 @@ data class JobBoard(
         }
     }
 
-    /** Checks if an item frame is part of this job board. */
+    /**
+     * Checks if a specified item frame is part of this job board.
+     *
+     * This method determines if the given item frame is aligned with
+     * this job board based on its location.
+     *
+     * @param itemFrame The item frame to check for alignment.
+     * @return True if the item frame is part of this job board; otherwise, false.
+     */
     fun isPartOfBoard(itemFrame: ItemFrame): Boolean {
         if (!mapLocation.chunk.isLoaded) return false
 
         return checkAlignmentAndPath(itemFrame.location.block.location, mapLocation.block.location)
     }
 
-    /** Checks which axes to iterate over, and run those checks. */
+    /**
+     * Checks alignment and path for the specified start and end locations.
+     *
+     * This method verifies if the start and end locations share the same world
+     * and checks if they align along the job board's axis, performing further
+     * checks along the path if they do.
+     *
+     * @param start The starting location.
+     * @param end The ending location.
+     * @return True if the alignment and path are valid; otherwise, false.
+     */
     private fun checkAlignmentAndPath(start: Location, end: Location): Boolean {
         if (start.world != end.world) return false
 
@@ -274,7 +339,16 @@ data class JobBoard(
     }
 
     /**
-     * Iterate over both axes and ensure that there are item frames on every location in between.
+     * Iterates over both axes and ensures that item frames are present at every location in between.
+     *
+     * This method checks each location along the path between the start and end
+     * locations to ensure that item frames exist at all intermediary points.
+     *
+     * @param start The starting location.
+     * @param end The ending location.
+     * @param axis1 The first axis to iterate over.
+     * @param axis2 The second axis to iterate over.
+     * @return True if item frames are found at all locations along the path; otherwise, false.
      */
     private fun checkPath(start: Location, end: Location, axis1: Char, axis2: Char): Boolean {
         val increment1 = if (start.getBlock(axis1) < end.getBlock(axis1)) 1 else -1
@@ -307,7 +381,16 @@ data class JobBoard(
         return true
     }
 
-    /** Get the axis value of a block location. */
+    /**
+     * Gets the block coordinate value for the specified axis of a location.
+     *
+     * This method retrieves the block coordinate (x, y, or z) from the given location
+     * based on the specified axis.
+     *
+     * @param axis The axis for which to get the block coordinate ('x', 'y', or 'z').
+     * @return The block coordinate value for the specified axis.
+     * @throws IllegalArgumentException if the provided axis is invalid.
+     */
     private fun Location.getBlock(axis: Char): Int {
         return when (axis) {
             'x' -> this.blockX
@@ -317,7 +400,16 @@ data class JobBoard(
         }
     }
 
-    /** Set the axis value of a block location. */
+    /**
+     * Sets the block coordinate value for the specified axis of a location.
+     *
+     * This method updates the block coordinate (x, y, or z) of the given location
+     * based on the specified axis.
+     *
+     * @param axis The axis for which to set the block coordinate ('x', 'y', or 'z').
+     * @param value The new block coordinate value for the specified axis.
+     * @throws IllegalArgumentException if the provided axis is invalid.
+     */
     private fun Location.setBlock(axis: Char, value: Int) {
         when (axis) {
             'x' -> this.x = value.toDouble()
@@ -327,13 +419,25 @@ data class JobBoard(
         }
     }
 
-    /** Check a specified location for item frames. */
+    /**
+     * Checks if a specified location contains item frames.
+     *
+     * This method determines if there are any item frames located at the specified
+     * location by checking nearby entities.
+     *
+     * @param location The location to check for item frames.
+     * @return True if item frames are found at the location; otherwise, false.
+     */
     private fun locationHasItemFrame(location: Location): Boolean {
         val entitiesAtLocation = location.world.getNearbyEntities(location.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5)
         return entitiesAtLocation.any { entity -> entity is ItemFrame }
     }
 
-    /** Spawn a jobs icons on this JobBoards. */
+    /**
+     * Spawns icons on the job board for the specified job if it is valid and not expired.
+     *
+     * @param job The job for which to spawn icons.
+     */
     fun spawnIcons(job: Job) {
         if (job.isExpired()) return
         if (job.location.world != worldLocation.world) return
@@ -369,7 +473,12 @@ data class JobBoard(
         }
     }
 
-    /** Calculate where on the board the display entities for this job should be. */
+    /**
+     * Calculates the display location for the specified job on the job board.
+     *
+     * @param job The job for which to calculate the display location.
+     * @return The calculated display location.
+     */
     fun getDisplayLocation(job: Job): Location {
         val jobLocation = job.location
         val displayLocation = mapLocation.clone().add(0.5, 0.5, 0.5)
@@ -473,7 +582,11 @@ data class JobBoard(
 
 class JobBoardListener : Listener {
 
-    /** Handles right-clicking the job board. */
+    /**
+     * Handles right-click interactions with item frames.
+     *
+     * @param event The interaction event.
+     */
     @EventHandler
     fun onRightClickItemFrame(event: PlayerInteractAtEntityEvent) {
         val entity = event.rightClicked
@@ -495,7 +608,11 @@ class JobBoardListener : Listener {
         }
     }
 
-    /** Handles lazy spawning of job board icons. */
+    /**
+     * Handles the lazy spawning of job board icons when a chunk is loaded.
+     *
+     * @param event The chunk load event.
+     */
     @EventHandler
     fun onChunkLoad(event: ChunkLoadEvent) {
         val jobManager = SneakyJobBoard.getJobManager()
@@ -510,7 +627,11 @@ class JobBoardListener : Listener {
         }
     }
 
-    /** Hide text displays to joining players. */
+    /**
+     * Hides text displays from players when they join the game.
+     *
+     * @param event The player join event.
+     */
     @EventHandler
     fun onJoin(event: PlayerJoinEvent) {
         for (job in SneakyJobBoard.getJobManager().jobs.values) {
@@ -520,7 +641,11 @@ class JobBoardListener : Listener {
         }
     }
 
-    /** Handle right-clicking the job board entities. */
+    /**
+     * Handles interactions with the job board entities.
+     *
+     * @param event The player interaction event.
+     */
     @EventHandler
     fun onInteract(event: PlayerInteractEvent) {
         if (event.action != Action.RIGHT_CLICK_BLOCK && event.action != Action.RIGHT_CLICK_AIR) return
@@ -529,7 +654,12 @@ class JobBoardListener : Listener {
         event.setCancelled(dispatchViaIcon(player))
     }
 
-    /** Dispatch a player via right-clicking a map icon. */
+    /**
+     * Dispatches a player when they right-click a job board icon.
+     *
+     * @param player The player interacting with the icon.
+     * @return True if dispatching occurred, false otherwise.
+     */
     private fun dispatchViaIcon(player: Player): Boolean {
         val entity = SneakyJobBoard.getInstance().jobBoardUpdater.shownIcons[player]
 
@@ -545,9 +675,13 @@ class JobBoardListener : Listener {
     }
 }
 
+/** Periodically updates job board icons based on player proximity. */
 class JobBoardUpdater : BukkitRunnable() {
     val shownIcons = mutableMapOf<Player, TextDisplay>()
 
+    /**
+     * Runs the update cycle for job board icons.
+     */
     override fun run() {
         val players = mutableMapOf<JobBoard, MutableList<Player>>()
 
@@ -593,13 +727,22 @@ class JobBoardUpdater : BukkitRunnable() {
         }
     }
 
-    /** Hide the textdisplay. */
+    /**
+     * Hides the text display for the given player.
+     *
+     * @param player The player whose display to hide.
+     */
     private fun hide(player: Player) {
         val entity: Entity? = shownIcons.remove(player)
         if (entity != null) player.hideEntity(SneakyJobBoard.getInstance(), entity)
     }
 
-    /** Show the textdisplay. */
+    /**
+     * Shows a text display entity to a player.
+     *
+     * @param player The player to show the display to.
+     * @param entity The text display entity to show.
+     */
     private fun show(player: Player, entity: TextDisplay) {
         if (shownIcons[player] == entity) return
 
@@ -608,7 +751,13 @@ class JobBoardUpdater : BukkitRunnable() {
         player.showEntity(SneakyJobBoard.getInstance(), entity)
     }
 
-    /** Get the first JobBoardIcon that the player is looking at. */
+    /**
+     * Gets the first job board icon the player is looking at.
+     *
+     * @param jobBoard The job board to check against.
+     * @param player The player whose line of sight to check.
+     * @return The first text display entity the player is looking at, or null if none found.
+     */
     private fun getLookedAtIcon(jobBoard: JobBoard, player: Player): TextDisplay? {
         val playerEyeLocation = player.eyeLocation
         val direction = playerEyeLocation.direction.normalize()
@@ -639,7 +788,12 @@ class JobBoardUpdater : BukkitRunnable() {
     }
 }
 
+/** Performs maintenance tasks for job board displays. */
 class JobBoardMaintenance : BukkitRunnable() {
+
+    /**
+     * Runs the maintenance tasks for job board displays.
+     */
     override fun run() {
         // Build a list of all Display Entities that have the JobBoardIcon tag
         val worlds = SneakyJobBoard.getJobBoardManager().jobBoards.map { it.mapLocation.world }.toSet()
@@ -689,7 +843,12 @@ class JobBoardMaintenance : BukkitRunnable() {
     }
 }
 
+/** Updates job locations for tracking jobs periodically. */
 class TrackingJobsUpdater : BukkitRunnable() {
+
+    /**
+     * Runs the update cycle for tracking jobs.
+     */
     override fun run() {
         for (job in SneakyJobBoard.getJobManager().getJobs()) {
             if (job.tracking && job.player.isOnline && job.player.location.world == job.location.world) {

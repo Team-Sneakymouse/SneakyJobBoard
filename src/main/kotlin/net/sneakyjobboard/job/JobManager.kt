@@ -25,7 +25,10 @@ class JobManager {
     val jobs = mutableMapOf<String, Job>()
     val pendingSpawns = mutableMapOf<JobBoard, MutableList<Job>>()
 
-    /** Adds a new job to the map. */
+    /**
+     * Lists a new job, spawning its display and scheduling unlisting.
+     * @param job The job to be listed.
+     */
     fun list(job: Job) {
         job.startTime = System.currentTimeMillis()
         SneakyJobBoard.getPocketbaseManager().listJob(job)
@@ -70,9 +73,8 @@ class JobManager {
         // Play toast on all players
         var displayStringLocation =
             (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
-                    "[x]",
-                    job.location.blockX.toString()
-                ).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
+                "[x]", job.location.blockX.toString()
+            ).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringLocation =
@@ -81,30 +83,35 @@ class JobManager {
 
         for (player in job.location.world.players) {
             Bukkit.getServer().dispatchCommand(
-                    Bukkit.getServer().consoleSender,
-                    "cast forcecast " + player.name + " jobboard-listed " + job.category.name.replace(
-                        " ",
-                        "\u00A0"
-                    ) + " " + displayStringLocation.replace(
-                        " ",
-                        "\u00A0"
-                    ) + " " + job.getIconItem().type + " " + (job.getIconItem().itemMeta?.customModelData?.toString()
-                        ?: "0")
-                )
+                Bukkit.getServer().consoleSender,
+                "cast forcecast " + player.name + " jobboard-listed " + job.category.name.replace(
+                    " ", "\u00A0"
+                ) + " " + displayStringLocation.replace(
+                    " ", "\u00A0"
+                ) + " " + job.getIconItem().type + " " + (job.getIconItem().itemMeta?.customModelData?.toString()
+                    ?: "0")
+            )
         }
 
         // Schedule unlisting
         Bukkit.getScheduler().runTaskLater(
-                SneakyJobBoard.getInstance(), Runnable { job.unlist() }, 20 * job.durationMillis / 1000
-            )
+            SneakyJobBoard.getInstance(), Runnable { job.unlist() }, 20 * job.durationMillis / 1000
+        )
     }
 
-    /** Get job value collection. */
+    /**
+     * Gets the collection of currently listed jobs.
+     * @return A mutable collection of jobs.
+     */
     fun getJobs(): MutableCollection<Job> {
         return jobs.values
     }
 
-    /** Get the last job that was listed by player. */
+    /**
+     * Retrieves the last job that was listed by the specified player.
+     * @param player The player whose last listed job is to be retrieved.
+     * @return The last job listed by the player, or null if none exists.
+     */
     fun getLastListedJob(player: Player): Job? {
         for (job in jobs.values.reversed()) {
             if (job.player == player) {
@@ -114,12 +121,16 @@ class JobManager {
         return null
     }
 
-    /** Get a listed job by its name. */
+    /**
+     * Gets a listed job by its name, ignoring case.
+     * @param name The name of the job.
+     * @return The job matching the specified name, or null if not found.
+     */
     fun getJobByName(name: String): Job? {
         return jobs.values.find { it.name.equals(name, ignoreCase = true) }
     }
 
-    /** Clean up all listed jobs. */
+    /** Cleans up all listed jobs, including removing associated markers. */
     fun cleanup() {
         val jobIdsToRemove = jobs.values.toList()
         jobIdsToRemove.forEach { it.unlist() }
@@ -141,16 +152,20 @@ class JobManager {
         }
     }
 
-    /** Dispatch a player to a listed job. */
+    /**
+     * Dispatches a player to the specified job.
+     * @param uuid The UUID of the job to dispatch to.
+     * @param pl The player to be dispatched.
+     */
     fun dispatch(uuid: String, pl: Player) {
         val job = jobs[uuid] ?: return
 
         Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast " + pl.name + " jobboard-dispatch-self " + floor(job.location.x) + " " + floor(job.location.y) + " " + floor(
-                    job.location.z
-                )
+            Bukkit.getServer().consoleSender,
+            "cast forcecast " + pl.name + " jobboard-dispatch-self " + floor(job.location.x) + " " + floor(job.location.y) + " " + floor(
+                job.location.z
             )
+        )
     }
 }
 
@@ -190,17 +205,23 @@ data class Job(
             updateTextDisplays()
         }
 
-    /** Returns the remaining duration of this job in milliseconds. */
+    /**
+     * Returns the remaining duration of this job in milliseconds.
+     * @return Remaining duration in milliseconds.
+     */
     private fun remainingDurationMillis(): Long {
         return ((startTime + durationMillis) - System.currentTimeMillis())
     }
 
-    /** Returns whether this job is expired. */
+    /**
+     * Checks if this job is expired based on its remaining duration.
+     * @return True if the job is expired, false otherwise.
+     */
     fun isExpired(): Boolean {
         return remainingDurationMillis() < 0L
     }
 
-    /** Unlists this job from all platforms. */
+    /** Unlists this job from all platforms and cleans up associated displays. */
     fun unlist() {
         SneakyJobBoard.getPocketbaseManager().unlistJob(this)
         itemDisplays.values.forEach { entity -> entity.remove() }
@@ -223,7 +244,9 @@ data class Job(
         }
     }
 
-    /** Updates all the Text Display entities associated with this job. */
+    /**
+     * Updates all Text Display entities associated with this job.
+     */
     fun updateTextDisplays() {
         for (textDisplayEntity in textDisplays.values) {
             val text: MutableList<String> = mutableListOf("&a${name}")
@@ -253,7 +276,10 @@ data class Job(
         }
     }
 
-    /** Returns the ItemStack that should be used to represent this job. */
+    /**
+     * Returns the ItemStack that represents this job, including metadata.
+     * @return The item representing this job.
+     */
     fun getIconItem(): ItemStack {
         val itemStack = ItemStack(category.iconMaterial)
         val customModelData: Int = category.iconCustomModelData
@@ -298,7 +324,10 @@ data class Job(
         return itemStack
     }
 
-    /** Returns the transformation values that should be applied to this job's item displays. */
+    /**
+     * Returns the transformation values for this job's item displays.
+     * @return The transformation to be applied to the job's item displays.
+     */
     fun getTransformation(): Transformation {
         val config = SneakyJobBoard.getInstance().getConfig()
 

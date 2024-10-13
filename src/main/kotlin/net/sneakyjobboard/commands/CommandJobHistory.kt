@@ -6,6 +6,11 @@ import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
+/**
+ * Command for accessing a player's job history.
+ *
+ * This command allows players to view their recent job history, specified by a duration.
+ */
 class CommandJobHistory : CommandBase("jobhistory") {
 
     init {
@@ -13,6 +18,14 @@ class CommandJobHistory : CommandBase("jobhistory") {
         this.description = "Opens your recent job history."
     }
 
+    /**
+     * Executes the command to retrieve a player's job history.
+     *
+     * @param sender The entity that sent the command.
+     * @param commandLabel The label used to invoke the command.
+     * @param args The arguments provided with the command.
+     * @return True if the command was executed successfully, false otherwise.
+     */
     override fun execute(
         sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
@@ -59,6 +72,14 @@ class CommandJobHistory : CommandBase("jobhistory") {
         return true
     }
 
+    /**
+     * Provides tab completion for the command arguments.
+     *
+     * @param sender The entity that sent the command.
+     * @param alias The alias used to invoke the command.
+     * @param args The arguments provided with the command.
+     * @return A list of possible completions based on the current input.
+     */
     override fun tabComplete(
         sender: CommandSender, alias: String, args: Array<String>
     ): List<String> {

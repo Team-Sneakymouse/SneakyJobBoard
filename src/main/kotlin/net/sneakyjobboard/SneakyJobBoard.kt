@@ -77,55 +77,83 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         const val VERSION = "1.0.0"
         private lateinit var instance: SneakyJobBoard
 
-        /** Logs a message using the plugin logger. */
+        /**
+         * Logs a message to the console.
+         * @param msg the message to log.
+         */
         fun log(msg: String) {
             instance.logger.info(msg)
         }
 
         /**
-         * Retrieves the plugin data folder.
-         * @throws IllegalStateException if the data folder is null.
+         * Retrieves the plugin's data folder.
+         * @return the File object representing the data folder.
+         * @throws IllegalStateException if the data folder is not initialized.
          */
         private fun getDataFolder(): File {
             return instance.dataFolder
         }
 
-        /** Retrieves the configuration file. */
+        /**
+         * Retrieves the configuration file for the plugin.
+         * @return the File object representing the config.yml file.
+         */
         fun getConfigFile(): File {
             return File(getDataFolder(), "config.yml")
         }
 
-        /** Whether placeholderAPI is running. */
+        /**
+         * Checks if PlaceholderAPI (PAPI) is active.
+         * @return true if PAPI is active, false otherwise.
+         */
         fun isPapiActive(): Boolean {
             return instance.papiActive
         }
 
-        /** Whether dynmap is running. */
+        /**
+         * Checks if Dynmap is active.
+         * @return true if Dynmap is active, false otherwise.
+         */
         fun isDynmapActive(): Boolean {
             return (instance.markerAPI != null)
         }
 
-        /** The running instance. */
+        /**
+         * Retrieves the running instance of the SneakyJobBoard plugin.
+         * @return the SneakyJobBoard instance.
+         */
         fun getInstance(): SneakyJobBoard {
             return instance
         }
 
-        /** Retrieves the job category manager instance. */
+        /**
+         * Retrieves the job category manager instance.
+         * @return the JobCategoryManager instance responsible for managing job categories.
+         */
         fun getJobCategoryManager(): JobCategoryManager {
             return instance.jobCategoryManager
         }
 
-        /** Retrieves the job category manager instance. */
+        /**
+         * Retrieves the job board manager instance.
+         * @return the JobBoardManager instance responsible for managing job boards.
+         */
         fun getJobBoardManager(): JobBoardManager {
             return instance.jobBoardManager
         }
 
-        /** Retrieves the job manager instance. */
+        /**
+         * Retrieves the job manager instance.
+         * @return the JobManager instance responsible for managing jobs.
+         */
         fun getJobManager(): JobManager {
             return instance.jobManager
         }
 
-        /** Retrieves the job manager instance. */
+        /**
+         * Retrieves the PocketBase manager instance.
+         * @return the PocketbaseManager instance responsible for interacting with the PocketBase API.
+         */
         fun getPocketbaseManager(): PocketbaseManager {
             return instance.pocketBaseManager
         }
@@ -138,6 +166,11 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
 class PluginListener(private val instance: SneakyJobBoard) : Listener {
 
+    /**
+     * Handles the PluginDisableEvent, which is triggered when the plugin is disabled.
+     * Cleans up the job manager when the plugin is disabled.
+     * @param event the PluginDisableEvent indicating that a plugin has been disabled.
+     */
     @EventHandler
     fun onPluginDisable(event: PluginDisableEvent) {
         if (event.plugin == instance) {

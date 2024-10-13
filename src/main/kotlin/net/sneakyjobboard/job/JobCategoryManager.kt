@@ -9,17 +9,22 @@ import org.bukkit.util.Transformation
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
-/** Manages job categories and their configurations. */
+/**
+ * Manages job categories and their configurations, loading them from a configuration file.
+ */
 class JobCategoryManager {
 
     private val jobCategories = mutableMapOf<String, JobCategory>()
 
-    /** Loads job categories from the configuration file on initialization. */
+    /** Initializes the manager by loading job categories from the configuration file. */
     init {
         parseConfig()
     }
 
-    /** Loads job categories from the configuration file. */
+    /**
+     * Loads job categories from the configuration file.
+     * Throws an IllegalStateException if the configuration file is not found.
+     */
     private fun parseConfig() {
         try {
             val configFile = SneakyJobBoard.getConfigFile()
@@ -73,7 +78,11 @@ class JobCategoryManager {
         }
     }
 
-    /** Parse a Transformation from our config section. */
+    /**
+     * Parses a Transformation from the configuration section.
+     * @param key The key for the job category in the configuration.
+     * @return The Transformation object created from the configuration values.
+     */
     private fun ConfigurationSection.getVectorTransformation(key: String): Transformation {
         val leftRotationString =
             getString("$key.item-display-transformation.left-rotation")?.split(",") ?: listOf("0", "0", "0", "1")
@@ -105,12 +114,26 @@ class JobCategoryManager {
         return Transformation(translation, leftRotation, scale, rightRotation)
     }
 
-    /** Retrieves a read-only map of job categories. */
+    /**
+     * Retrieves a read-only map of job categories.
+     * @return A map where the key is the job category ID and the value is the JobCategory object.
+     */
     fun getJobCategories(): Map<String, JobCategory> {
         return jobCategories
     }
 }
 
+/**
+ * Represents a job category with associated properties for display and functionality.
+ * @property name The display name of the job category.
+ * @property description A brief description of the job category.
+ * @property iconMaterial The material used for the icon representation.
+ * @property iconCustomModelData Custom model data for the icon.
+ * @property brightness The brightness settings for item display.
+ * @property transformation The transformation applied to the item display.
+ * @property dynmapMapIcon The icon used in the Dynmap integration.
+ * @property discordEmbedIcon The icon used in Discord embeds.
+ */
 data class JobCategory(
     val name: String,
     val description: String,

@@ -14,9 +14,13 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
+/** Holds the job inventory for the job board. */
 class JobInventoryHolder : InventoryHolder {
     private var inventory: Inventory
 
+    /**
+     * Initializes the job inventory and populates it with job icons.
+     */
     init {
         val jobs = SneakyJobBoard.getJobManager().getJobs()
         val size = (((jobs.size + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
@@ -31,11 +35,19 @@ class JobInventoryHolder : InventoryHolder {
         }
     }
 
+    /**
+     * Gets the inventory associated with this holder.
+     * @return The inventory for this job board.
+     */
     override fun getInventory(): Inventory {
         return inventory
     }
 
-    /** Get the job associated with this item, and dispatch the player to it. */
+    /**
+     * Handles item clicks in the inventory, dispatching the player to the associated job.
+     * @param clickedItem The item that was clicked.
+     * @param player The player who clicked the item.
+     */
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
         val uuid = meta.persistentDataContainer.get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
@@ -48,8 +60,13 @@ class JobInventoryHolder : InventoryHolder {
     }
 }
 
+/** Listener for job inventory interactions. */
 class JobInventoryListener : Listener {
 
+    /**
+     * Handles inventory click events for the job inventory.
+     * @param event The inventory click event.
+     */
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
         val clickedInventory = event.clickedInventory ?: return
@@ -74,6 +91,10 @@ class JobInventoryListener : Listener {
         }
     }
 
+    /**
+     * Handles interactions with the job inventory.
+     * @param event The inventory interact event.
+     */
     @EventHandler
     fun onInventoryInteract(event: InventoryInteractEvent) {
         val topInventoryHolder = event.view.topInventory.holder

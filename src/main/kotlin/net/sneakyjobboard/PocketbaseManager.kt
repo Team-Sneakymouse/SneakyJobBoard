@@ -23,25 +23,37 @@ import java.net.URL
 import java.util.*
 import javax.imageio.ImageIO
 
+/**
+ * Manages interactions with the PocketBase database, handling authentication and job listing updates.
+ * This class handles various tasks such as listing jobs, unlisting jobs, retrieving job history, and
+ * managing authentication with the PocketBase server.
+ */
 class PocketbaseManager {
 
     private var authToken: String = ""
 
+    /**
+     * Initializes the PocketbaseManager. Upon creation, it authenticates with PocketBase
+     * and unlists all active jobs that do not have an end time, running the operations asynchronously.
+     */
     init {
         Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
-                try {
-                    auth()
+            try {
+                auth()
 
-                    if (authToken.isNotEmpty()) {
-                        unlistAllJobs()
-                    }
-                } catch (e: Exception) {
-                    SneakyJobBoard.log("Error occurred during startup: ${e.message}")
+                if (authToken.isNotEmpty()) {
+                    unlistAllJobs()
                 }
-            })
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred during startup: ${e.message}")
+            }
+        })
     }
 
-    /** Get a PocketBase auth token. Only run this asynchronously! */
+    /**
+     * Authenticates with the PocketBase server and retrieves an auth token. This method should be run asynchronously.
+     * The authentication details are pulled from the server's configuration file.
+     */
     @Synchronized
     private fun auth() {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-auth-url")
@@ -76,7 +88,12 @@ class PocketbaseManager {
         }
     }
 
-    /** Add the job to the pocketbase collection. */
+    /**
+     * Lists a job in the PocketBase database. This method sends a POST request containing job details to PocketBase.
+     * If authentication is required, it will authenticate before sending the job listing request.
+     *
+     * @param job The job object containing all relevant information to be listed in PocketBase.
+     */
     @Synchronized
     fun listJob(job: Job) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
@@ -84,40 +101,44 @@ class PocketbaseManager {
         if (url.isNullOrEmpty()) return
 
         Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
-                try {
-                    if (authToken.isEmpty()) auth()
+            try {
+                if (authToken.isEmpty()) auth()
 
-                    if (authToken.isNotEmpty()) {
-                        val client = OkHttpClient()
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
 
-                        val jobData = createJobDataMap(job)
+                    val jobData = createJobDataMap(job)
 
-                        val jsonRequestBody = Gson().toJson(jobData).toRequestBody("application/json".toMediaType())
+                    val jsonRequestBody = Gson().toJson(jobData).toRequestBody("application/json".toMediaType())
 
-                        val request =
-                            Request.Builder().url("$url").header("Authorization", authToken).post(jsonRequestBody)
-                                .build()
+                    val request =
+                        Request.Builder().url("$url").header("Authorization", authToken).post(jsonRequestBody).build()
 
-                        val response = client.newCall(request).execute()
+                    val response = client.newCall(request).execute()
 
-                        if (response.isSuccessful) {
-                            val responseBody = response.body?.string()
-                            val jsonResponse = JSONObject(responseBody)
-                            job.recordID = jsonResponse.getString("id")
-                        } else {
-                            SneakyJobBoard.log(
-                                "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
-                            )
-                        }
-                        response.close()
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        val jsonResponse = JSONObject(responseBody)
+                        job.recordID = jsonResponse.getString("id")
+                    } else {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                        )
                     }
-                } catch (e: Exception) {
-                    SneakyJobBoard.log("Error occurred: ${e.message}")
+                    response.close()
                 }
-            })
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
     }
 
-    /** Add an endtime to the pocketbase record. */
+    /**
+     * Unlists a job in PocketBase by adding an end time to its record. The job's recordID is used to identify
+     * the job in PocketBase, and the method patches the job with the current system time as its endTime.
+     *
+     * @param job The job to be unlisted.
+     */
     @Synchronized
     fun unlistJob(job: Job) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
@@ -125,34 +146,37 @@ class PocketbaseManager {
         if (url.isNullOrEmpty() || job.recordID.isEmpty()) return
 
         Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
-                try {
-                    if (authToken.isEmpty()) auth()
+            try {
+                if (authToken.isEmpty()) auth()
 
-                    if (authToken.isNotEmpty()) {
-                        val client = OkHttpClient()
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
 
-                        val jobData = mapOf("endTime" to System.currentTimeMillis())
-                        val jsonRequestBody = Gson().toJson(jobData).toRequestBody("application/json".toMediaType())
+                    val jobData = mapOf("endTime" to System.currentTimeMillis())
+                    val jsonRequestBody = Gson().toJson(jobData).toRequestBody("application/json".toMediaType())
 
-                        val request = Request.Builder().url("$url/${job.recordID}").header("Authorization", authToken)
-                            .patch(jsonRequestBody).build()
+                    val request = Request.Builder().url("$url/${job.recordID}").header("Authorization", authToken)
+                        .patch(jsonRequestBody).build()
 
-                        val response = client.newCall(request).execute()
+                    val response = client.newCall(request).execute()
 
-                        if (!response.isSuccessful) {
-                            SneakyJobBoard.log(
-                                "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
-                            )
-                        }
-                        response.close()
+                    if (!response.isSuccessful) {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                        )
                     }
-                } catch (e: Exception) {
-                    SneakyJobBoard.log("Error occurred: ${e.message}")
+                    response.close()
                 }
-            })
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
     }
 
-    /** Add an endtime to all jobs with an empty endtime. */
+    /**
+     * Unlists all jobs in PocketBase that do not have an end time. This method retrieves all jobs with an empty endTime field
+     * and patches them to add the current system time as their endTime.
+     */
     @Synchronized
     fun unlistAllJobs() {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
@@ -160,60 +184,63 @@ class PocketbaseManager {
         if (url.isNullOrEmpty()) return
 
         Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
-                try {
-                    if (authToken.isEmpty()) auth()
+            try {
+                if (authToken.isEmpty()) auth()
 
-                    if (authToken.isNotEmpty()) {
-                        val client = OkHttpClient()
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
 
-                        // Retrieve all jobs with an empty endtime
-                        val requestGet =
-                            Request.Builder().url("$url?filter=(endTime='0')").header("Authorization", authToken).get()
-                                .build()
+                    // Retrieve all jobs with an empty endtime
+                    val requestGet =
+                        Request.Builder().url("$url?filter=(endTime='0')").header("Authorization", authToken).get()
+                            .build()
 
-                        val responseGet = client.newCall(requestGet).execute()
-                        val responseBody = responseGet.body?.string()
+                    val responseGet = client.newCall(requestGet).execute()
+                    val responseBody = responseGet.body?.string()
 
-                        if (!responseGet.isSuccessful || responseBody == null) {
-                            SneakyJobBoard.log(
-                                "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
-                            )
-                            responseGet.close()
-                            return@Runnable
-                        }
-
-                        val recordIDs = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
-                            .map { it.asJsonObject.get("id").asString }
-
+                    if (!responseGet.isSuccessful || responseBody == null) {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
+                        )
                         responseGet.close()
-                        // Iterate over the jobs and update them
-                        recordIDs.forEach { recordID ->
-                            val jobData = mapOf("endTime" to System.currentTimeMillis())
-                            val jsonRequestBody = Gson().toJson(jobData).toRequestBody(
-                                    "application/json".toMediaType()
-                                )
-
-                            val requestPatch =
-                                Request.Builder().url("$url/${recordID}").header("Authorization", authToken)
-                                    .patch(jsonRequestBody).build()
-
-                            val responsePatch = client.newCall(requestPatch).execute()
-                            if (!responsePatch.isSuccessful) {
-                                SneakyJobBoard.log(
-                                    "Pocketbase request unsuccessful: ${responsePatch.code}, ${responsePatch.body?.string()}"
-                                )
-                            }
-                            responsePatch.close()
-                        }
+                        return@Runnable
                     }
-                } catch (e: Exception) {
-                    SneakyJobBoard.log("Error occurred: ${e.message}")
+
+                    val recordIDs = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
+                        .map { it.asJsonObject.get("id").asString }
+
+                    responseGet.close()
+                    // Iterate over the jobs and update them
+                    recordIDs.forEach { recordID ->
+                        val jobData = mapOf("endTime" to System.currentTimeMillis())
+                        val jsonRequestBody = Gson().toJson(jobData).toRequestBody(
+                            "application/json".toMediaType()
+                        )
+
+                        val requestPatch = Request.Builder().url("$url/${recordID}").header("Authorization", authToken)
+                            .patch(jsonRequestBody).build()
+
+                        val responsePatch = client.newCall(requestPatch).execute()
+                        if (!responsePatch.isSuccessful) {
+                            SneakyJobBoard.log(
+                                "Pocketbase request unsuccessful: ${responsePatch.code}, ${responsePatch.body?.string()}"
+                            )
+                        }
+                        responsePatch.close()
+                    }
                 }
-            })
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
     }
 
     /**
-     * Get the 9 most recent unique job listings from the pocketbase, and open the job history UI
+     * Retrieves a player's job history from PocketBase, showing the 9 most recent unique job listings.
+     * The retrieved job history is displayed to the player in a custom inventory UI.
+     *
+     * @param player The player for whom the job history is being retrieved.
+     * @param durationMillis The duration to display the job listings.
      */
     @Synchronized
     fun getJobHistory(player: Player, durationMillis: Long) {
@@ -222,85 +249,90 @@ class PocketbaseManager {
         if (url.isNullOrEmpty()) return
 
         Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
-                try {
-                    if (authToken.isEmpty()) auth()
+            try {
+                if (authToken.isEmpty()) auth()
 
-                    if (authToken.isNotEmpty()) {
-                        val client = OkHttpClient()
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
 
-                        val requestGet = Request.Builder().url("$url?filter=(poster='${player.name}')")
-                            .header("Authorization", authToken).get().build()
+                    val requestGet = Request.Builder().url("$url?filter=(poster='${player.name}')")
+                        .header("Authorization", authToken).get().build()
 
-                        val responseGet = client.newCall(requestGet).execute()
-                        val responseBody = responseGet.body?.string()
+                    val responseGet = client.newCall(requestGet).execute()
+                    val responseBody = responseGet.body?.string()
 
-                        if (!responseGet.isSuccessful || responseBody.isNullOrEmpty()) {
-                            SneakyJobBoard.log(
-                                "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
-                            )
-                            responseGet.close()
-                            return@Runnable
-                        }
-
-                        val items = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
-                            .map { it.asJsonObject }
-
-                        val jobHistory = mutableListOf<Job>()
-                        val seenJobs = mutableSetOf<Quadruple<String, String, String, String>>()
-
-                        for (item in items.reversed()) {
-                            if (jobHistory.size >= 9) break
-
-                            val category = item.get("category").asString
-                            val name = item.get("name").asString
-                            val tracking = item.get("tracking").asString
-                            val description = item.get("description").asString
-
-                            val jobKey = Quadruple(category, name, tracking, description)
-                            if (seenJobs.contains(jobKey)) continue
-
-                            seenJobs.add(jobKey)
-
-                            val jobCategory = SneakyJobBoard.getJobCategoryManager()
-                                .getJobCategories().values.find { it.name == category }
-                                ?: SneakyJobBoard.getJobCategoryManager().getJobCategories().values.first()
-
-                            val job = Job(
-                                category = jobCategory,
-                                player = player,
-                                durationMillis = durationMillis,
-                                tracking = tracking.toBooleanOrNull() ?: false
-                            ).apply {
-                                    this.name = name
-                                    this.description = description
-                                }
-
-                            jobHistory.add(job)
-                        }
-
-                        Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
-                                if (jobHistory.isNotEmpty()) {
-                                    player.openInventory(
-                                        JobHistoryInventoryHolder(
-                                            jobHistory.reversed()
-                                        ).inventory
-                                    )
-                                } else {
-                                    player.sendMessage(
-                                        TextUtility.convertToComponent(
-                                            "&4You do not have a job posting history."
-                                        )
-                                    )
-                                }
-                            })
+                    if (!responseGet.isSuccessful || responseBody.isNullOrEmpty()) {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
+                        )
+                        responseGet.close()
+                        return@Runnable
                     }
-                } catch (e: Exception) {
-                    SneakyJobBoard.log("Error occurred: ${e.message}")
+
+                    val items = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
+                        .map { it.asJsonObject }
+
+                    val jobHistory = mutableListOf<Job>()
+                    val seenJobs = mutableSetOf<Quadruple<String, String, String, String>>()
+
+                    for (item in items.reversed()) {
+                        if (jobHistory.size >= 9) break
+
+                        val category = item.get("category").asString
+                        val name = item.get("name").asString
+                        val tracking = item.get("tracking").asString
+                        val description = item.get("description").asString
+
+                        val jobKey = Quadruple(category, name, tracking, description)
+                        if (seenJobs.contains(jobKey)) continue
+
+                        seenJobs.add(jobKey)
+
+                        val jobCategory = SneakyJobBoard.getJobCategoryManager()
+                            .getJobCategories().values.find { it.name == category }
+                            ?: SneakyJobBoard.getJobCategoryManager().getJobCategories().values.first()
+
+                        val job = Job(
+                            category = jobCategory,
+                            player = player,
+                            durationMillis = durationMillis,
+                            tracking = tracking.toBooleanOrNull() ?: false
+                        ).apply {
+                            this.name = name
+                            this.description = description
+                        }
+
+                        jobHistory.add(job)
+                    }
+
+                    Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
+                        if (jobHistory.isNotEmpty()) {
+                            player.openInventory(
+                                JobHistoryInventoryHolder(
+                                    jobHistory.reversed()
+                                ).inventory
+                            )
+                        } else {
+                            player.sendMessage(
+                                TextUtility.convertToComponent(
+                                    "&4You do not have a job posting history."
+                                )
+                            )
+                        }
+                    })
                 }
-            })
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
     }
 
-    /** Converts a Job into a json-ready map. */
+    /**
+     * Helper method to create a job data map used for job listings in PocketBase.
+     *
+     * @param job The job object from which the data is derived.
+     * @return A map containing job data ready to be converted to JSON and sent to PocketBase.
+     */
     private fun createJobDataMap(job: Job): Map<String, Any> {
         // Poster display string
         var displayStringPoster = (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-poster")
@@ -313,9 +345,8 @@ class PocketbaseManager {
         // Location display string
         var displayStringLocation =
             (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
-                    "[x]",
-                    job.location.blockX.toString()
-                ).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
+                "[x]", job.location.blockX.toString()
+            ).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringLocation =
@@ -353,7 +384,12 @@ class PocketbaseManager {
         )
     }
 
-    /** Downloads an image from a specified URL. */
+    /**
+     * Downloads an image from the specified URL.
+     *
+     * @param url The URL from which to download the image.
+     * @return The downloaded image as a BufferedImage, or null if an error occurs.
+     */
     private fun downloadImage(url: URL): BufferedImage? {
         return try {
             ImageIO.read(url)
@@ -364,8 +400,12 @@ class PocketbaseManager {
     }
 
     /**
-     * Creates a player icon by extracting the face and overlaying the helmet layer from a Minecraft
-     * skin.
+     * Creates a player icon by extracting the face and overlaying the helmet layer (if present)
+     * from a Minecraft skin.
+     *
+     * @param skin The player's skin image.
+     * @param hatVisible Whether the helmet/hat layer of the skin should be displayed on top of the face.
+     * @return A BufferedImage of the player icon with the face (and optionally the helmet).
      */
     private fun createPlayerIcon(skin: BufferedImage, hatVisible: Boolean): BufferedImage {
         val icon = BufferedImage(72, 72, BufferedImage.TYPE_INT_ARGB)
@@ -397,12 +437,25 @@ class PocketbaseManager {
         return icon
     }
 
-    /** Checks if an image is fully transparent. */
+    /**
+     * Checks if an image is fully transparent by inspecting all its pixels.
+     *
+     * @param image The BufferedImage to check.
+     * @return True if the image is fully transparent, false otherwise.
+     */
     private fun isFullyTransparent(image: BufferedImage): Boolean = (0 until image.width).none { x ->
         (0 until image.height).any { y -> (image.getRGB(x, y) ushr 24) != 0 }
     }
 
-    /** Encode an image to a base64 String with proper prefix. */
+    /**
+     * Encodes an image to a Base64 string with a data URI prefix.
+     *
+     * This function writes the image to a ByteArrayOutputStream and encodes the image bytes as Base64.
+     * The result is returned as a valid data URI for PNG images.
+     *
+     * @param image The BufferedImage to be encoded.
+     * @return A String representing the image as a Base64 encoded data URI.
+     */
     private fun encodeImageToBase64(image: BufferedImage): String {
         val outputStream = ByteArrayOutputStream()
         return outputStream.use {
