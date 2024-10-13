@@ -84,12 +84,17 @@ class JobManager {
         for (player in job.location.world.players) {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast " + player.name + " jobboard-listed " + job.category.name.replace(
-                    " ", "\u00A0"
-                ) + " " + displayStringLocation.replace(
-                    " ", "\u00A0"
-                ) + " " + job.getIconItem().type + " " + (job.getIconItem().itemMeta?.customModelData?.toString()
-                    ?: "0")
+                "cast forcecast ${player.name} jobboard-listed ${
+                    job.category.name.replace(
+                        " ",
+                        "\u00A0"
+                    )
+                } ${
+                    displayStringLocation.replace(
+                        " ",
+                        "\u00A0"
+                    )
+                } ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
             )
         }
 
@@ -168,7 +173,8 @@ class JobManager {
                 }"
             )
             Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender, "cast forcecast ${job.player.name} jobboard-dispatch-other ${pl.name}"
+                Bukkit.getServer().consoleSender,
+                "cast forcecast ${job.player.name} jobboard-dispatch-other ${pl.name} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
