@@ -14,32 +14,28 @@ class CommandJobHistory : CommandBase("jobhistory") {
     }
 
     override fun execute(
-            sender: CommandSender,
-            commandLabel: String,
-            args: Array<out String>
+        sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
         val pocketbaseUrl = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
         if (pocketbaseUrl.isNullOrEmpty()) {
             sender.sendMessage(
-                    TextUtility.convertToComponent(
-                            "&4Job history cannot be viewed if Pocketbase is not set up."
-                    )
+                TextUtility.convertToComponent(
+                    "&4Job history cannot be viewed if Pocketbase is not set up."
+                )
             )
             return false
         }
 
-        val player: Player? =
-                if (sender is Player) sender
-                else if (args.isNotEmpty()) Bukkit.getPlayer(args[0]) else null
-        val remainingArgs: Array<out String> =
-                if (sender is Player) args else args.drop(1).toTypedArray()
+        val player: Player? = if (sender is Player) sender
+        else if (args.isNotEmpty()) Bukkit.getPlayer(args[0]) else null
+        val remainingArgs: Array<out String> = if (sender is Player) args else args.drop(1).toTypedArray()
 
         if (player == null) {
             sender.sendMessage(
-                    TextUtility.convertToComponent(
-                            "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
-                    )
+                TextUtility.convertToComponent(
+                    "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                )
             )
             return false
         }
@@ -49,16 +45,14 @@ class CommandJobHistory : CommandBase("jobhistory") {
             return false
         }
 
-        val durationMillis: Long =
-                remainingArgs[0].toLongOrNull()
-                        ?: run {
-                            sender.sendMessage(
-                                    TextUtility.convertToComponent(
-                                            "&4Invalid duration value. Please provide a valid number."
-                                    )
-                            )
-                            return false
-                        }
+        val durationMillis: Long = remainingArgs[0].toLongOrNull() ?: run {
+            sender.sendMessage(
+                TextUtility.convertToComponent(
+                    "&4Invalid duration value. Please provide a valid number."
+                )
+            )
+            return false
+        }
 
         SneakyJobBoard.getPocketbaseManager().getJobHistory(player, durationMillis)
 
@@ -66,17 +60,14 @@ class CommandJobHistory : CommandBase("jobhistory") {
     }
 
     override fun tabComplete(
-            sender: CommandSender,
-            alias: String,
-            args: Array<String>
+        sender: CommandSender, alias: String, args: Array<String>
     ): List<String> {
         return when {
             args.size == 1 && sender !is Player -> {
-                Bukkit.getOnlinePlayers()
-                        .filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
-                        .filter { it.name.startsWith(args[0], ignoreCase = true) }
-                        .map { it.name }
+                Bukkit.getOnlinePlayers().filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
+                    .filter { it.name.startsWith(args[0], ignoreCase = true) }.map { it.name }
             }
+
             else -> emptyList()
         }
     }

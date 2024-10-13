@@ -55,9 +55,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         jobBoardUpdater.runTaskTimer(this, 0L, 1L)
         jobBoardMaintenance.runTaskTimer(this, 0L, 100L)
         trackingJobsUpdater.runTaskTimer(
-                this,
-                0L,
-                getConfig().getLong("tracking-jobs-update-interval")
+            this, 0L, getConfig().getLong("tracking-jobs-update-interval")
         )
 
         val papiPlugin = Bukkit.getServer().pluginManager.getPlugin("PlaceholderAPI")
@@ -146,4 +144,5 @@ class PluginListener(private val instance: SneakyJobBoard) : Listener {
             SneakyJobBoard.getJobManager().cleanup()
         }
     }
+
 }

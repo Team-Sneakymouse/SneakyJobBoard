@@ -27,15 +27,11 @@ class Placeholders : PlaceholderExpansion() {
 
         return when (placeholder) {
             "listed_jobs" -> {
-                val jobs =
-                        SneakyJobBoard.getJobManager()
-                                .jobs
-                                .values
-                                .filter { it.player == player }
-                                .map { it.name }
+                val jobs = SneakyJobBoard.getJobManager().jobs.values.filter { it.player == player }.map { it.name }
 
                 jobs.takeIf { it.isNotEmpty() }?.joinToString("|") ?: "none"
             }
+
             else -> null
         }
     }

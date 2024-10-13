@@ -14,15 +14,13 @@ class CommandUnlistJob : CommandBase("unlistjob") {
     }
 
     override fun execute(
-            sender: CommandSender,
-            commandLabel: String,
-            args: Array<out String>
+        sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
         if (sender !is Player) {
             sender.sendMessage(
-                    TextUtility.convertToComponent(
-                            "&4This command can only be executed by players."
-                    )
+                TextUtility.convertToComponent(
+                    "&4This command can only be executed by players."
+                )
             )
             return false
         }
@@ -44,26 +42,22 @@ class CommandUnlistJob : CommandBase("unlistjob") {
 
         job.unlist()
         sender.sendMessage(
-                TextUtility.convertToComponent("&aThe job &b'${job.name}' &ahas been unlisted.")
+            TextUtility.convertToComponent("&aThe job &b'${job.name}' &ahas been unlisted.")
         )
 
         return true
     }
 
     override fun tabComplete(
-            sender: CommandSender,
-            alias: String,
-            args: Array<String>
+        sender: CommandSender, alias: String, args: Array<String>
     ): List<String> {
         if (sender !is Player || !sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin")) {
             return emptyList()
         }
 
         val prefix = args.joinToString(" ").lowercase()
-        return SneakyJobBoard.getJobManager()
-                .jobs
-                .values
-                .filter { it.name.lowercase().startsWith(prefix, ignoreCase = true) }
-                .map { it.name }
+        return SneakyJobBoard.getJobManager().jobs.values.filter {
+                it.name.lowercase().startsWith(prefix, ignoreCase = true)
+            }.map { it.name }
     }
 }

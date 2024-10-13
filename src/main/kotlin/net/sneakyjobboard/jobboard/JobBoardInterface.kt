@@ -20,8 +20,7 @@ class JobInventoryHolder : InventoryHolder {
     init {
         val jobs = SneakyJobBoard.getJobManager().getJobs()
         val size = (((jobs.size + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
-        inventory =
-                Bukkit.createInventory(this, size, TextUtility.convertToComponent("&eJob Board"))
+        inventory = Bukkit.createInventory(this, size, TextUtility.convertToComponent("&eJob Board"))
 
         for (job in jobs) {
             if (inventory.firstEmpty() != -1) {
@@ -38,9 +37,7 @@ class JobInventoryHolder : InventoryHolder {
 
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
-        val uuid =
-                meta.persistentDataContainer
-                        .get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
+        val uuid = meta.persistentDataContainer.get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
 
         if (uuid.isNullOrEmpty()) return
 
@@ -71,6 +68,7 @@ class JobInventoryListener : Listener {
                 val player = event.whoClicked as? Player ?: return
                 holder.clickedItem(clickedItem, player)
             }
+
             else -> {}
         }
     }

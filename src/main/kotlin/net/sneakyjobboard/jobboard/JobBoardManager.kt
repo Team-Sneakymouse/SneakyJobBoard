@@ -48,8 +48,7 @@ class JobBoardManager {
             val worldCentralLocations = mutableListOf<Location?>()
 
             val mapCentralVectorStrings: List<String> = config.getStringList("map-central-vectors")
-            val worldCentralVectorStrings: List<String> =
-                    config.getStringList("world-central-vectors")
+            val worldCentralVectorStrings: List<String> = config.getStringList("world-central-vectors")
 
             // Parse map central vectors
             mapCentralVectorStrings.forEach { vectorString ->
@@ -71,7 +70,7 @@ class JobBoardManager {
                         isometricAngles.add(isometricAngle)
                     } else {
                         SneakyJobBoard.log(
-                                "Error parsing map central vector: World '${components[1]}' not found."
+                            "Error parsing map central vector: World '${components[1]}' not found."
                         )
                         mapCentralLocations.add(null)
                         mapInteractables.add(null)
@@ -100,7 +99,7 @@ class JobBoardManager {
                         worldCentralLocations.add(location)
                     } else {
                         SneakyJobBoard.log(
-                                "Error parsing world central vector: World '${components[0]}' not found."
+                            "Error parsing world central vector: World '${components[0]}' not found."
                         )
                         worldCentralLocations.add(null)
                     }
@@ -121,28 +120,18 @@ class JobBoardManager {
 
                         // Find the last non-null worldVector
                         for (j in i downTo 0) {
-                            if (j < worldCentralLocations.size && worldCentralLocations[j] != null
-                            ) {
+                            if (j < worldCentralLocations.size && worldCentralLocations[j] != null) {
                                 worldLocation = worldCentralLocations[j]
                                 break
                             }
                         }
 
-                        if (worldLocation == null ||
-                                        interactable == null ||
-                                        scaleOverride == null ||
-                                        isometricAngle == null
-                        )
-                                continue
+                        if (worldLocation == null || interactable == null || scaleOverride == null || isometricAngle == null) continue
 
                         jobBoards.add(
-                                JobBoard(
-                                        mapLocation,
-                                        worldLocation,
-                                        interactable,
-                                        scaleOverride,
-                                        isometricAngle
-                                )
+                            JobBoard(
+                                mapLocation, worldLocation, interactable, scaleOverride, isometricAngle
+                            )
                         )
                     }
                 }
@@ -156,30 +145,22 @@ class JobBoardManager {
 }
 
 data class JobBoard(
-        val mapLocation: Location,
-        val worldLocation: Location,
-        val interactable: Boolean,
-        private var scale: Int,
-        val isometricAngle: Double
+    val mapLocation: Location,
+    val worldLocation: Location,
+    val interactable: Boolean,
+    private var scale: Int,
+    val isometricAngle: Double
 ) {
     private val attachedFace: BlockFace? by lazy {
-        val itemFrame =
-                mapLocation.world?.getNearbyEntities(
-                                mapLocation.clone().add(0.5, 0.5, 0.5),
-                                0.5,
-                                0.5,
-                                0.5
-                        )
-                        ?.firstOrNull {
-                            (it is ItemFrame) &&
-                                    it.location.blockX == mapLocation.blockX &&
-                                    it.location.blockY == mapLocation.blockY &&
-                                    it.location.blockZ == mapLocation.blockZ
-                        }
+        val itemFrame = mapLocation.world?.getNearbyEntities(
+            mapLocation.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5
+        )?.firstOrNull {
+                (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
+            }
 
         if (itemFrame == null) {
             SneakyJobBoard.log(
-                    "One of the jobboards listed in map-central-vectors does not have an item frame on it: $mapLocation"
+                "One of the jobboards listed in map-central-vectors does not have an item frame on it: $mapLocation"
             )
             return@lazy null
         }
@@ -188,23 +169,15 @@ data class JobBoard(
     }
 
     private val frameRotation: Rotation? by lazy {
-        val itemFrame =
-                mapLocation.world?.getNearbyEntities(
-                                mapLocation.clone().add(0.5, 0.5, 0.5),
-                                0.5,
-                                0.5,
-                                0.5
-                        )
-                        ?.firstOrNull {
-                            (it is ItemFrame) &&
-                                    it.location.blockX == mapLocation.blockX &&
-                                    it.location.blockY == mapLocation.blockY &&
-                                    it.location.blockZ == mapLocation.blockZ
-                        }
+        val itemFrame = mapLocation.world?.getNearbyEntities(
+            mapLocation.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5
+        )?.firstOrNull {
+                (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
+            }
 
         if (itemFrame == null) {
             SneakyJobBoard.log(
-                    "One of the jobboards listed in map-central-vectors does not have an item frame on it: $mapLocation"
+                "One of the jobboards listed in map-central-vectors does not have an item frame on it: $mapLocation"
             )
             return@lazy null
         }
@@ -214,31 +187,22 @@ data class JobBoard(
 
     private fun getScale(): Int {
         if (scale <= 0) {
-            val itemFrame =
-                    mapLocation.world?.getNearbyEntities(
-                                    mapLocation.clone().add(0.5, 0.5, 0.5),
-                                    0.5,
-                                    0.5,
-                                    0.5
-                            )
-                            ?.firstOrNull {
-                                (it is ItemFrame) &&
-                                        it.location.blockX == mapLocation.blockX &&
-                                        it.location.blockY == mapLocation.blockY &&
-                                        it.location.blockZ == mapLocation.blockZ
-                            } as?
-                            ItemFrame
+            val itemFrame = mapLocation.world?.getNearbyEntities(
+                mapLocation.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5
+            )?.firstOrNull {
+                    (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
+                } as? ItemFrame
 
             if (itemFrame == null) {
                 SneakyJobBoard.log(
-                        "One of the job boards listed in map-central-vectors does not have an item frame on it: $mapLocation"
+                    "One of the job boards listed in map-central-vectors does not have an item frame on it: $mapLocation"
                 )
                 scale = 128
             } else {
                 val frameItem = itemFrame.item
                 if (frameItem.type != Material.FILLED_MAP) {
                     SneakyJobBoard.log(
-                            "One of the job boards listed in map-central-vectors does not have a filled map item in the item frame: $mapLocation"
+                        "One of the job boards listed in map-central-vectors does not have a filled map item in the item frame: $mapLocation"
                     )
                     scale = 128
                 } else {
@@ -246,18 +210,17 @@ data class JobBoard(
 
                     if (mapView == null) {
                         SneakyJobBoard.log(
-                                "One of the job boards listed in map-central-vectors does not have a valid map item in the item frame: $mapLocation"
+                            "One of the job boards listed in map-central-vectors does not have a valid map item in the item frame: $mapLocation"
                         )
                         scale = 128
                     } else {
-                        scale =
-                                when (mapView.scale) {
-                                    MapView.Scale.CLOSE -> 256
-                                    MapView.Scale.NORMAL -> 512
-                                    MapView.Scale.FAR -> 1024
-                                    MapView.Scale.FARTHEST -> 2048
-                                    else -> 128
-                                }
+                        scale = when (mapView.scale) {
+                            MapView.Scale.CLOSE -> 256
+                            MapView.Scale.NORMAL -> 512
+                            MapView.Scale.FAR -> 1024
+                            MapView.Scale.FARTHEST -> 2048
+                            else -> 128
+                        }
                     }
                 }
             }
@@ -365,8 +328,7 @@ data class JobBoard(
 
     /** Check a specified location for item frames. */
     private fun locationHasItemFrame(location: Location): Boolean {
-        val entitiesAtLocation =
-                location.world.getNearbyEntities(location.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5)
+        val entitiesAtLocation = location.world.getNearbyEntities(location.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5)
         return entitiesAtLocation.any { entity -> entity is ItemFrame }
     }
 
@@ -378,8 +340,7 @@ data class JobBoard(
         val displayLocation = getDisplayLocation(job)
 
         // Spawn the ItemDisplay
-        val itemDisplayEntity: ItemDisplay =
-                displayLocation.world.spawn(displayLocation, ItemDisplay::class.java)
+        val itemDisplayEntity: ItemDisplay = displayLocation.world.spawn(displayLocation, ItemDisplay::class.java)
 
         itemDisplayEntity.itemStack = job.getIconItem()
         itemDisplayEntity.transformation = job.getTransformation()
@@ -390,8 +351,7 @@ data class JobBoard(
         job.itemDisplays[this] = itemDisplayEntity
 
         // Spawn the TextDisplay
-        val textDisplayEntity: TextDisplay =
-                displayLocation.world!!.spawn(displayLocation, TextDisplay::class.java)
+        val textDisplayEntity: TextDisplay = displayLocation.world!!.spawn(displayLocation, TextDisplay::class.java)
 
         textDisplayEntity.brightness = Brightness(15, 15)
         textDisplayEntity.alignment = TextDisplay.TextAlignment.LEFT
@@ -412,10 +372,7 @@ data class JobBoard(
         val jobLocation = job.location
         val displayLocation = mapLocation.clone().add(0.5, 0.5, 0.5)
 
-        val worldLocation =
-                worldLocation
-                        .clone()
-                        .add((getScale() / 2).toDouble(), 0.0, (getScale() / 2).toDouble())
+        val worldLocation = worldLocation.clone().add((getScale() / 2).toDouble(), 0.0, (getScale() / 2).toDouble())
 
         // Calculate correct horizontal and vertical offsets
         var horizOffset = (jobLocation.x - worldLocation.x) / getScale()
@@ -428,11 +385,8 @@ data class JobBoard(
             val xTemp = horizOffset
             val yTemp = vertOffset
 
-            horizOffset =
-                    xTemp * cos((Math.PI / 2) - radianAngle) + yTemp * sin(radianAngle) -
-                            0.5
-            vertOffset =
-                    -xTemp * sin((Math.PI / 2) - radianAngle) + yTemp * cos(radianAngle)
+            horizOffset = xTemp * cos((Math.PI / 2) - radianAngle) + yTemp * sin(radianAngle) - 0.5
+            vertOffset = -xTemp * sin((Math.PI / 2) - radianAngle) + yTemp * cos(radianAngle)
 
             vertOffset += (jobLocation.y - worldLocation.y) / getScale()
         }
@@ -444,15 +398,18 @@ data class JobBoard(
                 horizOffset = vertOffset
                 vertOffset = -temp
             }
+
             Rotation.CLOCKWISE, Rotation.COUNTER_CLOCKWISE -> {
                 horizOffset = -horizOffset
                 vertOffset = -vertOffset
             }
+
             Rotation.CLOCKWISE_135, Rotation.COUNTER_CLOCKWISE_45 -> {
                 val temp = horizOffset
                 horizOffset = -vertOffset
                 vertOffset = temp
             }
+
             else -> {}
         }
 
@@ -467,12 +424,14 @@ data class JobBoard(
                 yOffset = 0.5
                 zOffset = vertOffset
             }
+
             BlockFace.NORTH -> {
                 displayLocation.pitch = 90F
                 xOffset = horizOffset
                 yOffset = vertOffset
                 zOffset = -0.5
             }
+
             BlockFace.EAST -> {
                 displayLocation.pitch = 90F
                 displayLocation.yaw = 90F
@@ -480,6 +439,7 @@ data class JobBoard(
                 yOffset = vertOffset
                 zOffset = horizOffset
             }
+
             BlockFace.SOUTH -> {
                 displayLocation.pitch = 90F
                 displayLocation.yaw = 180F
@@ -487,6 +447,7 @@ data class JobBoard(
                 yOffset = vertOffset
                 zOffset = 0.5
             }
+
             BlockFace.WEST -> {
                 displayLocation.pitch = 90F
                 displayLocation.yaw = 270F
@@ -494,6 +455,7 @@ data class JobBoard(
                 yOffset = vertOffset
                 zOffset = -horizOffset
             }
+
             else -> {
                 xOffset = horizOffset
                 yOffset = -0.5
@@ -559,8 +521,7 @@ class JobBoardListener : Listener {
     /** Handle right-clicking the job board entities. */
     @EventHandler
     fun onInteract(event: PlayerInteractEvent) {
-        if (event.action != Action.RIGHT_CLICK_BLOCK && event.action != Action.RIGHT_CLICK_AIR)
-                return
+        if (event.action != Action.RIGHT_CLICK_BLOCK && event.action != Action.RIGHT_CLICK_AIR) return
 
         val player = event.player
         event.setCancelled(dispatchViaIcon(player))
@@ -590,11 +551,9 @@ class JobBoardUpdater : BukkitRunnable() {
 
         // Build a map of players who are nearby a JobBoard
         for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
-            val nearbyPlayers =
-                    jobBoard.mapLocation.world?.entities?.filterIsInstance<Player>()?.filter {
-                        it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
-                    }
-                            ?: emptyList()
+            val nearbyPlayers = jobBoard.mapLocation.world?.entities?.filterIsInstance<Player>()?.filter {
+                it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
+            } ?: emptyList()
 
             players[jobBoard] = nearbyPlayers.toMutableList()
         }
@@ -659,26 +618,20 @@ class JobBoardUpdater : BukkitRunnable() {
 
         // Calculate the distance along the player's line of sight direction to the axis
         // intersection point
-        val distanceToIntersection =
-                when (axis) {
-                    'x' -> (axisIntersection - playerEyeLocation.x) / direction.x
-                    'y' -> (axisIntersection - playerEyeLocation.y) / direction.y
-                    'z' -> (axisIntersection - playerEyeLocation.z) / direction.z
-                    else -> return null
-                }
+        val distanceToIntersection = when (axis) {
+            'x' -> (axisIntersection - playerEyeLocation.x) / direction.x
+            'y' -> (axisIntersection - playerEyeLocation.y) / direction.y
+            'z' -> (axisIntersection - playerEyeLocation.z) / direction.z
+            else -> return null
+        }
 
         if (distanceToIntersection < 0) return null
 
-        val intersectionPoint =
-                playerEyeLocation.clone().add(direction.multiply(distanceToIntersection))
+        val intersectionPoint = playerEyeLocation.clone().add(direction.multiply(distanceToIntersection))
 
-        val nearbyEntities =
-                intersectionPoint
-                        .world
-                        ?.getNearbyEntities(intersectionPoint, 0.3, 0.3, 0.3)
-                        ?.filterIsInstance<TextDisplay>()
-                        ?.filter { it.scoreboardTags.contains("JobBoardIcon") }
-                        ?.sortedBy { it.location.distanceSquared(intersectionPoint) }
+        val nearbyEntities = intersectionPoint.world?.getNearbyEntities(intersectionPoint, 0.3, 0.3, 0.3)
+            ?.filterIsInstance<TextDisplay>()?.filter { it.scoreboardTags.contains("JobBoardIcon") }
+            ?.sortedBy { it.location.distanceSquared(intersectionPoint) }
 
         return nearbyEntities?.firstOrNull()
     }
@@ -687,16 +640,13 @@ class JobBoardUpdater : BukkitRunnable() {
 class JobBoardMaintenance : BukkitRunnable() {
     override fun run() {
         // Build a list of all Display Entities that have the JobBoardIcon tag
-        val worlds =
-                SneakyJobBoard.getJobBoardManager().jobBoards.map { it.mapLocation.world }.toSet()
+        val worlds = SneakyJobBoard.getJobBoardManager().jobBoards.map { it.mapLocation.world }.toSet()
 
         val displays = mutableSetOf<Entity>()
         for (world in worlds) {
-            displays.addAll(
-                    world.entities.filterIsInstance<Display>().filter {
-                        it.scoreboardTags.contains("JobBoardIcon")
-                    }
-            )
+            displays.addAll(world.entities.filterIsInstance<Display>().filter {
+                it.scoreboardTags.contains("JobBoardIcon")
+            })
         }
 
         // If any of these entities do not belong to a listed job, remove them
@@ -711,18 +661,15 @@ class JobBoardMaintenance : BukkitRunnable() {
         val players = Bukkit.getServer().onlinePlayers.toMutableSet()
 
         for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
-            val nearbyPlayers =
-                    jobBoard.mapLocation.world?.players?.filter {
-                        it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
-                    }
-                            ?: emptyList()
+            val nearbyPlayers = jobBoard.mapLocation.world?.players?.filter {
+                it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
+            } ?: emptyList()
 
             players.removeAll(nearbyPlayers.toSet())
         }
 
         // Ensure that TextDisplay icons are hidden to them
-        val textDisplays =
-                SneakyJobBoard.getJobManager().getJobs().flatMap { it.textDisplays.values }
+        val textDisplays = SneakyJobBoard.getJobManager().getJobs().flatMap { it.textDisplays.values }
         players.forEach { player ->
             textDisplays.forEach { textDisplay ->
                 player.hideEntity(SneakyJobBoard.getInstance(), textDisplay)
@@ -743,10 +690,7 @@ class JobBoardMaintenance : BukkitRunnable() {
 class TrackingJobsUpdater : BukkitRunnable() {
     override fun run() {
         for (job in SneakyJobBoard.getJobManager().getJobs()) {
-            if (job.tracking &&
-                            job.player.isOnline &&
-                            job.player.location.world == job.location.world
-            ) {
+            if (job.tracking && job.player.isOnline && job.player.location.world == job.location.world) {
                 job.location = job.player.location
 
                 for ((jobBoard, itemDisplay) in job.itemDisplays) {
@@ -760,31 +704,20 @@ class TrackingJobsUpdater : BukkitRunnable() {
                 if (SneakyJobBoard.isDynmapActive()) {
                     val markerAPI = SneakyJobBoard.getInstance().markerAPI
 
-                    val markerSet =
-                            markerAPI?.getMarkerSet("SneakyJobBoard")
-                                    ?: run {
-                                        markerAPI?.createMarkerSet(
-                                                "SneakyJobBoard",
-                                                "SneakyJobBoard",
-                                                null,
-                                                false
-                                        )
-                                                ?: run {
-                                                    SneakyJobBoard.log(
-                                                            "Failed to create a new marker set."
-                                                    )
-                                                    null
-                                                }
-                                    }
-
-                    markerSet
-                            ?.findMarker(job.uuid)
-                            ?.setLocation(
-                                    job.location.world.name,
-                                    job.location.x,
-                                    job.location.y,
-                                    job.location.z
+                    val markerSet = markerAPI?.getMarkerSet("SneakyJobBoard") ?: run {
+                        markerAPI?.createMarkerSet(
+                            "SneakyJobBoard", "SneakyJobBoard", null, false
+                        ) ?: run {
+                            SneakyJobBoard.log(
+                                "Failed to create a new marker set."
                             )
+                            null
+                        }
+                    }
+
+                    markerSet?.findMarker(job.uuid)?.setLocation(
+                            job.location.world.name, job.location.x, job.location.y, job.location.z
+                        )
                 }
             }
         }

@@ -16,9 +16,7 @@ import org.bukkit.persistence.PersistentDataType
 
 class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHolder {
     private var inventory: Inventory = Bukkit.createInventory(
-            this,
-            9,
-            TextUtility.convertToComponent("&eJob History. Click to re-list.")
+        this, 9, TextUtility.convertToComponent("&eJob History. Click to re-list.")
     )
 
     init {
@@ -38,9 +36,7 @@ class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHo
 
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
-        val uuid =
-                meta.persistentDataContainer
-                        .get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
+        val uuid = meta.persistentDataContainer.get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
 
         if (uuid.isNullOrEmpty()) return
 
@@ -50,14 +46,10 @@ class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHo
 
         if (job != null) {
             SneakyJobBoard.getJobManager().list(job)
-            Bukkit.getServer()
-                    .dispatchCommand(
-                            Bukkit.getServer().consoleSender,
-                            "cast forcecast " +
-                                    player.name +
-                                    " jobboard-history-listing " +
-                                    job.durationMillis
-                    )
+            Bukkit.getServer().dispatchCommand(
+                    Bukkit.getServer().consoleSender,
+                    "cast forcecast ${player.name} jobboard-history-listing ${job.durationMillis}"
+                )
         }
     }
 }
@@ -83,6 +75,7 @@ class JobHistoryInventoryListener : Listener {
                 val player = event.whoClicked as? Player ?: return
                 holder.clickedItem(clickedItem, player)
             }
+
             else -> {}
         }
     }

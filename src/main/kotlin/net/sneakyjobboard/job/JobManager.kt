@@ -47,34 +47,20 @@ class JobManager {
             val jobLocation = job.location
             val markerAPI = SneakyJobBoard.getInstance().markerAPI
 
-            val markerSet =
-                    markerAPI?.getMarkerSet("SneakyJobBoard")
-                            ?: run {
-                                markerAPI?.createMarkerSet(
-                                        "SneakyJobBoard",
-                                        "SneakyJobBoard",
-                                        null,
-                                        false
-                                )
-                                        ?: run {
-                                            SneakyJobBoard.log("Failed to create a new marker set.")
-                                            null
-                                        }
-                            }
+            val markerSet = markerAPI?.getMarkerSet("SneakyJobBoard") ?: run {
+                markerAPI?.createMarkerSet(
+                    "SneakyJobBoard", "SneakyJobBoard", null, false
+                ) ?: run {
+                    SneakyJobBoard.log("Failed to create a new marker set.")
+                    null
+                }
+            }
 
             val icon = markerAPI?.getMarkerIcon(job.category.dynmapMapIcon)
 
-            val marker =
-                    markerSet?.createMarker(
-                            job.uuid,
-                            job.name,
-                            jobLocation.world.name,
-                            jobLocation.x,
-                            jobLocation.y,
-                            jobLocation.z,
-                            icon,
-                            false
-                    )
+            val marker = markerSet?.createMarker(
+                job.uuid, job.name, jobLocation.world.name, jobLocation.x, jobLocation.y, jobLocation.z, icon, false
+            )
 
             if (marker == null) {
                 SneakyJobBoard.log("Failed to create marker")
@@ -83,39 +69,34 @@ class JobManager {
 
         // Play toast on all players
         var displayStringLocation =
-            (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location")
-                ?: "[x],[y],[z]")
-                .replace("[x]", job.location.blockX.toString())
-                .replace("[y]", job.location.blockY.toString())
-                .replace("[z]", job.location.blockZ.toString())
+            (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
+                    "[x]",
+                    job.location.blockX.toString()
+                ).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringLocation =
-                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation)
-                    .replace("none", "Dinky Dank")
+                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Dinky Dank")
         }
 
         for (player in job.location.world.players) {
-            Bukkit.getServer()
-                .dispatchCommand(
+            Bukkit.getServer().dispatchCommand(
                     Bukkit.getServer().consoleSender,
-                    "cast forcecast " +
-                            player.name +
-                            " jobboard-listed " +
-                            job.category.name.replace(" ", "\u00A0") + " " +
-                            displayStringLocation.replace(" ", "\u00A0") + " " +
-                            job.getIconItem().type + " " +
-                            (job.getIconItem().itemMeta?.customModelData?.toString() ?: "0")
+                    "cast forcecast " + player.name + " jobboard-listed " + job.category.name.replace(
+                        " ",
+                        "\u00A0"
+                    ) + " " + displayStringLocation.replace(
+                        " ",
+                        "\u00A0"
+                    ) + " " + job.getIconItem().type + " " + (job.getIconItem().itemMeta?.customModelData?.toString()
+                        ?: "0")
                 )
         }
 
         // Schedule unlisting
-        Bukkit.getScheduler()
-                .runTaskLater(
-                        SneakyJobBoard.getInstance(),
-                        Runnable { job.unlist() },
-                        20 * job.durationMillis / 1000
-                )
+        Bukkit.getScheduler().runTaskLater(
+                SneakyJobBoard.getInstance(), Runnable { job.unlist() }, 20 * job.durationMillis / 1000
+            )
     }
 
     /** Get job value collection. */
@@ -147,20 +128,14 @@ class JobManager {
         if (SneakyJobBoard.isDynmapActive()) {
             val markerAPI = SneakyJobBoard.getInstance().markerAPI
 
-            val markerSet =
-                    markerAPI?.getMarkerSet("SneakyJobBoard")
-                            ?: run {
-                                markerAPI?.createMarkerSet(
-                                        "SneakyJobBoard",
-                                        "SneakyJobBoard",
-                                        null,
-                                        false
-                                )
-                                        ?: run {
-                                            SneakyJobBoard.log("Failed to create a new marker set.")
-                                            null
-                                        }
-                            }
+            val markerSet = markerAPI?.getMarkerSet("SneakyJobBoard") ?: run {
+                markerAPI?.createMarkerSet(
+                    "SneakyJobBoard", "SneakyJobBoard", null, false
+                ) ?: run {
+                    SneakyJobBoard.log("Failed to create a new marker set.")
+                    null
+                }
+            }
 
             markerSet?.deleteMarkerSet()
         }
@@ -170,26 +145,17 @@ class JobManager {
     fun dispatch(uuid: String, pl: Player) {
         val job = jobs[uuid] ?: return
 
-        Bukkit.getServer()
-                .dispatchCommand(
-                        Bukkit.getServer().consoleSender,
-                        "cast forcecast " +
-                                pl.name +
-                                " jobboard-dispatch-self " +
-                                floor(job.location.x) +
-                                " " +
-                                floor(job.location.y) +
-                                " " +
-                                floor(job.location.z)
+        Bukkit.getServer().dispatchCommand(
+                Bukkit.getServer().consoleSender,
+                "cast forcecast " + pl.name + " jobboard-dispatch-self " + floor(job.location.x) + " " + floor(job.location.y) + " " + floor(
+                    job.location.z
                 )
+            )
     }
 }
 
 data class Job(
-        val category: JobCategory,
-        val player: Player,
-        val durationMillis: Long,
-        val tracking: Boolean
+    val category: JobCategory, val player: Player, val durationMillis: Long, val tracking: Boolean
 ) {
     val uuid = UUID.randomUUID().toString()
     var recordID = ""
@@ -204,22 +170,16 @@ data class Job(
             if (SneakyJobBoard.isDynmapActive()) {
                 val markerAPI = SneakyJobBoard.getInstance().markerAPI
 
-                val markerSet =
-                        markerAPI?.getMarkerSet("SneakyJobBoard")
-                                ?: run {
-                                    markerAPI?.createMarkerSet(
-                                            "SneakyJobBoard",
-                                            "SneakyJobBoard",
-                                            null,
-                                            false
-                                    )
-                                            ?: run {
-                                                SneakyJobBoard.log(
-                                                        "Failed to create a new marker set."
-                                                )
-                                                null
-                                            }
-                                }
+                val markerSet = markerAPI?.getMarkerSet("SneakyJobBoard") ?: run {
+                    markerAPI?.createMarkerSet(
+                        "SneakyJobBoard", "SneakyJobBoard", null, false
+                    ) ?: run {
+                        SneakyJobBoard.log(
+                            "Failed to create a new marker set."
+                        )
+                        null
+                    }
+                }
 
                 markerSet?.findMarker(uuid)?.label = value
             }
@@ -247,20 +207,14 @@ data class Job(
         if (SneakyJobBoard.isDynmapActive()) {
             val markerAPI = SneakyJobBoard.getInstance().markerAPI
 
-            val markerSet =
-                    markerAPI?.getMarkerSet("SneakyJobBoard")
-                            ?: run {
-                                markerAPI?.createMarkerSet(
-                                        "SneakyJobBoard",
-                                        "SneakyJobBoard",
-                                        null,
-                                        false
-                                )
-                                        ?: run {
-                                            SneakyJobBoard.log("Failed to create a new marker set.")
-                                            null
-                                        }
-                            }
+            val markerSet = markerAPI?.getMarkerSet("SneakyJobBoard") ?: run {
+                markerAPI?.createMarkerSet(
+                    "SneakyJobBoard", "SneakyJobBoard", null, false
+                ) ?: run {
+                    SneakyJobBoard.log("Failed to create a new marker set.")
+                    null
+                }
+            }
 
             markerSet?.findMarker(uuid)?.deleteMarker()
         }
@@ -274,12 +228,10 @@ data class Job(
                 text.add("&e$line")
             }
 
-            var posterString =
-                    (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-                                    ?: "&ePosted by: &b[playerName]").replace(
-                            "[playerName]",
-                            player.name
-                    )
+            var posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
+                ?: "&ePosted by: &b[playerName]").replace(
+                "[playerName]", player.name
+            )
 
             if (SneakyJobBoard.isPapiActive()) {
                 posterString = PlaceholderAPI.setPlaceholders(player, posterString)
@@ -318,12 +270,10 @@ data class Job(
         }
 
         // Add poster line
-        var posterString =
-                (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-                                ?: "&ePosted by: &b[playerName]").replace(
-                        "[playerName]",
-                        player.name
-                )
+        var posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
+            ?: "&ePosted by: &b[playerName]").replace(
+            "[playerName]", player.name
+        )
 
         if (SneakyJobBoard.isPapiActive()) {
             posterString = PlaceholderAPI.setPlaceholders(player, posterString)
@@ -354,22 +304,20 @@ data class Job(
 
             for (job in SneakyJobBoard.getJobManager().getJobs()) {
                 val remainingDuration = job.remainingDurationMillis()
-                val scaleFactor =
-                        (remainingDuration.toFloat() / baseDuration).coerceIn(minScale, maxScale)
+                val scaleFactor = (remainingDuration.toFloat() / baseDuration).coerceIn(minScale, maxScale)
 
                 val oldTransformation = job.category.transformation
-                val newScale =
-                        Vector3f(
-                                scaleFactor * oldTransformation.scale.x(),
-                                scaleFactor * oldTransformation.scale.y(),
-                                scaleFactor * oldTransformation.scale.z()
-                        )
+                val newScale = Vector3f(
+                    scaleFactor * oldTransformation.scale.x(),
+                    scaleFactor * oldTransformation.scale.y(),
+                    scaleFactor * oldTransformation.scale.z()
+                )
 
                 return Transformation(
-                        oldTransformation.translation,
-                        oldTransformation.leftRotation,
-                        newScale,
-                        oldTransformation.rightRotation
+                    oldTransformation.translation,
+                    oldTransformation.leftRotation,
+                    newScale,
+                    oldTransformation.rightRotation
                 )
             }
         }

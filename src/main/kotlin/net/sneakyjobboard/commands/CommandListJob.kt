@@ -40,21 +40,17 @@ class CommandListJob : CommandBase("listjob") {
     }
 
     override fun execute(
-            sender: CommandSender,
-            commandLabel: String,
-            args: Array<out String>
+        sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
-        val player: Player? =
-                if (sender is Player) sender
-                else if (args.isNotEmpty()) Bukkit.getPlayer(args[0]) else null
-        val remainingArgs: Array<out String> =
-                if (sender is Player) args else args.drop(1).toTypedArray()
+        val player: Player? = if (sender is Player) sender
+        else if (args.isNotEmpty()) Bukkit.getPlayer(args[0]) else null
+        val remainingArgs: Array<out String> = if (sender is Player) args else args.drop(1).toTypedArray()
 
         if (player == null) {
             sender.sendMessage(
-                    TextUtility.convertToComponent(
-                            "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
-                    )
+                TextUtility.convertToComponent(
+                    "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                )
             )
             return false
         }
@@ -64,51 +60,42 @@ class CommandListJob : CommandBase("listjob") {
             return false
         }
 
-        val jobcategory: JobCategory? =
-            SneakyJobBoard.getJobCategoryManager().getJobCategories()[remainingArgs[0]]
+        val jobcategory: JobCategory? = SneakyJobBoard.getJobCategoryManager().getJobCategories()[remainingArgs[0]]
 
         if (jobcategory == null) {
             sender.sendMessage(
-                    TextUtility.convertToComponent(
-                            "&4${remainingArgs[0]} is not a valid job category!"
-                    )
+                TextUtility.convertToComponent(
+                    "&4${remainingArgs[0]} is not a valid job category!"
+                )
             )
             return false
         }
 
-        val durationMillis: Long =
-                remainingArgs[1].toLongOrNull()
-                        ?: run {
-                            sender.sendMessage(
-                                    TextUtility.convertToComponent(
-                                            "&4Invalid duration value. Please provide a valid number."
-                                    )
-                            )
-                            return false
-                        }
-
-        val tracking =
-                if (remainingArgs.size > 2) {
-                    remainingArgs[2].toBooleanOrNull()
-                            ?: run {
-                                sender.sendMessage(
-                                        TextUtility.convertToComponent(
-                                                "&4Invalid boolean value '${remainingArgs[2]}'. Please provide 'true' or 'false'."
-                                        )
-                                )
-                                return false
-                            }
-                } else {
-                    false
-                }
-
-        val job =
-                Job(
-                        category = jobcategory,
-                        player = player,
-                        durationMillis = durationMillis,
-                        tracking = tracking
+        val durationMillis: Long = remainingArgs[1].toLongOrNull() ?: run {
+            sender.sendMessage(
+                TextUtility.convertToComponent(
+                    "&4Invalid duration value. Please provide a valid number."
                 )
+            )
+            return false
+        }
+
+        val tracking = if (remainingArgs.size > 2) {
+            remainingArgs[2].toBooleanOrNull() ?: run {
+                sender.sendMessage(
+                    TextUtility.convertToComponent(
+                        "&4Invalid boolean value '${remainingArgs[2]}'. Please provide 'true' or 'false'."
+                    )
+                )
+                return false
+            }
+        } else {
+            false
+        }
+
+        val job = Job(
+            category = jobcategory, player = player, durationMillis = durationMillis, tracking = tracking
+        )
 
         player.sendMessage(TextUtility.convertToComponent("&aPlease type the name of the job."))
 
@@ -118,27 +105,26 @@ class CommandListJob : CommandBase("listjob") {
     }
 
     override fun tabComplete(
-            sender: CommandSender,
-            alias: String,
-            args: Array<String>
+        sender: CommandSender, alias: String, args: Array<String>
     ): List<String> {
         val startIndex: Int = if (sender is Player) 0 else 1
 
         return when {
             args.size == 1 && sender !is Player -> {
-                Bukkit.getOnlinePlayers()
-                        .filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
-                        .filter { it.name.startsWith(args.last(), ignoreCase = true) }
-                        .map { it.name }
+                Bukkit.getOnlinePlayers().filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
+                    .filter { it.name.startsWith(args.last(), ignoreCase = true) }.map { it.name }
             }
+
             args.size - startIndex == 1 -> {
                 SneakyJobBoard.getJobCategoryManager().getJobCategories().keys.toList().filter {
                     it.startsWith(args.last(), ignoreCase = true)
                 }
             }
+
             args.size - startIndex == 3 -> {
                 listOf("TRUE", "FALSE").filter { it.startsWith(args.last(), ignoreCase = true) }
             }
+
             else -> emptyList()
         }
     }
@@ -149,18 +135,16 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
     @EventHandler
     fun onPlayerChat(event: AsyncChatEvent) {
         if (event.player == sender) {
-            val name =
-                    MiniMessage.miniMessage()
-                            .escapeTags(
-                                    TextUtility.replaceFormatCodes((event.message() as TextComponent).content().replace("|", ""))
-                            )
+            val name = MiniMessage.miniMessage().escapeTags(
+                TextUtility.replaceFormatCodes((event.message() as TextComponent).content().replace("|", ""))
+            )
 
             job.name = name
             event.isCancelled = true
             sender.sendMessage(
-                    TextUtility.convertToComponent(
-                            "&aJob name set to: &b'$name'\n&aNow please type the description of the job."
-                    )
+                TextUtility.convertToComponent(
+                    "&aJob name set to: &b'$name'\n&aNow please type the description of the job."
+                )
             )
 
             CommandListJob.registerListener(sender, JobDescriptionInputListener(sender, job))
@@ -184,26 +168,21 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
     @EventHandler
     fun onPlayerChat(event: AsyncChatEvent) {
         if (event.player == sender) {
-            val description =
-                    MiniMessage.miniMessage()
-                            .escapeTags(TextUtility.replaceFormatCodes((event.message() as TextComponent).content()))
+            val description = MiniMessage.miniMessage()
+                .escapeTags(TextUtility.replaceFormatCodes((event.message() as TextComponent).content()))
 
             job.description = description
             event.isCancelled = true
 
-            Bukkit.getScheduler()
-                    .runTask(
-                            SneakyJobBoard.getInstance(),
-                            Runnable {
-                                SneakyJobBoard.getJobManager().list(job)
+            Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
+                SneakyJobBoard.getJobManager().list(job)
 
-                                sender.sendMessage(
-                                        TextUtility.convertToComponent(
-                                                "&aJob listed. description set to: &b'$description'"
-                                        )
-                                )
-                            }
+                sender.sendMessage(
+                    TextUtility.convertToComponent(
+                        "&aJob listed. description set to: &b'$description'"
                     )
+                )
+            })
 
             unregisterListener()
         }
