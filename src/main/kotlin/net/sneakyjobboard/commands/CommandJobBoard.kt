@@ -46,6 +46,7 @@ class CommandJobBoard : CommandBase("jobboard") {
     }
 
     companion object {
+        /** Makes the provided player open the job board inventory UI. */
         fun openJobBoard(player: Player) {
             player.openInventory(JobInventoryHolder().inventory)
         }

@@ -158,6 +158,7 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
         }
     }
 
+    /** Unregisters this listener */
     private fun unregisterListener() {
         CommandListJob.unregisterListener(sender)
     }
@@ -195,6 +196,7 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
         }
     }
 
+    /** Unregisters this listener */
     private fun unregisterListener() {
         CommandListJob.unregisterListener(sender)
     }

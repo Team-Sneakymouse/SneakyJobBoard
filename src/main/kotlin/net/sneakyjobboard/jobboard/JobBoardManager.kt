@@ -155,8 +155,8 @@ data class JobBoard(
         val itemFrame = mapLocation.world?.getNearbyEntities(
             mapLocation.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5
         )?.firstOrNull {
-                (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
-            }
+            (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
+        }
 
         if (itemFrame == null) {
             SneakyJobBoard.log(
@@ -172,8 +172,8 @@ data class JobBoard(
         val itemFrame = mapLocation.world?.getNearbyEntities(
             mapLocation.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5
         )?.firstOrNull {
-                (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
-            }
+            (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
+        }
 
         if (itemFrame == null) {
             SneakyJobBoard.log(
@@ -185,13 +185,14 @@ data class JobBoard(
         (itemFrame as ItemFrame).rotation
     }
 
+    /** Retrieves the minecraft scale value of the map in the center job board position. */
     private fun getScale(): Int {
         if (scale <= 0) {
             val itemFrame = mapLocation.world?.getNearbyEntities(
                 mapLocation.clone().add(0.5, 0.5, 0.5), 0.5, 0.5, 0.5
             )?.firstOrNull {
-                    (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
-                } as? ItemFrame
+                (it is ItemFrame) && it.location.blockX == mapLocation.blockX && it.location.blockY == mapLocation.blockY && it.location.blockZ == mapLocation.blockZ
+            } as? ItemFrame
 
             if (itemFrame == null) {
                 SneakyJobBoard.log(
@@ -257,7 +258,7 @@ data class JobBoard(
         return checkAlignmentAndPath(itemFrame.location.block.location, mapLocation.block.location)
     }
 
-    /** Checkss which axes to iterate over, and run those checks. */
+    /** Checks which axes to iterate over, and run those checks. */
     private fun checkAlignmentAndPath(start: Location, end: Location): Boolean {
         if (start.world != end.world) return false
 
@@ -368,6 +369,7 @@ data class JobBoard(
         }
     }
 
+    /** Calculate where on the board the display entities for this job should be. */
     fun getDisplayLocation(job: Job): Location {
         val jobLocation = job.location
         val displayLocation = mapLocation.clone().add(0.5, 0.5, 0.5)
@@ -716,8 +718,8 @@ class TrackingJobsUpdater : BukkitRunnable() {
                     }
 
                     markerSet?.findMarker(job.uuid)?.setLocation(
-                            job.location.world.name, job.location.x, job.location.y, job.location.z
-                        )
+                        job.location.world.name, job.location.x, job.location.y, job.location.z
+                    )
                 }
             }
         }

@@ -190,14 +190,17 @@ data class Job(
             updateTextDisplays()
         }
 
+    /** Returns the remaining duration of this job in milliseconds. */
     private fun remainingDurationMillis(): Long {
         return ((startTime + durationMillis) - System.currentTimeMillis())
     }
 
+    /** Returns whether this job is expired. */
     fun isExpired(): Boolean {
         return remainingDurationMillis() < 0L
     }
 
+    /** Unlists this job from all platforms. */
     fun unlist() {
         SneakyJobBoard.getPocketbaseManager().unlistJob(this)
         itemDisplays.values.forEach { entity -> entity.remove() }
@@ -220,6 +223,7 @@ data class Job(
         }
     }
 
+    /** Updates all the Text Display entities associated with this job. */
     fun updateTextDisplays() {
         for (textDisplayEntity in textDisplays.values) {
             val text: MutableList<String> = mutableListOf("&a${name}")
@@ -249,6 +253,7 @@ data class Job(
         }
     }
 
+    /** Returns the ItemStack that should be used to represent this job. */
     fun getIconItem(): ItemStack {
         val itemStack = ItemStack(category.iconMaterial)
         val customModelData: Int = category.iconCustomModelData
@@ -293,6 +298,7 @@ data class Job(
         return itemStack
     }
 
+    /** Returns the transformation values that should be applied to this job's item displays. */
     fun getTransformation(): Transformation {
         val config = SneakyJobBoard.getInstance().getConfig()
 

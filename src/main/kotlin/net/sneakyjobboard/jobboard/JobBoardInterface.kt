@@ -35,6 +35,7 @@ class JobInventoryHolder : InventoryHolder {
         return inventory
     }
 
+    /** Get the job associated with this item, and dispatch the player to it. */
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
         val uuid = meta.persistentDataContainer.get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)

@@ -34,6 +34,7 @@ class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHo
         return inventory
     }
 
+    /** Get the job associated with this item, and re-list it. */
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
         val uuid = meta.persistentDataContainer.get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
