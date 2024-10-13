@@ -160,12 +160,21 @@ class JobManager {
     fun dispatch(uuid: String, pl: Player) {
         val job = jobs[uuid] ?: return
 
-        Bukkit.getServer().dispatchCommand(
-            Bukkit.getServer().consoleSender,
-            "cast forcecast " + pl.name + " jobboard-dispatch-self " + floor(job.location.x) + " " + floor(job.location.y) + " " + floor(
-                job.location.z
+        if (job.player.isOnline) {
+            Bukkit.getServer().dispatchCommand(
+                Bukkit.getServer().consoleSender,
+                "cast forcecast ${pl.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${floor(job.location.z)}"
             )
-        )
+            Bukkit.getServer().dispatchCommand(
+                Bukkit.getServer().consoleSender,
+                "cast forcecast ${job.player.name} jobboard-dispatch-other ${pl.name}"
+            )
+        } else {
+            Bukkit.getServer().dispatchCommand(
+                Bukkit.getServer().consoleSender,
+                "cast forcecast ${pl.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${floor(job.location.z)}"
+            )
+        }
     }
 }
 
