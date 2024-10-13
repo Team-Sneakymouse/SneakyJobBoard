@@ -8,4 +8,5 @@ abstract class CommandBase(name: String) : Command(name) {
     init {
         this.permission = "${SneakyJobBoard.IDENTIFIER}.command.$name"
     }
+
 }

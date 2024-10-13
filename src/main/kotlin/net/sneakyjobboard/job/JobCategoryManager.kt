@@ -20,7 +20,7 @@ class JobCategoryManager {
     }
 
     /** Loads job categories from the configuration file. */
-    public fun parseConfig() {
+    private fun parseConfig() {
         try {
             val configFile = SneakyJobBoard.getConfigFile()
             if (!configFile.exists()) {
@@ -82,7 +82,7 @@ class JobCategoryManager {
     }
 
     /** Parse a Transformation from our config section. */
-    fun ConfigurationSection.getVectorTransformation(key: String): Transformation {
+    private fun ConfigurationSection.getVectorTransformation(key: String): Transformation {
         val leftRotationString =
                 getString("$key.item-display-transformation.left-rotation")?.split(",")
                         ?: listOf("0", "0", "0", "1")

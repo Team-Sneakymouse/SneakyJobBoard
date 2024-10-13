@@ -14,16 +14,14 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-class JobHistoryInventoryHolder(val jobHistory: List<Job>) : InventoryHolder {
-    private var inventory: Inventory
+class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHolder {
+    private var inventory: Inventory = Bukkit.createInventory(
+            this,
+            9,
+            TextUtility.convertToComponent("&eJob History. Click to re-list.")
+    )
 
     init {
-        inventory =
-                Bukkit.createInventory(
-                        this,
-                        9,
-                        TextUtility.convertToComponent("&eJob History. Click to re-list.")
-                )
 
         for (job in jobHistory) {
             if (inventory.firstEmpty() != -1) {
@@ -41,10 +39,10 @@ class JobHistoryInventoryHolder(val jobHistory: List<Job>) : InventoryHolder {
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
         val uuid =
-                meta.getPersistentDataContainer()
+                meta.persistentDataContainer
                         .get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
 
-        if (uuid == null || uuid.isEmpty()) return
+        if (uuid.isNullOrEmpty()) return
 
         player.closeInventory()
 
@@ -54,9 +52,9 @@ class JobHistoryInventoryHolder(val jobHistory: List<Job>) : InventoryHolder {
             SneakyJobBoard.getJobManager().list(job)
             Bukkit.getServer()
                     .dispatchCommand(
-                            Bukkit.getServer().getConsoleSender(),
+                            Bukkit.getServer().consoleSender,
                             "cast forcecast " +
-                                    player.getName() +
+                                    player.name +
                                     " jobboard-history-listing " +
                                     job.durationMillis
                     )

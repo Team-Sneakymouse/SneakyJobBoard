@@ -3,18 +3,11 @@ package net.sneakyjobboard
 import com.destroystokyo.paper.ClientOption
 import com.google.gson.Gson
 import com.google.gson.JsonParser
-import java.awt.Graphics2D
-import java.awt.Image
-import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import java.net.URL
-import java.util.Base64
-import javax.imageio.ImageIO
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobHistoryInventoryHolder
 import net.sneakyjobboard.util.TextUtility
-import okhttp3.*
+import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,10 +15,17 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.json.JSONObject
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import java.net.URL
+import java.util.*
+import javax.imageio.ImageIO
 
 class PocketbaseManager {
 
-    var authToken: String = ""
+    private var authToken: String = ""
 
     init {
         Bukkit.getScheduler()
@@ -400,10 +400,10 @@ class PocketbaseManager {
         val faceIconBase64 =
                 skinURL?.let {
                     val skinImage = downloadImage(it)
-                    skinImage?.let {
+                    skinImage?.let { image ->
                         val faceIcon =
                                 createPlayerIcon(
-                                        it,
+                                        image,
                                         job.player
                                                 .getClientOption(ClientOption.SKIN_PARTS)
                                                 .hasHatsEnabled()
@@ -484,13 +484,11 @@ class PocketbaseManager {
     /** Encode an image to a base64 String with proper prefix. */
     private fun encodeImageToBase64(image: BufferedImage): String {
         val outputStream = ByteArrayOutputStream()
-        return try {
-            ImageIO.write(image, "png", outputStream)
-            val imageBytes = outputStream.toByteArray()
+        return outputStream.use {
+            ImageIO.write(image, "png", it)
+            val imageBytes = it.toByteArray()
             val base64String = Base64.getEncoder().encodeToString(imageBytes)
             "data:image/png;base64,$base64String"
-        } finally {
-            outputStream.close()
         }
     }
 }

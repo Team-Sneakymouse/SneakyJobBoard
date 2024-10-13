@@ -1,19 +1,13 @@
 package net.sneakyjobboard
 
-import java.io.File
 import net.sneakyjobboard.commands.CommandJobBoard
 import net.sneakyjobboard.commands.CommandJobHistory
 import net.sneakyjobboard.commands.CommandListJob
 import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.job.JobCategoryManager
-import net.sneakyjobboard.job.JobManager
 import net.sneakyjobboard.job.JobHistoryInventoryListener
-import net.sneakyjobboard.jobboard.JobBoardListener
-import net.sneakyjobboard.jobboard.JobBoardMaintenance
-import net.sneakyjobboard.jobboard.JobBoardManager
-import net.sneakyjobboard.jobboard.JobBoardUpdater
-import net.sneakyjobboard.jobboard.JobInventoryListener
-import net.sneakyjobboard.jobboard.TrackingJobsUpdater
+import net.sneakyjobboard.job.JobManager
+import net.sneakyjobboard.jobboard.*
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -22,36 +16,37 @@ import org.bukkit.permissions.Permission
 import org.bukkit.plugin.java.JavaPlugin
 import org.dynmap.DynmapAPI
 import org.dynmap.markers.MarkerAPI
+import java.io.File
 
 class SneakyJobBoard : JavaPlugin(), Listener {
 
     lateinit var jobCategoryManager: JobCategoryManager
-    lateinit var JobBoardManager: JobBoardManager
+    lateinit var jobBoardManager: JobBoardManager
     lateinit var jobManager: JobManager
     lateinit var pocketBaseManager: PocketbaseManager
     var papiActive = false
     var markerAPI: MarkerAPI? = null
     val jobBoardUpdater = JobBoardUpdater()
-    val jobBoardMaintenance = JobBoardMaintenance()
-    val trackingJobsUpdater = TrackingJobsUpdater()
+    private val jobBoardMaintenance = JobBoardMaintenance()
+    private val trackingJobsUpdater = TrackingJobsUpdater()
 
     override fun onEnable() {
         saveDefaultConfig()
 
         jobCategoryManager = JobCategoryManager()
-        JobBoardManager = JobBoardManager()
+        jobBoardManager = JobBoardManager()
         jobManager = JobManager()
         pocketBaseManager = PocketbaseManager()
 
-        getServer().getCommandMap().register(IDENTIFIER, CommandListJob())
-        getServer().getCommandMap().register(IDENTIFIER, CommandJobBoard())
-        getServer().getCommandMap().register(IDENTIFIER, CommandUnlistJob())
-        getServer().getCommandMap().register(IDENTIFIER, CommandJobHistory())
+        server.commandMap.register(IDENTIFIER, CommandListJob())
+        server.commandMap.register(IDENTIFIER, CommandJobBoard())
+        server.commandMap.register(IDENTIFIER, CommandUnlistJob())
+        server.commandMap.register(IDENTIFIER, CommandJobHistory())
 
-        getServer().getPluginManager().registerEvents(PluginListener(this), this)
-        getServer().getPluginManager().registerEvents(JobInventoryListener(), this)
-        getServer().getPluginManager().registerEvents(JobHistoryInventoryListener(), this)
-        getServer().getPluginManager().registerEvents(JobBoardListener(), this)
+        server.pluginManager.registerEvents(PluginListener(this), this)
+        server.pluginManager.registerEvents(JobInventoryListener(), this)
+        server.pluginManager.registerEvents(JobHistoryInventoryListener(), this)
+        server.pluginManager.registerEvents(JobBoardListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.admin"))
@@ -83,19 +78,18 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         const val AUTHORS = "Team Sneakymouse"
         const val VERSION = "1.0.0"
         private lateinit var instance: SneakyJobBoard
-            private set
 
         /** Logs a message using the plugin logger. */
         fun log(msg: String) {
-            instance?.logger?.info(msg) ?: System.err.println("SneakyJobBoard instance is null")
+            instance.logger.info(msg)
         }
 
         /**
          * Retrieves the plugin data folder.
          * @throws IllegalStateException if the data folder is null.
          */
-        fun getDataFolder(): File {
-            return instance?.dataFolder ?: throw IllegalStateException("Data folder is null")
+        private fun getDataFolder(): File {
+            return instance.dataFolder
         }
 
         /** Retrieves the configuration file. */
@@ -105,12 +99,12 @@ class SneakyJobBoard : JavaPlugin(), Listener {
 
         /** Whether placeholderAPI is running. */
         fun isPapiActive(): Boolean {
-            return instance?.papiActive ?: false
+            return instance.papiActive
         }
 
         /** Whether dynmap is running. */
         fun isDynmapActive(): Boolean {
-            return (instance?.markerAPI != null)
+            return (instance.markerAPI != null)
         }
 
         /** The running instance. */
@@ -118,27 +112,24 @@ class SneakyJobBoard : JavaPlugin(), Listener {
             return instance
         }
 
-        /** Retrieves the job category manager instance, creating a new one if necessary. */
+        /** Retrieves the job category manager instance. */
         fun getJobCategoryManager(): JobCategoryManager {
-            return instance?.jobCategoryManager
-                    ?: JobCategoryManager().also { instance?.jobCategoryManager = it }
+            return instance.jobCategoryManager
         }
 
-        /** Retrieves the job category manager instance, creating a new one if necessary. */
+        /** Retrieves the job category manager instance. */
         fun getJobBoardManager(): JobBoardManager {
-            return instance?.JobBoardManager
-                    ?: JobBoardManager().also { instance?.JobBoardManager = it }
+            return instance.jobBoardManager
         }
 
-        /** Retrieves the job manager instance, creating a new one if necessary. */
+        /** Retrieves the job manager instance. */
         fun getJobManager(): JobManager {
-            return instance?.jobManager ?: JobManager().also { instance?.jobManager = it }
+            return instance.jobManager
         }
 
-        /** Retrieves the job manager instance, creating a new one if necessary. */
+        /** Retrieves the job manager instance. */
         fun getPocketbaseManager(): PocketbaseManager {
-            return instance?.pocketBaseManager
-                    ?: PocketbaseManager().also { instance?.pocketBaseManager = it }
+            return instance.pocketBaseManager
         }
     }
 
@@ -147,7 +138,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     }
 }
 
-class PluginListener(val instance: SneakyJobBoard) : Listener {
+class PluginListener(private val instance: SneakyJobBoard) : Listener {
 
     @EventHandler
     fun onPluginDisable(event: PluginDisableEvent) {

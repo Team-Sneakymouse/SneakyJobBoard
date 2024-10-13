@@ -27,7 +27,7 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             return false
         }
 
-        var job: Job?
+        val job: Job?
 
         if (sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin") && args.isNotEmpty()) {
             val name = args.joinToString(" ")

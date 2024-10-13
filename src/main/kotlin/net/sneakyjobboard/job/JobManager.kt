@@ -1,7 +1,5 @@
 package net.sneakyjobboard.job
 
-import java.util.*
-import kotlin.collections.mutableListOf
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobBoard
@@ -16,13 +14,15 @@ import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
 import org.joml.Quaternionf
 import org.joml.Vector3f
+import java.util.*
+import kotlin.math.floor
 
 /** Manages listed jobs and dispatching. */
 class JobManager {
 
-    public val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
+    val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
 
-    public val jobs = mutableMapOf<String, Job>()
+    val jobs = mutableMapOf<String, Job>()
     val pendingSpawns = mutableMapOf<JobBoard, MutableList<Job>>()
 
     /** Adds a new job to the map. */
@@ -36,7 +36,7 @@ class JobManager {
             if (jobBoard.mapLocation.chunk.isLoaded) {
                 jobBoard.spawnIcons(job)
             } else {
-                val list = pendingSpawns.getOrDefault(jobBoard, mutableListOf<Job>())
+                val list = pendingSpawns.getOrDefault(jobBoard, mutableListOf())
                 list.add(job)
                 pendingSpawns[jobBoard] = list
             }
@@ -168,21 +168,19 @@ class JobManager {
 
     /** Dispatch a player to a listed job. */
     fun dispatch(uuid: String, pl: Player) {
-        val job = jobs.get(uuid)
-
-        if (job == null) return
+        val job = jobs[uuid] ?: return
 
         Bukkit.getServer()
                 .dispatchCommand(
-                        Bukkit.getServer().getConsoleSender(),
+                        Bukkit.getServer().consoleSender,
                         "cast forcecast " +
-                                pl.getName() +
+                                pl.name +
                                 " jobboard-dispatch-self " +
-                                Math.floor(job.location.getX()) +
+                                floor(job.location.x) +
                                 " " +
-                                Math.floor(job.location.getY()) +
+                                floor(job.location.y) +
                                 " " +
-                                Math.floor(job.location.getZ())
+                                floor(job.location.z)
                 )
     }
 }
@@ -232,7 +230,7 @@ data class Job(
             updateTextDisplays()
         }
 
-    fun remainingDurationMillis(): Long {
+    private fun remainingDurationMillis(): Long {
         return ((startTime + durationMillis) - System.currentTimeMillis())
     }
 
@@ -290,20 +288,18 @@ data class Job(
             text.add(posterString)
 
             textDisplayEntity.text(TextUtility.convertToComponent(text.joinToString("\n")))
-            textDisplayEntity.setTransformation(
-                    Transformation(
-                            Vector3f(0F, 0.3F, 0.025F + (0.025F * text.size)),
-                            Quaternionf(-1F, 0F, 0F, 1F),
-                            Vector3f(0.1F, 0.1F, 0.1F),
-                            Quaternionf(0F, 0F, 0F, 1F)
-                    )
+            textDisplayEntity.transformation = Transformation(
+                Vector3f(0F, 0.3F, 0.025F + (0.025F * text.size)),
+                Quaternionf(-1F, 0F, 0F, 1F),
+                Vector3f(0.1F, 0.1F, 0.1F),
+                Quaternionf(0F, 0F, 0F, 1F)
             )
         }
     }
 
     fun getIconItem(): ItemStack {
-        var itemStack: ItemStack = ItemStack(category.iconMaterial)
-        var customModelData: Int = category.iconCustomModelData
+        val itemStack = ItemStack(category.iconMaterial)
+        val customModelData: Int = category.iconCustomModelData
 
         val meta = itemStack.itemMeta
 

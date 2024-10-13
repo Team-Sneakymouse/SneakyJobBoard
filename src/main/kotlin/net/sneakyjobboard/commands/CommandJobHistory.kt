@@ -44,7 +44,7 @@ class CommandJobHistory : CommandBase("jobhistory") {
             return false
         }
 
-        if (remainingArgs.size < 1) {
+        if (remainingArgs.isEmpty()) {
             sender.sendMessage(TextUtility.convertToComponent("&4Invalid Usage: $usageMessage"))
             return false
         }

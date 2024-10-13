@@ -31,7 +31,7 @@ class Placeholders : PlaceholderExpansion() {
                         SneakyJobBoard.getJobManager()
                                 .jobs
                                 .values
-                                .filter { it.player.equals(player) }
+                                .filter { it.player == player }
                                 .map { it.name }
 
                 jobs.takeIf { it.isNotEmpty() }?.joinToString("|") ?: "none"

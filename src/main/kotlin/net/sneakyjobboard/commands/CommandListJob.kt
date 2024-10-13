@@ -1,5 +1,7 @@
 package net.sneakyjobboard.commands
 
+import io.papermc.paper.event.player.AsyncChatEvent
+import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
@@ -11,7 +13,6 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
-import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerQuitEvent
 
 class CommandListJob : CommandBase("listjob") {
@@ -64,7 +65,7 @@ class CommandListJob : CommandBase("listjob") {
         }
 
         val jobcategory: JobCategory? =
-                SneakyJobBoard.getJobCategoryManager().getJobCategories().get(remainingArgs[0])
+            SneakyJobBoard.getJobCategoryManager().getJobCategories()[remainingArgs[0]]
 
         if (jobcategory == null) {
             sender.sendMessage(
@@ -111,7 +112,7 @@ class CommandListJob : CommandBase("listjob") {
 
         player.sendMessage(TextUtility.convertToComponent("&aPlease type the name of the job."))
 
-        CommandListJob.registerListener(player, JobNameInputListener(player, job))
+        registerListener(player, JobNameInputListener(player, job))
 
         return true
     }
@@ -121,7 +122,7 @@ class CommandListJob : CommandBase("listjob") {
             alias: String,
             args: Array<String>
     ): List<String> {
-        var startIndex: Int = if (sender is Player) 0 else 1
+        val startIndex: Int = if (sender is Player) 0 else 1
 
         return when {
             args.size == 1 && sender !is Player -> {
@@ -146,12 +147,12 @@ class CommandListJob : CommandBase("listjob") {
 class JobNameInputListener(private val sender: Player, private val job: Job) : Listener {
 
     @EventHandler
-    fun onPlayerChat(event: AsyncPlayerChatEvent) {
+    fun onPlayerChat(event: AsyncChatEvent) {
         if (event.player == sender) {
             val name =
                     MiniMessage.miniMessage()
                             .escapeTags(
-                                    TextUtility.replaceFormatCodes(event.message.replace("|", ""))
+                                    TextUtility.replaceFormatCodes((event.message() as TextComponent).content().replace("|", ""))
                             )
 
             job.name = name
@@ -181,11 +182,11 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
 class JobDescriptionInputListener(private val sender: Player, private val job: Job) : Listener {
 
     @EventHandler
-    fun onPlayerChat(event: AsyncPlayerChatEvent) {
+    fun onPlayerChat(event: AsyncChatEvent) {
         if (event.player == sender) {
             val description =
                     MiniMessage.miniMessage()
-                            .escapeTags(TextUtility.replaceFormatCodes(event.message))
+                            .escapeTags(TextUtility.replaceFormatCodes((event.message() as TextComponent).content()))
 
             job.description = description
             event.isCancelled = true

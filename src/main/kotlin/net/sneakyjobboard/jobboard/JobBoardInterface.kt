@@ -14,7 +14,7 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-class JobInventoryHolder() : InventoryHolder {
+class JobInventoryHolder : InventoryHolder {
     private var inventory: Inventory
 
     init {
@@ -39,10 +39,10 @@ class JobInventoryHolder() : InventoryHolder {
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
         val uuid =
-                meta.getPersistentDataContainer()
+                meta.persistentDataContainer
                         .get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
 
-        if (uuid == null || uuid.isEmpty()) return
+        if (uuid.isNullOrEmpty()) return
 
         player.closeInventory()
 
