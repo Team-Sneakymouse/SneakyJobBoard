@@ -138,9 +138,10 @@ class PocketbaseManager {
      * the job in PocketBase, and the method patches the job with the current system time as its endTime.
      *
      * @param job The job to be unlisted.
+     * @param endReason The unlisting reason. Can be "expired", "unlisted" or "restart".
      */
     @Synchronized
-    fun unlistJob(job: Job) {
+    fun unlistJob(job: Job, endReason: String) {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
 
         if (url.isNullOrEmpty() || job.recordID.isEmpty()) return
@@ -152,7 +153,10 @@ class PocketbaseManager {
                 if (authToken.isNotEmpty()) {
                     val client = OkHttpClient()
 
-                    val jobData = mapOf("endTime" to System.currentTimeMillis())
+                    val jobData = mapOf(
+                        "endTime" to System.currentTimeMillis(),
+                        "endReason" to endReason
+                    )
                     val jsonRequestBody = Gson().toJson(jobData).toRequestBody("application/json".toMediaType())
 
                     val request = Request.Builder().url("$url/${job.recordID}").header("Authorization", authToken)
@@ -212,7 +216,10 @@ class PocketbaseManager {
                     responseGet.close()
                     // Iterate over the jobs and update them
                     recordIDs.forEach { recordID ->
-                        val jobData = mapOf("endTime" to System.currentTimeMillis())
+                        val jobData = mapOf(
+                            "endTime" to System.currentTimeMillis(),
+                            "endReason" to "restart"
+                        )
                         val jsonRequestBody = Gson().toJson(jobData).toRequestBody(
                             "application/json".toMediaType()
                         )

@@ -95,7 +95,7 @@ class JobManager {
 
         // Schedule unlisting
         Bukkit.getScheduler().runTaskLater(
-            SneakyJobBoard.getInstance(), Runnable { job.unlist() }, 20 * job.durationMillis / 1000
+            SneakyJobBoard.getInstance(), Runnable { job.unlist("expired") }, 20 * job.durationMillis / 1000
         )
     }
 
@@ -133,7 +133,7 @@ class JobManager {
     /** Cleans up all listed jobs, including removing associated markers. */
     fun cleanup() {
         val jobIdsToRemove = jobs.values.toList()
-        jobIdsToRemove.forEach { it.unlist() }
+        jobIdsToRemove.forEach { it.unlist("restart") }
 
         // Clean up dynmap markers
         if (SneakyJobBoard.isDynmapActive()) {
@@ -163,16 +163,19 @@ class JobManager {
         if (job.player.isOnline) {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${floor(job.location.z)}"
+                "cast forcecast ${pl.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
+                    floor(job.location.z)
+                }"
             )
             Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${job.player.name} jobboard-dispatch-other ${pl.name}"
+                Bukkit.getServer().consoleSender, "cast forcecast ${job.player.name} jobboard-dispatch-other ${pl.name}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${floor(job.location.z)}"
+                "cast forcecast ${pl.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${
+                    floor(job.location.z)
+                }"
             )
         }
     }
@@ -230,9 +233,14 @@ data class Job(
         return remainingDurationMillis() < 0L
     }
 
-    /** Unlists this job from all platforms and cleans up associated displays. */
-    fun unlist() {
-        SneakyJobBoard.getPocketbaseManager().unlistJob(this)
+    /**
+     * Unlists this job from all platforms and cleans up associated displays.
+     * @param endReason The unlisting reason. Can be "expired", "unlisted" or "restart".
+     * */
+    fun unlist(endReason: String) {
+        if (!SneakyJobBoard.getJobManager().jobs.values.contains(this)) return
+
+        SneakyJobBoard.getPocketbaseManager().unlistJob(this, endReason)
         itemDisplays.values.forEach { entity -> entity.remove() }
         textDisplays.values.forEach { entity -> entity.remove() }
         SneakyJobBoard.getJobManager().jobs.remove(uuid)

@@ -53,7 +53,7 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             return false
         }
 
-        job.unlist()
+        job.unlist("unlisted")
         sender.sendMessage(
             TextUtility.convertToComponent("&aThe job &b'${job.name}' &ahas been unlisted.")
         )
