@@ -14,7 +14,8 @@ import org.bukkit.entity.Player
 class CommandUnlistJob : CommandBase("unlistjob") {
 
     init {
-        this.usageMessage = "/${this@CommandUnlistJob.name} (Job Name (admin only))"
+        this.usageMessage =
+            "/${this@CommandUnlistJob.name} <expire/delete. Delete will remove the discord message as well.> (Job Name (admin only))"
         this.description = "Unlist the last job that you listed."
     }
 
@@ -38,10 +39,20 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             return false
         }
 
+        val action: JobAction? = try {
+            when (args[0].lowercase()) {
+                "delete" -> JobAction.DELETE
+                "expire" -> JobAction.EXPIRE
+                else -> null
+            }
+        } catch (_: IndexOutOfBoundsException) {
+            null
+        }
+
         val job: Job?
 
-        if (sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin") && args.isNotEmpty()) {
-            val name = args.joinToString(" ")
+        if (sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin") && args.size > 1) {
+            val name = args.drop(1).joinToString(" ")
             job = SneakyJobBoard.getJobManager().getJobByName(name)
         } else {
             job = SneakyJobBoard.getJobManager().getLastListedJob(sender)
@@ -53,16 +64,33 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             return false
         }
 
-        job.unlist("unlisted")
-        sender.sendMessage(
-            TextUtility.convertToComponent("&aThe job &b'${job.name}' &ahas been unlisted.")
-        )
+        when (action) {
+            JobAction.DELETE -> {
+                job.unlist("deleted")
+                sender.sendMessage(
+                    TextUtility.convertToComponent("&eThe job &3'${job.name}' &ehas been deleted.")
+                )
+            }
+
+            JobAction.EXPIRE -> {
+                job.unlist("unlisted")
+                sender.sendMessage(
+                    TextUtility.convertToComponent("&eThe job &3'${job.name}' &ehas been expired.")
+                )
+            }
+
+            null -> {
+                sender.sendMessage(this.usageMessage)
+                return false
+            }
+        }
+
 
         return true
     }
 
     /**
-     * Provides tab completion for job names when the command is executed by an admin.
+     * Provides tab completion for the expire/delete arg, and for job names when the command is executed by an admin.
      *
      * @param sender The entity that sent the command.
      * @param alias The alias used to invoke the command.
@@ -72,13 +100,25 @@ class CommandUnlistJob : CommandBase("unlistjob") {
     override fun tabComplete(
         sender: CommandSender, alias: String, args: Array<String>
     ): List<String> {
-        if (sender !is Player || !sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin")) {
-            return emptyList()
-        }
+        return when {
+            args.size == 1 -> {
+                listOf("expire", "delete").filter { it.startsWith(args[0]) }
+            }
 
-        val prefix = args.joinToString(" ").lowercase()
-        return SneakyJobBoard.getJobManager().jobs.values.filter {
-            it.name.lowercase().startsWith(prefix, ignoreCase = true)
-        }.map { it.name }
+            args.size == 2 && sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin") -> {
+                val prefix = args.joinToString(" ").lowercase()
+                return SneakyJobBoard.getJobManager().jobs.values.filter {
+                    it.name.lowercase().startsWith(prefix, ignoreCase = true)
+                }.map { it.name }
+            }
+
+            else -> {
+                emptyList()
+            }
+        }
+    }
+
+    private enum class JobAction {
+        DELETE, EXPIRE
     }
 }

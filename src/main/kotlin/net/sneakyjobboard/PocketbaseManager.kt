@@ -138,7 +138,7 @@ class PocketbaseManager {
      * the job in PocketBase, and the method patches the job with the current system time as its endTime.
      *
      * @param job The job to be unlisted.
-     * @param endReason The unlisting reason. Can be "expired", "unlisted" or "restart".
+     * @param endReason The unlisting reason. Can be "expired", "unlisted", "deleted" or "restart".
      */
     @Synchronized
     fun unlistJob(job: Job, endReason: String) {

@@ -112,7 +112,7 @@ class CommandListJob : CommandBase("listjob") {
             category = jobcategory, player = player, durationMillis = durationMillis, tracking = tracking
         )
 
-        player.sendMessage(TextUtility.convertToComponent("&aPlease type the name of the job."))
+        player.sendMessage(TextUtility.convertToComponent("&ePlease type the name of the job."))
 
         registerListener(player, JobNameInputListener(player, job))
 
@@ -176,7 +176,7 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
             event.isCancelled = true
             sender.sendMessage(
                 TextUtility.convertToComponent(
-                    "&aJob name set to: &b'$name'\n&aNow please type the description of the job."
+                    "&eJob name set to: &3'$name'\n&eNow please type the description of the job."
                 )
             )
 
@@ -228,7 +228,7 @@ class JobDescriptionInputListener(private val sender: Player, private val job: J
 
                 sender.sendMessage(
                     TextUtility.convertToComponent(
-                        "&aJob listed. description set to: &b'$description'"
+                        "&eJob listed. description set to: &3'$description'&e."
                     )
                 )
             })
