@@ -282,7 +282,7 @@ class PocketbaseManager {
                     val jobHistory = mutableListOf<Job>()
                     val seenJobs = mutableSetOf<Quadruple<String, String, String, String>>()
 
-                    for (item in items.reversed()) {
+                    for (item in items) {
                         if (jobHistory.size >= 9) break
 
                         val category = item.get("category").asString
