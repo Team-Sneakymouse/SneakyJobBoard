@@ -42,7 +42,8 @@ class CommandListJob : CommandBase("listjob") {
     }
 
     init {
-        this.usageMessage = "/${this@CommandListJob.name} [jobCategory] [durationMillis] (tracking)"
+        this.usageMessage =
+            "/${this@CommandListJob.name} [jobCategory] [durationMillis] (tracking) (\"name\") (\"description\")"
         this.description = "List a job to the job board."
     }
 
@@ -112,9 +113,30 @@ class CommandListJob : CommandBase("listjob") {
             category = jobcategory, player = player, durationMillis = durationMillis, tracking = tracking
         )
 
-        player.sendMessage(TextUtility.convertToComponent("&ePlease type the name of the job."))
+        // Now check if name and description are provided as arguments in the command
+        if (remainingArgs.size > 3) {
+            val nameAndDesc: List<String> = remainingArgs.drop(3).joinToString(" ").split("\" \"")
 
-        registerListener(player, JobNameInputListener(player, job))
+            if (nameAndDesc.size == 2 && nameAndDesc[0].startsWith("\"") && nameAndDesc[1].endsWith("\"")) {
+                // Remove the quotes and set name and description
+                job.name = nameAndDesc[0].substring(1)
+                job.description = nameAndDesc[1].substring(0, nameAndDesc[1].length - 1)
+
+                // List the job without additional input
+                SneakyJobBoard.getJobManager().list(job)
+
+                sender.sendMessage(TextUtility.convertToComponent("&eJob listed. Name: &3'${job.name}'&e, Description: &3'${job.description}'"))
+                return true
+            } else {
+                sender.sendMessage(TextUtility.convertToComponent("&4Invalid Usage: $usageMessage"))
+                return false
+            }
+        } else {
+            // If the name and description are not passed, prompt for them
+            player.sendMessage(TextUtility.convertToComponent("&ePlease type the name of the job."))
+
+            registerListener(player, JobNameInputListener(player, job))
+        }
 
         return true
     }
