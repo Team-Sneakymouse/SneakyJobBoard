@@ -599,7 +599,7 @@ class JobBoardListener : Listener {
 
                 jobBoards.forEach { jobBoard ->
                     if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
-                        CommandJobBoard.openJobBoard(event.player)
+                        JobInventoryHolder.openJobBoard(event.player, true)
                         event.isCancelled = true
                         return
                     }

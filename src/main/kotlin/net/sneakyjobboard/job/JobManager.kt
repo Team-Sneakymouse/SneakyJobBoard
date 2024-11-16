@@ -339,7 +339,7 @@ data class Job(
 
         // Set persistent data.
         val persistentData = meta.persistentDataContainer
-        persistentData.set(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING, uuid)
+        persistentData.set(NamespacedKey(SneakyJobBoard.getInstance(), "job_id"), PersistentDataType.STRING, uuid)
 
         meta.setEnchantmentGlintOverride(true)
 

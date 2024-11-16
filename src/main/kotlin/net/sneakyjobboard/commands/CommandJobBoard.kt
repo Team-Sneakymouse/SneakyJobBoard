@@ -40,7 +40,7 @@ class CommandJobBoard : CommandBase("jobboard") {
             )
             return false
         }
-        openJobBoard(player)
+        JobInventoryHolder.openJobBoard(player, false)
 
         return true
     }
@@ -63,17 +63,6 @@ class CommandJobBoard : CommandBase("jobboard") {
             }
 
             else -> emptyList()
-        }
-    }
-
-    companion object {
-        /**
-         * Opens the job board inventory UI for the provided player.
-         *
-         * @param player The player for whom to open the job board inventory.
-         */
-        fun openJobBoard(player: Player) {
-            player.openInventory(JobInventoryHolder().inventory)
         }
     }
 }

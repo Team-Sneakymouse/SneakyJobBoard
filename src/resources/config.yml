@@ -36,6 +36,19 @@ map-central-vectors:
 world-central-vectors:
     - world,0,0,0
 
+## Extra buttons to add to the job board.
+## command-console is run on the console and replaces "[playerName]" with the name of the clicker.
+job-board-extra-buttons:
+    list-1800000:
+        slot: 8
+        name: "&aPost New Job"
+        description: "&ePost a 30 minute lob listing."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 1
+        show-on-board-interact: false
+        command-console: ""
+
+## Different categories that a job can have. This is used to set icons for various displays.
 job-categories:
     aid_request:
         name: "Aid Request"

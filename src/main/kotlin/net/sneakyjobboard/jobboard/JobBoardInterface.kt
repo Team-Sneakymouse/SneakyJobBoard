@@ -3,6 +3,9 @@ package net.sneakyjobboard.jobboard
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -15,23 +18,26 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 /** Holds the job inventory for the job board. */
-class JobInventoryHolder : InventoryHolder {
+class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     private var inventory: Inventory
 
     /**
      * Initializes the job inventory and populates it with job icons.
      */
     init {
+        var i = (extraButtons.keys.maxOrNull()?.plus(1)) ?: 0
         val jobs = SneakyJobBoard.getJobManager().getJobs()
-        val size = (((jobs.size + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
+        val size = (((jobs.size + i + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
         inventory = Bukkit.createInventory(this, size, TextUtility.convertToComponent("&eJob Board"))
 
+        extraButtons.forEach { extraButton ->
+            if (extraButton.value.showOnBoardInteract || !isJobBoardInteract) inventory.setItem(
+                extraButton.key, extraButton.value.itemStack
+            )
+        }
+
         for (job in jobs) {
-            if (inventory.firstEmpty() != -1) {
-                inventory.addItem(job.getIconItem())
-            } else {
-                break
-            }
+            inventory.setItem(i++, job.getIconItem())
         }
     }
 
@@ -50,13 +56,105 @@ class JobInventoryHolder : InventoryHolder {
      */
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
-        val uuid = meta.persistentDataContainer.get(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING)
+        val uuid = meta.persistentDataContainer.get(
+            NamespacedKey(SneakyJobBoard.getInstance(), "job_id"), PersistentDataType.STRING
+        )
+        val commandConsole = meta.persistentDataContainer.get(
+            NamespacedKey(SneakyJobBoard.getInstance(), "command_console"), PersistentDataType.STRING
+        )
 
-        if (uuid.isNullOrEmpty()) return
+        if (!uuid.isNullOrEmpty()) {
+            player.closeInventory()
 
-        player.closeInventory()
+            SneakyJobBoard.getJobManager().dispatch(uuid, player)
+        } else if (!commandConsole.isNullOrEmpty()) {
+            Bukkit.getServer()
+                .dispatchCommand(Bukkit.getServer().consoleSender, commandConsole.replace("[playerName]", player.name))
+        }
+    }
 
-        SneakyJobBoard.getJobManager().dispatch(uuid, player)
+    companion object {
+        private val extraButtons = mutableMapOf<Int, JobBoardButton>()
+
+        init {
+            parseConfig()
+        }
+
+        /**
+         * Loads job categories from the configuration file.
+         * Throws an IllegalStateException if the configuration file is not found.
+         */
+        private fun parseConfig() {
+            try {
+                val configFile = SneakyJobBoard.getConfigFile()
+                if (!configFile.exists()) {
+                    throw IllegalStateException("config.yml not found")
+                }
+
+                val config = YamlConfiguration.loadConfiguration(configFile)
+                val jobCategoriesSection = config.getConfigurationSection("job-board-extra-buttons") ?: return
+
+                extraButtons.clear()
+
+                for (key in jobCategoriesSection.getKeys(false)) {
+                    val slot = jobCategoriesSection.getInt("$key.slot")
+
+                    val name = jobCategoriesSection.getString("$key.name") ?: key
+                    val description = jobCategoriesSection.getString("$key.description") ?: key
+                    val iconMaterialString = jobCategoriesSection.getString("$key.icon-material") ?: ""
+                    val iconCustomModelData = jobCategoriesSection.getInt("$key.icon-custom-model-data")
+
+                    val showOnBoardInteract = jobCategoriesSection.getBoolean("$key.slot")
+
+                    val commandConsole = jobCategoriesSection.getString("$key.command-console")
+
+                    val iconMaterial = Material.matchMaterial(iconMaterialString)
+
+                    val itemStack = iconMaterial?.let {
+                        ItemStack(it).apply {
+                            itemMeta = itemMeta?.also { meta ->
+                                meta.itemName(TextUtility.convertToComponent(name))
+                                meta.lore(mutableListOf(TextUtility.convertToComponent(description)))
+                                meta.setCustomModelData(iconCustomModelData)
+
+                                commandConsole?.let { command ->
+                                    meta.persistentDataContainer.set(
+                                        NamespacedKey(SneakyJobBoard.getInstance(), "command_console"),
+                                        PersistentDataType.STRING,
+                                        command
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    extraButtons[slot] = JobBoardButton(
+                        itemStack, showOnBoardInteract
+                    )
+                }
+            } catch (e: IllegalStateException) {
+                SneakyJobBoard.log("Error: ${e.message}")
+            } catch (e: Exception) {
+                SneakyJobBoard.log(
+                    "An unexpected error occurred while loading job categories: ${e.message}"
+                )
+            }
+        }
+
+
+        data class JobBoardButton(
+            val itemStack: ItemStack?, val showOnBoardInteract: Boolean
+        )
+
+        /**
+         * Opens the job board inventory UI for the provided player.
+         *
+         * @param player The player for whom to open the job board inventory.
+         * @param isJobBoardInteract Whether the board was opened by a job board interact.
+         */
+        fun openJobBoard(player: Player, isJobBoardInteract: Boolean) {
+            player.openInventory(JobInventoryHolder(isJobBoardInteract).inventory)
+        }
     }
 }
 
