@@ -17,12 +17,17 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-/** Holds the job inventory for the job board. */
+/**
+ * Holds and manages the job board inventory.
+ *
+ * This class implements an InventoryHolder to represent the job board, allowing players to interact with job listings
+ * and special buttons defined in the configuration.
+ */
 class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     private var inventory: Inventory
 
     /**
-     * Initializes the job inventory and populates it with job icons.
+     * Initializes the job inventory and populates it with job icons and extra buttons.
      */
     init {
         var i = (extraButtons.keys.maxOrNull()?.plus(1)) ?: 0
@@ -42,16 +47,18 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     }
 
     /**
-     * Gets the inventory associated with this holder.
-     * @return The inventory for this job board.
+     * Returns the inventory associated with this holder.
+     *
+     * @return The Inventory object representing the job board.
      */
     override fun getInventory(): Inventory {
         return inventory
     }
 
     /**
-     * Handles item clicks in the inventory, dispatching the player to the associated job.
-     * @param clickedItem The item that was clicked.
+     * Processes an item click within the job board inventory.
+     *
+     * @param clickedItem The ItemStack that was clicked by the player.
      * @param player The player who clicked the item.
      */
     fun clickedItem(clickedItem: ItemStack, player: Player) {
@@ -81,8 +88,10 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
         }
 
         /**
-         * Loads job categories from the configuration file.
-         * Throws an IllegalStateException if the configuration file is not found.
+         * Parses the job board extra buttons configuration from the configuration file.
+         *
+         * This method loads additional buttons from the configuration, which are shown on the job board at specific slots.
+         * If the configuration file is not found, an IllegalStateException is thrown.
          */
         private fun parseConfig() {
             try {
@@ -141,16 +150,21 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
             }
         }
 
-
+        /**
+         * Represents a job board button with its associated item and display properties.
+         *
+         * @property itemStack The ItemStack representing the button.
+         * @property showOnBoardInteract Whether the button is shown when interacting with the job board.
+         */
         data class JobBoardButton(
             val itemStack: ItemStack?, val showOnBoardInteract: Boolean
         )
 
         /**
-         * Opens the job board inventory UI for the provided player.
+         * Opens the job board inventory UI for a specific player.
          *
-         * @param player The player for whom to open the job board inventory.
-         * @param isJobBoardInteract Whether the board was opened by a job board interact.
+         * @param player The player to show the job board to.
+         * @param isJobBoardInteract Indicates if the board was opened by interacting with a job board.
          */
         fun openJobBoard(player: Player, isJobBoardInteract: Boolean) {
             player.openInventory(JobInventoryHolder(isJobBoardInteract).inventory)
@@ -158,7 +172,9 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     }
 }
 
-/** Listener for job inventory interactions. */
+/**
+ * Listener class for handling interactions with the job board inventory.
+ */
 class JobInventoryListener : Listener {
 
     /**
