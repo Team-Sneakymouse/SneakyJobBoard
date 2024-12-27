@@ -78,7 +78,7 @@ class JobManager {
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringLocation =
-                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Dinky Dank")
+                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Moonwell Pass")
         }
 
         for (player in job.location.world.players) {
