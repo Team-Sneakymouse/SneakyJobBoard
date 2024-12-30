@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib:1.6.0")
-    compileOnly("io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
 	compileOnly("me.clip:placeholderapi:2.11.5")
     compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
     compileOnly("us.dynmap:DynmapCoreAPI:3.4")

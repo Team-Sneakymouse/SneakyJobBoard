@@ -447,7 +447,7 @@ data class JobBoard(
         // Spawn the ItemDisplay
         val itemDisplayEntity: ItemDisplay = displayLocation.world.spawn(displayLocation, ItemDisplay::class.java)
 
-        itemDisplayEntity.itemStack = job.getIconItem()
+		itemDisplayEntity.setItemStack(job.getIconItem())
         itemDisplayEntity.transformation = job.getTransformation()
         itemDisplayEntity.brightness = job.category.brightness
 
