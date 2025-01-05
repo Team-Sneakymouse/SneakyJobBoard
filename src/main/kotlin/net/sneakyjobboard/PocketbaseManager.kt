@@ -637,6 +637,7 @@ class PocketbaseManager {
                         val description = item.get("description").asString
                         val iconMaterialStr = item.get("iconMaterial").asString
                         val iconCustomModelData = item.get("iconCustomModelData").asInt
+						val enabled = item.get("enabled").asBoolean
 
                         val advertKey = Triple(category, name, description)
                         if (seenAdverts.contains(advertKey)) continue
@@ -658,6 +659,7 @@ class PocketbaseManager {
                             this.recordID = item.get("id").asString
                             this.iconMaterial = Material.matchMaterial(iconMaterialStr)
                             this.iconCustomModelData = iconCustomModelData
+							this.enabled = enabled
                         }
 
                         adverts.add(advert)
