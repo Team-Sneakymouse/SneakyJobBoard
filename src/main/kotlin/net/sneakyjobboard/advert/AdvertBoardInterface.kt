@@ -241,6 +241,11 @@ class AdvertBoardListener : Listener {
                 // It's an advert, handle invitation creation
                 val advert = SneakyJobBoard.getAdvertManager().getAdverts().find { it.uuid == id }
                 if (advert != null) {
+					if (advert.player.uniqueId == player.uniqueId) {
+						player.sendMessage(TextUtility.convertToComponent("&4You cannot invite yourself!"))
+						return
+					}
+
                     // Close the advert board first to prevent inventory issues
                     player.closeInventory()
                     
