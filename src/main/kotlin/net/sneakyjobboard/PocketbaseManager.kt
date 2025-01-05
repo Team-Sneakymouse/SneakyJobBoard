@@ -620,6 +620,7 @@ class PocketbaseManager {
                     val seenAdverts = mutableSetOf<Triple<String, String, String>>()
 
                     for (item in items) {
+                        val uuid = item.get("uuid").asString
                         val category = item.get("category").asString
                         val posterDisplayString = item.get("posterDisplayString").asString
                         val name = item.get("name").asString
@@ -640,6 +641,7 @@ class PocketbaseManager {
                         val advert = Advert(
                             category = advertCategory, player = player
                         ).apply {
+                            this.uuid = uuid
                             this.name = name
                             this.description = description
                             this.posterString = posterDisplayString

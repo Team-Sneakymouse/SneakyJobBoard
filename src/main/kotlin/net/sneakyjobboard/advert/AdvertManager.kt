@@ -232,7 +232,7 @@ data class Invitation(
 class Advert(
     var category: AdvertCategory?, val player: Player
 ) {
-    val uuid = UUID.randomUUID().toString()
+    var uuid: String = UUID.randomUUID().toString()
     var recordID = ""
     var name: String = category?.name ?: ""
     var description: String = category?.description ?: ""

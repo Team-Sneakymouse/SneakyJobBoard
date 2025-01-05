@@ -87,7 +87,7 @@ class AdvertInvitationListener : Listener {
 
         player.closeInventory()
 
-        SneakyJobBoard.getAdvertManager().dispatch(invitation, player)
+        SneakyJobBoard.getAdvertManager().dispatch(invitation)
     }
 
 } 
