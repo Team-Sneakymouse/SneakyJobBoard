@@ -110,8 +110,8 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
 
                     val name = jobCategoriesSection.getString("$key.name") ?: key
                     val description = jobCategoriesSection.getString("$key.description") ?: key
-                    val iconMaterialString = jobCategoriesSection.getString("$key.icon-material") ?: ""
-                    val iconCustomModelData = jobCategoriesSection.getInt("$key.icon-custom-model-data")
+                    val iconMaterialString = jobCategoriesSection.getString("$key.material") ?: ""
+                    val iconCustomModelData = jobCategoriesSection.getInt("$key.custom-model-data")
 
                     val showOnBoardInteract = jobCategoriesSection.getBoolean("$key.show-on-board-interact", true)
 
