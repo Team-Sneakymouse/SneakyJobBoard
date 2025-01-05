@@ -43,10 +43,11 @@ class AdvertManager : Listener {
     /**
      * Lists a new advert, spawning its display and scheduling unlisting.
      * @param advert The advert to be listed.
+     * @param sendToPocketbase Whether to send the advert to PocketBase.
      */
-    fun list(advert: Advert) {
+    fun list(advert: Advert, sendToPocketbase: Boolean = true) {
         adverts[advert.uuid] = advert
-		SneakyJobBoard.getPocketbaseManager().listAdvert(advert)
+		if (sendToPocketbase) SneakyJobBoard.getPocketbaseManager().listAdvert(advert)
     }
 
     /**
@@ -207,7 +208,7 @@ data class Invitation(
 }
 
 class Advert(
-    val category: AdvertCategory?,
+    var category: AdvertCategory?,
     val player: Player
 ) {
     val uuid = UUID.randomUUID().toString()
@@ -218,6 +219,8 @@ class Advert(
     val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
     var iconMaterial: Material? = null
     var iconCustomModelData: Int? = null
+    var enabled: Boolean = true
+    var deleted: Boolean = false
 
     /**
      * Returns the ItemStack that represents this advert, including metadata.

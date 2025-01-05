@@ -19,7 +19,11 @@ import org.bukkit.persistence.PersistentDataType
 /**
  * Interface for selecting an icon for an advert.
  */
-class AdvertIconSelector(val category: AdvertCategory?, val page: Int = 0) : InventoryHolder {
+class AdvertIconSelector(
+    val category: AdvertCategory?, 
+    val page: Int = 0,
+    val callback: ((Material, Int) -> Unit)? = null
+) : InventoryHolder {
     private val inventory: Inventory = Bukkit.createInventory(this, 54, TextUtility.convertToComponent("&6Select Icon"))
     private val icons = mutableListOf<IconData>()
 
@@ -118,8 +122,8 @@ class AdvertIconSelector(val category: AdvertCategory?, val page: Int = 0) : Inv
     }
 
     companion object {
-        fun open(player: Player, category: AdvertCategory?, page: Int = 0) {
-            val ui = AdvertIconSelector(category, page)
+        fun open(player: Player, category: AdvertCategory?, page: Int = 0, callback: ((Material, Int) -> Unit)? = null) {
+            val ui = AdvertIconSelector(category, page, callback)
             player.openInventory(ui.inventory)
         }
     }
@@ -134,9 +138,7 @@ class AdvertIconSelectorListener : Listener {
 
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
-        val holder = event.inventory.holder
-        if (holder !is AdvertIconSelector) return
-
+        val holder = event.inventory.holder as? AdvertIconSelector ?: return
         event.isCancelled = true
 
         val clickedItem = event.currentItem ?: return
@@ -149,14 +151,14 @@ class AdvertIconSelectorListener : Listener {
 
         when (id) {
             "prev_page" -> {
-                val currentPage = (holder as? AdvertIconSelector)?.page ?: 0
+                val currentPage = holder.page
                 if (currentPage > 0) {
-                    AdvertIconSelector.open(player, holder.category, currentPage - 1)
+                    AdvertIconSelector.open(player, holder.category, currentPage - 1, holder.callback)
                 }
             }
             "next_page" -> {
-                val currentPage = (holder as? AdvertIconSelector)?.page ?: 0
-                AdvertIconSelector.open(player, holder.category, currentPage + 1)
+                val currentPage = holder.page
+                AdvertIconSelector.open(player, holder.category, currentPage + 1, holder.callback)
             }
             else -> {
                 // Parse icon data
@@ -164,9 +166,13 @@ class AdvertIconSelectorListener : Listener {
                 val material = Material.valueOf(materialName)
                 val customModelData = modelData.toInt()
 
-                // Start the advert creation process with the selected icon and category
-                player.closeInventory()
-                CommandListAdvert.startAdvertCreation(player, material, customModelData, holder.category)
+                if (holder.callback != null) {
+                    holder.callback.invoke(material, customModelData)
+                } else {
+                    // Start the advert creation process with the selected icon and category
+                    player.closeInventory()
+                    CommandListAdvert.startAdvertCreation(player, material, customModelData, holder.category)
+                }
             }
         }
     }

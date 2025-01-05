@@ -503,8 +503,8 @@ class PocketbaseManager {
                         "description" to advert.description,
                         "iconMaterial" to (advert.iconMaterial?.name ?: ""),
                         "iconCustomModelData" to (advert.iconCustomModelData ?: 0),
-                        "enabled" to true,
-                        "deleted" to false
+                        "enabled" to advert.enabled,
+                        "deleted" to advert.deleted
                     )
 
                     val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
@@ -562,8 +562,8 @@ class PocketbaseManager {
                         "description" to advert.description,
                         "iconMaterial" to (advert.iconMaterial?.name ?: ""),
                         "iconCustomModelData" to (advert.iconCustomModelData ?: 0),
-                        "enabled" to true,
-                        "deleted" to false
+                        "enabled" to advert.enabled,
+                        "deleted" to advert.deleted
                     )
 
                     val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
@@ -666,7 +666,7 @@ class PocketbaseManager {
                     responseGet.close()
 
                     adverts.forEach { advert ->
-						SneakyJobBoard.getAdvertManager().list(advert)
+						SneakyJobBoard.getAdvertManager().list(advert, false)
                     }
                 }
             } catch (e: Exception) {
