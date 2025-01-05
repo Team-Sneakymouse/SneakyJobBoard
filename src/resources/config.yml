@@ -50,8 +50,6 @@ job-board-extra-buttons:
         icon-material: "jigsaw"
         icon-custom-model-data: 1
         show-on-board-interact: false
-        lore:
-            - "&eClick to post a new job listing"
         command-console: "listjob [playerName]"
     list-advert:
         slot: 5
@@ -60,8 +58,6 @@ job-board-extra-buttons:
         icon-material: "jigsaw"
         icon-custom-model-data: 2
         show-on-board-interact: false
-        lore:
-            - "&eClick to post a new service advert"
         command-console: "listadvert [playerName]"
 
 ## Different categories that a job can have. This is used to set icons for various displays.
