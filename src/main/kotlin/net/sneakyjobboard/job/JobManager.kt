@@ -222,7 +222,8 @@ data class Job(
             field = value
             updateTextDisplays()
         }
-
+    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name) else SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name)
+		
     /**
      * Returns the remaining duration of this job in milliseconds.
      * @return Remaining duration in milliseconds.
@@ -321,16 +322,6 @@ data class Job(
         // Add each line of the description to the lore
         for (line in descriptionLines) {
             lore.add("&e$line")
-        }
-
-        // Add poster line
-        var posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-            ?: "&ePosted by: &b[playerName]").replace(
-            "[playerName]", player.name
-        )
-
-        if (SneakyJobBoard.isPapiActive()) {
-            posterString = PlaceholderAPI.setPlaceholders(player, posterString)
         }
 
         lore.add(posterString)
