@@ -125,3 +125,10 @@ job-categories:
             right-rotation: 0,0,0,1
             translation: 0.0,0.0,0.0
             scale: 0.10,0.10,0.10
+
+advert-categories:
+    medical:
+        name: "Medical"
+        description: "Physical and mental health services."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 1

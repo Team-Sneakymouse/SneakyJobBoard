@@ -22,16 +22,20 @@ class Placeholders : PlaceholderExpansion() {
         return true
     }
 
-    override fun onPlaceholderRequest(player: Player, params: String): String? {
+    override fun onPlaceholderRequest(player: Player?, params: String): String? {
+        if (player == null) return null
+
         val placeholder = params.lowercase()
 
         return when (placeholder) {
             "listed_jobs" -> {
                 val jobs = SneakyJobBoard.getJobManager().jobs.values.filter { it.player == player }.map { it.name }
-
                 jobs.takeIf { it.isNotEmpty() }?.joinToString("|") ?: "none"
             }
-
+            "listed_adverts" -> {
+                val adverts = SneakyJobBoard.getAdvertManager().adverts.values.filter { it.player == player }.map { it.name }
+                adverts.takeIf { it.isNotEmpty() }?.joinToString("|") ?: "none"
+            }
             else -> null
         }
     }

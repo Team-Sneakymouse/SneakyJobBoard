@@ -7,6 +7,8 @@ import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.job.JobCategoryManager
 import net.sneakyjobboard.job.JobHistoryInventoryListener
 import net.sneakyjobboard.job.JobManager
+import net.sneakyjobboard.advert.AdvertCategoryManager
+import net.sneakyjobboard.advert.AdvertManager
 import net.sneakyjobboard.jobboard.*
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
@@ -24,11 +26,17 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     lateinit var jobBoardManager: JobBoardManager
     lateinit var jobManager: JobManager
     lateinit var pocketBaseManager: PocketbaseManager
+    lateinit var advertCategoryManager: AdvertCategoryManager
+    lateinit var advertManager: AdvertManager
     var papiActive = false
     var markerAPI: MarkerAPI? = null
     val jobBoardUpdater = JobBoardUpdater()
     private val jobBoardMaintenance = JobBoardMaintenance()
     private val trackingJobsUpdater = TrackingJobsUpdater()
+
+    override fun onLoad() {
+        instance = this
+    }
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -37,6 +45,8 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         jobBoardManager = JobBoardManager()
         jobManager = JobManager()
         pocketBaseManager = PocketbaseManager()
+        advertCategoryManager = AdvertCategoryManager()
+        advertManager = AdvertManager()
 
         server.commandMap.register(IDENTIFIER, CommandListJob())
         server.commandMap.register(IDENTIFIER, CommandJobBoard())
@@ -77,90 +87,49 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         const val VERSION = "1.0.0"
         private lateinit var instance: SneakyJobBoard
 
-        /**
-         * Logs a message to the console.
-         * @param msg the message to log.
-         */
         fun log(msg: String) {
             instance.logger.info(msg)
         }
 
-        /**
-         * Retrieves the plugin's data folder.
-         * @return the File object representing the data folder.
-         * @throws IllegalStateException if the data folder is not initialized.
-         */
-        private fun getDataFolder(): File {
-            return instance.dataFolder
-        }
-
-        /**
-         * Retrieves the configuration file for the plugin.
-         * @return the File object representing the config.yml file.
-         */
         fun getConfigFile(): File {
-            return File(getDataFolder(), "config.yml")
+            return File(instance.dataFolder, "config.yml")
         }
 
-        /**
-         * Checks if PlaceholderAPI (PAPI) is active.
-         * @return true if PAPI is active, false otherwise.
-         */
-        fun isPapiActive(): Boolean {
-            return instance.papiActive
-        }
-
-        /**
-         * Checks if Dynmap is active.
-         * @return true if Dynmap is active, false otherwise.
-         */
-        fun isDynmapActive(): Boolean {
-            return (instance.markerAPI != null)
-        }
-
-        /**
-         * Retrieves the running instance of the SneakyJobBoard plugin.
-         * @return the SneakyJobBoard instance.
-         */
         fun getInstance(): SneakyJobBoard {
             return instance
         }
 
-        /**
-         * Retrieves the job category manager instance.
-         * @return the JobCategoryManager instance responsible for managing job categories.
-         */
         fun getJobCategoryManager(): JobCategoryManager {
             return instance.jobCategoryManager
         }
 
-        /**
-         * Retrieves the job board manager instance.
-         * @return the JobBoardManager instance responsible for managing job boards.
-         */
         fun getJobBoardManager(): JobBoardManager {
             return instance.jobBoardManager
         }
 
-        /**
-         * Retrieves the job manager instance.
-         * @return the JobManager instance responsible for managing jobs.
-         */
         fun getJobManager(): JobManager {
             return instance.jobManager
         }
 
-        /**
-         * Retrieves the PocketBase manager instance.
-         * @return the PocketbaseManager instance responsible for interacting with the PocketBase API.
-         */
         fun getPocketbaseManager(): PocketbaseManager {
             return instance.pocketBaseManager
         }
-    }
 
-    override fun onLoad() {
-        instance = this
+        fun getAdvertCategoryManager(): AdvertCategoryManager {
+            return instance.advertCategoryManager
+        }
+
+        fun getAdvertManager(): AdvertManager {
+            return instance.advertManager
+        }
+
+        fun isPapiActive(): Boolean {
+            return instance.papiActive
+        }
+
+        fun isDynmapActive(): Boolean {
+            return instance.markerAPI != null
+        }
     }
 }
 
