@@ -8,6 +8,9 @@ duration-scale-scale-max: 2
 ## The interval (in ticks) that the location of job board icons will be updated for Tracking jobs
 tracking-jobs-update-interval: 100
 
+## The duration in milliseconds after which an invitation expires
+invitation-expire-duration: 300000
+
 ## The api URL of your pocketbase collection, in case you want to track job listings and build listeners for social media integration.
 pocketbase-url: "http://127.0.0.1:8090/api/collections/collectionIdOrName/records"
 ## The authorization for your pocketbase collection.
@@ -42,11 +45,25 @@ job-board-extra-buttons:
     list-1800000:
         slot: 8
         name: "&aPost New Job"
-        description: "&ePost a 30 minute lob listing."
-        icon-material: "jigsaw"
-        icon-custom-model-data: 1
+        description: "&ePost a 30 minute job listing."
+        material: "jigsaw"
+        amount: 1
+        custom-model-data: 1
         show-on-board-interact: false
-        command-console: ""
+        lore:
+            - "&eClick to post a new job listing"
+        command-console: "listjob [playerName]"
+    list-advert:
+        slot: 5
+        name: "&aPost New Advert"
+        description: "&ePost a new service advert."
+        material: "jigsaw"
+        amount: 1
+        custom-model-data: 2
+        show-on-board-interact: false
+        lore:
+            - "&eClick to post a new service advert"
+        command-console: "listadvert [playerName]"
 
 ## Different categories that a job can have. This is used to set icons for various displays.
 job-categories:

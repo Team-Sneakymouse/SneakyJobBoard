@@ -5,6 +5,8 @@ import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
@@ -12,18 +14,19 @@ import org.bukkit.entity.TextDisplay
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
-import org.bukkit.Material
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
 import kotlin.math.floor
 
-/** Manages listed adverts and dispatching. */
+/** Manages listed adverts, invitations, and dispatching. */
 class AdvertManager {
 
     val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
+    val INVITATION_IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "invitation_id")
 
     val adverts = mutableMapOf<String, Advert>()
+    private val invitations = mutableMapOf<String, Invitation>()
 
     /**
      * Lists a new advert, spawning its display and scheduling unlisting.
@@ -40,6 +43,51 @@ class AdvertManager {
      */
     fun getAdverts(): MutableCollection<Advert> {
         return adverts.values
+    }
+
+    /**
+     * Creates a new invitation for an advert.
+     * @param advert The advert being responded to
+     * @param inviter The player creating the invitation
+     * @return The created invitation
+     */
+    fun createInvitation(advert: Advert, inviter: Player): Invitation {
+        val invitation = Invitation(
+            advert = advert,
+            inviter = inviter,
+            location = inviter.location,
+            startTime = System.currentTimeMillis()
+        )
+        invitations[invitation.id] = invitation
+        return invitation
+    }
+
+    /**
+     * Gets an invitation by its ID.
+     * @param id The ID of the invitation
+     * @return The invitation if found, null otherwise
+     */
+    fun getInvitation(id: String): Invitation? = invitations[id]
+
+    /**
+     * Gets all active invitations for a player.
+     * @param player The player to get invitations for
+     * @return List of active invitations
+     */
+    fun getActiveInvitationsForPlayer(player: Player): List<Invitation> {
+		cleanupExpiredInvitations()
+        return invitations.values.filter { 
+            it.advert.player == player
+        }
+    }
+
+    /**
+     * Removes expired invitations.
+     */
+    fun cleanupExpiredInvitations() {
+        val now = System.currentTimeMillis()
+        val expireDuration = SneakyJobBoard.getInstance().config.getLong("invitation-expire-duration", 300000)
+        invitations.values.removeIf { (now - it.startTime) >= expireDuration }
     }
 
     /**
@@ -72,6 +120,55 @@ class AdvertManager {
     }
 }
 
+/**
+ * Represents an invitation from a player responding to an advert.
+ */
+data class Invitation(
+    val advert: Advert,
+    val inviter: Player,
+    val location: Location
+) {
+    val id: String = UUID.randomUUID().toString()
+    val startTime: Long = System.currentTimeMillis()
+
+    /**
+     * Creates an ItemStack representing this invitation in the UI.
+     * @return The ItemStack for this invitation
+     */
+    fun createDisplayItem(): ItemStack {
+        val itemStack = ItemStack(Material.PAPER)
+        val meta = itemStack.itemMeta
+
+        meta.displayName(TextUtility.convertToComponent("&aInvitation from ${inviter.name}"))
+
+        val lore = mutableListOf<String>()
+        lore.add("&eFor your advert: &f${advert.name}")
+        lore.add("&eLocation: &f${location.blockX}, ${location.blockY}, ${location.blockZ}")
+        
+        // Calculate time remaining
+        val now = System.currentTimeMillis()
+        val expireDuration = SneakyJobBoard.getInstance().config.getLong("invitation-expire-duration", 300000)
+        val progress = (now - startTime).toDouble() / expireDuration.toDouble()
+        val barLength = 20
+        val filledBars = (barLength * (1.0 - progress)).toInt().coerceIn(0, barLength)
+        val progressBar = "&a" + "█".repeat(filledBars) + "&7" + "█".repeat(barLength - filledBars)
+        lore.add("&eTime remaining: $progressBar")
+
+        meta.lore(lore.map { TextUtility.convertToComponent(it) })
+
+        // Set persistent data
+        val container = meta.persistentDataContainer
+        container.set(
+            SneakyJobBoard.getInstance().advertManager.INVITATION_IDKEY,
+            PersistentDataType.STRING,
+            id
+        )
+
+        itemStack.itemMeta = meta
+        return itemStack
+    }
+}
+
 class Advert(
     val category: AdvertCategory?,
     val player: Player
@@ -83,7 +180,7 @@ class Advert(
     var description: String = category?.description ?: ""
     val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name)
 
-	/**
+    /**
      * Returns the ItemStack that represents this advert, including metadata.
      * @return The item representing this advert.
      */
@@ -108,6 +205,7 @@ class Advert(
         }
 
         lore.add(posterString)
+        lore.add("&7Click to send an invitation!")
 
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
 
