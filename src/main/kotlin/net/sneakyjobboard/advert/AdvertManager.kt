@@ -34,7 +34,6 @@ class AdvertManager {
      */
     fun storeInvitation(invitation: Invitation) {
         invitations[invitation.id] = invitation
-        invitation.advert.player.sendMessage(TextUtility.convertToComponent("&a${invitation.inviter.name} has sent you an invitation! Use /invitations to view it."))
     }
 
     /**

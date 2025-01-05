@@ -245,8 +245,7 @@ class AdvertBoardListener : Listener {
                     player.closeInventory()
                     
                     // Create the invitation
-                    val invitation = SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
-					SneakyJobBoard.getAdvertManager().storeInvitation(invitation)
+                    SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
                     player.sendMessage(TextUtility.convertToComponent("&aYou have invited ${advert.player.name} to come to you!"))
                 }
             }
