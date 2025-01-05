@@ -67,6 +67,16 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
                 ))
             }
         })
+
+        // Close button
+        inventory.setItem(8, ItemStack(Material.BARRIER).apply {
+            itemMeta = itemMeta?.also { meta ->
+                meta.displayName(TextUtility.convertToComponent("&cClose"))
+                meta.lore(listOf(
+                    TextUtility.convertToComponent("&7Click to close the interface")
+                ))
+            }
+        })
     }
 
     companion object {
@@ -171,6 +181,9 @@ class AdvertEditListener : Listener {
                             advert.name = message
                             waitingForTitle = false
                             player.sendMessage(TextUtility.convertToComponent("&aEnter the new description:"))
+                            player.sendMessage(TextUtility.convertToComponent("&7Current: &e[Click to use old description]").clickEvent(
+                                net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.description)
+                            ))
                         } else {
                             advert.description = message
                             SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
@@ -191,6 +204,13 @@ class AdvertEditListener : Listener {
 
                 AdvertEditInterface.registerListener(player, chatListener)
                 player.sendMessage(TextUtility.convertToComponent("&aEnter the new title:"))
+                player.sendMessage(TextUtility.convertToComponent("&7Current: &e[Click to use old title]").clickEvent(
+                    net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.name)
+                ))
+            }
+            8 -> {
+                // Close interface
+                player.closeInventory()
             }
         }
     }
