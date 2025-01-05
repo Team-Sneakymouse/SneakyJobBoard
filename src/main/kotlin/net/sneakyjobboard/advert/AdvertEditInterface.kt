@@ -128,7 +128,9 @@ class AdvertEditListener : Listener {
                         SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
                         player.sendMessage(TextUtility.convertToComponent("&aCategory updated!"))
                         AdvertEditInterface.unregisterListener(player)
-                        AdvertEditInterface.open(player, advert)
+                        Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
+                            AdvertEditInterface.open(player, advert)
+                        })
                     }
 
                     @EventHandler
@@ -173,7 +175,9 @@ class AdvertEditListener : Listener {
                             advert.description = message
                             SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
                             AdvertEditInterface.unregisterListener(player)
-                            AdvertEditInterface.open(player, advert)
+                            Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
+                                AdvertEditInterface.open(player, advert)
+                            })
                         }
                     }
 
