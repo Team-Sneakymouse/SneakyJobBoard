@@ -29,7 +29,7 @@ class AdvertManager : Listener {
     val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
     val INVITATION_IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "invitation_id")
 
-    val adverts = mutableMapOf<String, Advert>()
+    private val adverts = mutableMapOf<String, Advert>()
     private val invitations = mutableMapOf<String, Invitation>()
 
     /**
@@ -50,13 +50,39 @@ class AdvertManager : Listener {
 		if (sendToPocketbase) SneakyJobBoard.getPocketbaseManager().listAdvert(advert)
     }
 
+	/**
+	 * Unlists an advert.
+	 * @param advert The advert to unlist.
+	 */
+	fun unlist(advert: Advert) {
+		advert.deleted = true
+		SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
+		adverts.remove(advert.uuid)
+	}
+
+	/**
+	 * Gets an advert by its UUID.
+	 * @param uuid The UUID of the advert.
+	 * @return The advert if found, null otherwise.
+	 */
+	fun getAdvert(uuid: String): Advert? = adverts[uuid]
+
     /**
      * Gets the collection of currently listed adverts from online players.
      * @return A mutable collection of adverts.
      */
     fun getAdverts(): MutableCollection<Advert> {
-        return adverts.values.filter { it.player.isOnline }.toMutableList()
+        return adverts.values.filter { it.player.isOnline && it.enabled }.toMutableList()
     }
+
+	/**
+	 * Gets the adverts for a specific player.
+	 * @param player The player to get adverts for.
+	 * @return A mutable collection of adverts.
+	 */
+	fun getAdvertsForPlayer(player: Player): MutableCollection<Advert> {
+		return adverts.values.filter { it.player == player }.toMutableList()
+	}
 
     /**
      * Creates a new invitation for an advert.

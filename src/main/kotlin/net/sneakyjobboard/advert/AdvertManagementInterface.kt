@@ -27,7 +27,7 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
     override fun getInventory(): Inventory = inventory
 
     private fun createInventory(): Inventory {
-        val adverts = SneakyJobBoard.getAdvertManager().adverts.values.filter { it.player == player }
+        val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
         val rows = ((adverts.size + 8) / 9).coerceIn(1, 6)
         return Bukkit.createInventory(this, rows * 9, TextUtility.convertToComponent("&6Your Advertisements"))
     }
@@ -36,7 +36,7 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
         inventory.clear()
         
         // Add all adverts belonging to the player
-        val adverts = SneakyJobBoard.getAdvertManager().adverts.values.filter { it.player == player }
+        val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
         adverts.forEachIndexed { index, advert ->
             if (index < inventory.size) {
                 val itemStack = if (advert.enabled) {
@@ -117,7 +117,7 @@ class AdvertManagementListener : Listener {
             org.bukkit.persistence.PersistentDataType.STRING
         ) ?: return
 
-        val advert = SneakyJobBoard.getAdvertManager().adverts[uuid] ?: return
+        val advert = SneakyJobBoard.getAdvertManager().getAdvert(uuid) ?: return
 
         when (event.click) {
             ClickType.LEFT -> {
@@ -129,10 +129,7 @@ class AdvertManagementListener : Listener {
             }
             ClickType.DROP -> {
                 // Mark as deleted
-                advert.deleted = true
-                advert.enabled = false
-                SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
-                SneakyJobBoard.getAdvertManager().adverts.remove(advert.uuid)
+                SneakyJobBoard.getAdvertManager().unlist(advert)
                 player.closeInventory()
                 AdvertManagementInterface.open(player)
             }
