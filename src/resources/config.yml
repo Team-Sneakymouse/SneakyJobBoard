@@ -47,9 +47,8 @@ job-board-extra-buttons:
         slot: 8
         name: "&aPost New Job"
         description: "&ePost a 30 minute job listing."
-        material: "jigsaw"
-        amount: 1
-        custom-model-data: 1
+        icon-material: "jigsaw"
+        icon-custom-model-data: 1
         show-on-board-interact: false
         lore:
             - "&eClick to post a new job listing"
@@ -58,9 +57,8 @@ job-board-extra-buttons:
         slot: 5
         name: "&aPost New Advert"
         description: "&ePost a new service advert."
-        material: "jigsaw"
-        amount: 1
-        custom-model-data: 2
+        icon-material: "jigsaw"
+        icon-custom-model-data: 2
         show-on-board-interact: false
         lore:
             - "&eClick to post a new service advert"
