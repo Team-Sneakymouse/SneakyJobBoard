@@ -38,11 +38,11 @@ class AdvertManager {
     }
 
     /**
-     * Gets the collection of currently listed adverts.
+     * Gets the collection of currently listed adverts from online players.
      * @return A mutable collection of adverts.
      */
     fun getAdverts(): MutableCollection<Advert> {
-        return adverts.values
+        return adverts.values.filter { it.player.isOnline }.toMutableList()
     }
 
     /**
@@ -213,8 +213,6 @@ class Advert(
         // Set persistent data.
         val persistentData = meta.persistentDataContainer
         persistentData.set(NamespacedKey(SneakyJobBoard.getInstance(), "advert_id"), PersistentDataType.STRING, uuid)
-
-        meta.setEnchantmentGlintOverride(true)
 
         itemStack.itemMeta = meta
         return itemStack

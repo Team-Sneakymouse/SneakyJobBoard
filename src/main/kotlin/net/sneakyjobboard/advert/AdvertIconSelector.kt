@@ -103,7 +103,7 @@ class AdvertIconSelector(val category: AdvertCategory?, val page: Int = 0) : Inv
         val meta = itemStack.itemMeta
 
         meta.setCustomModelData(icon.modelData)
-        meta.displayName(TextUtility.convertToComponent("&7Icon"))
+		meta.isHideTooltip = true
         
         // Store icon data in persistent data container
         val container = meta.persistentDataContainer

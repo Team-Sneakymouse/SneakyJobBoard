@@ -58,6 +58,7 @@ class AdvertCategoryManager {
                 }
 
                 advertCategories[key] = AdvertCategory(
+					id = key,
                     name,
                     description,
                     iconMaterial,
@@ -136,6 +137,7 @@ class AdvertCategoryManager {
  * @property discordEmbedIcon The icon used in Discord embeds.
  */
 data class AdvertCategory(
+    val id: String,
     val name: String,
     val description: String,
     val iconMaterial: Material,

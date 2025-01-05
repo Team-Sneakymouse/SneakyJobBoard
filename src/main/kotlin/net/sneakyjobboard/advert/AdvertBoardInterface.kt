@@ -62,9 +62,7 @@ class AdvertBoardInterface(
 
         // Add category buttons for categories that have active adverts
         for (category in categoryManager.getAdvertCategories().values) {
-            val categoryAdverts = advertManager.getAdverts().filter { 
-                it.category == category && it.player.isOnline 
-            }
+            val categoryAdverts = advertManager.getAdverts().filter { it.category == category }
             
             if (categoryAdverts.isNotEmpty()) {
                 val button = createCategoryButton(category, categoryAdverts.size)
@@ -77,7 +75,7 @@ class AdvertBoardInterface(
 
         // Add uncategorized adverts
         val uncategorizedAdverts = advertManager.getAdverts()
-            .filter { it.category == null && it.player.isOnline }
+            .filter { it.category == null }
             .drop(page * 50)
             .take(50 - slot)
 
@@ -94,7 +92,7 @@ class AdvertBoardInterface(
     private fun populateCategoryAdverts() {
         val advertManager = SneakyJobBoard.getAdvertManager()
         val adverts = advertManager.getAdverts()
-            .filter { it.category == category && it.player.isOnline }
+            .filter { it.category == category }
             .drop(page * 50)
             .take(50)
 
@@ -116,7 +114,6 @@ class AdvertBoardInterface(
         val lore = mutableListOf<String>()
         lore.add("&7${category.description}")
         lore.add("&e$advertCount active adverts")
-        lore.add("&7Click to view!")
 
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
 
@@ -124,7 +121,7 @@ class AdvertBoardInterface(
         meta.persistentDataContainer.set(
             SneakyJobBoard.getInstance().advertManager.IDKEY,
             PersistentDataType.STRING,
-            category.name
+            "category_${category.id}" // Prefix with category_ to distinguish from other IDs
         )
 
         itemStack.itemMeta = meta
@@ -139,9 +136,9 @@ class AdvertBoardInterface(
         
         // Calculate if we need previous/next buttons
         val totalAdverts = if (category != null) {
-            advertManager.getAdverts().count { it.category == category && it.player.isOnline }
+            advertManager.getAdverts().count { it.category == category }
         } else {
-            advertManager.getAdverts().count { it.category == null && it.player.isOnline }
+            advertManager.getAdverts().count { it.category == null }
         }
         
         val hasNextPage = totalAdverts > (page + 1) * 50
@@ -218,33 +215,35 @@ class AdvertBoardListener : Listener {
             PersistentDataType.STRING
         ) ?: return
 
-        when (id) {
-            "prev_page" -> {
+        when {
+            id == "prev_page" -> {
                 val currentPage = (holder as? AdvertBoardInterface)?.page ?: 0
                 if (currentPage > 0) {
                     AdvertBoardInterface.open(player, holder.category, currentPage - 1)
                 }
             }
-            "next_page" -> {
+            id == "next_page" -> {
                 val currentPage = (holder as? AdvertBoardInterface)?.page ?: 0
                 AdvertBoardInterface.open(player, holder.category, currentPage + 1)
             }
-            "back" -> {
+            id == "back" -> {
                 AdvertBoardInterface.open(player)
             }
-            else -> {
-                // Check if it's a category button
-                val category = SneakyJobBoard.getInstance().advertCategoryManager.getCategory(id)
+            id.startsWith("category_") -> {
+                // Extract category key from the ID
+                val categoryKey = id.removePrefix("category_")
+                val category = SneakyJobBoard.getAdvertCategoryManager().getCategory(categoryKey)
                 if (category != null) {
                     AdvertBoardInterface.open(player, category)
-                } else {
-                    // It's an advert, handle invitation creation
-                    val advert = SneakyJobBoard.getAdvertManager().getAdverts().find { it.uuid == id }
-                    if (advert != null) {
-                        val invitation = SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
-                        player.sendMessage(TextUtility.convertToComponent("&aYou have invited ${advert.player.name} to come to you!"))
-                        player.closeInventory()
-                    }
+                }
+            }
+            else -> {
+                // It's an advert, handle invitation creation
+                val advert = SneakyJobBoard.getAdvertManager().getAdverts().find { it.uuid == id }
+                if (advert != null) {
+                    val invitation = SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
+                    player.sendMessage(TextUtility.convertToComponent("&aYou have invited ${advert.player.name} to come to you!"))
+                    player.closeInventory()
                 }
             }
         }
