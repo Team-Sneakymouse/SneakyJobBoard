@@ -33,8 +33,8 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     init {
         var i = (extraButtons.keys.maxOrNull()?.plus(1)) ?: 0
         val jobs = SneakyJobBoard.getJobManager().getJobs()
-        val size = (((jobs.size + i + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
-        inventory = Bukkit.createInventory(this, size, TextUtility.convertToComponent("&eJob Board"))
+        //val size = (((jobs.size + i + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
+        inventory = Bukkit.createInventory(this, 54, TextUtility.convertToComponent("&eJob Board"))
 
         extraButtons.forEach { extraButton ->
             if (extraButton.value.showOnBoardInteract || !isJobBoardInteract) inventory.setItem(
