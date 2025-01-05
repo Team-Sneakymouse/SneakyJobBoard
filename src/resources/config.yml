@@ -1,5 +1,5 @@
 ## The string that is used to append the poster to a listing. Supports placeholders and color codes. "[playerName]" will also work, even without PAPI installed.
-poster-string: "&ePosted by: &b%sneakycharacters_character_name_noformat%"
+poster-string: "&eFom: &b%sneakycharacters_character_name_noformat%"
 ## The duration in millis that represents 100% scale on the duration-based scaling feature. Set to 0 to disable duration-based scaling.
 duration-scale-base-duration: 1800000
 ## The minimum and maximum multiplier that duration-based scaling is allowed to scale up to, if duration-based scaling is active.
@@ -18,7 +18,7 @@ pocketbase-auth-url: "http://127.0.0.1:8090/api/admins/auth-with-password"
 pocketbase-email: ""
 pocketbase-password: ""
 ## The poster display string that is provided to the pocketbase. Supports placeholders. "[playerName]" will also work, even without PAPI installed.
-pocketbase-poster: "Posted by: %sneakycharacters_character_name_noformat%"
+pocketbase-poster: "From: %sneakycharacters_character_name_noformat%"
 ## The location display string that is provided to the pocketbase. Supports placeholders. "[x]", "[y]", "[z]" will also work, even without PAPI installed.
 pocketbase-location: "%dipp_district_name%"
 

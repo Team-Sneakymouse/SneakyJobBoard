@@ -137,6 +137,11 @@ data class Invitation(
 ) {
     val id: String = UUID.randomUUID().toString()
     val startTime: Long = System.currentTimeMillis()
+	val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(inviter, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", inviter.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", inviter.name)
+	var displayStringLocation =
+		(SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
+			"[x]", location.blockX.toString()
+		).replace("[y]", location.blockY.toString()).replace("[z]", location.blockZ.toString())
 
     /**
      * Creates an ItemStack representing this invitation in the UI.
@@ -146,20 +151,21 @@ data class Invitation(
         val itemStack = ItemStack(Material.PAPER)
         val meta = itemStack.itemMeta
 
-        meta.displayName(TextUtility.convertToComponent("&aInvitation from ${inviter.name}"))
+        meta.displayName(TextUtility.convertToComponent("&a${advert.name}"))
 
         val lore = mutableListOf<String>()
-        lore.add("&eFor your advert: &f${advert.name}")
-        lore.add("&eLocation: &f${location.blockX}, ${location.blockY}, ${location.blockZ}")
+		lore.add(posterString)
+        lore.add("&eLocation: &b${displayStringLocation}")
         
         // Calculate time remaining
         val now = System.currentTimeMillis()
         val expireDuration = SneakyJobBoard.getInstance().config.getLong("invitation-expire-duration", 300000)
         val progress = (now - startTime).toDouble() / expireDuration.toDouble()
-        val barLength = 20
+        val barLength = 10
         val filledBars = (barLength * (1.0 - progress)).toInt().coerceIn(0, barLength)
         val progressBar = "&a" + "█".repeat(filledBars) + "&7" + "█".repeat(barLength - filledBars)
-        lore.add("&eTime remaining: $progressBar")
+        lore.add("&eTime remaining:")
+		lore.add("${progressBar}")
 
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
 
@@ -185,7 +191,7 @@ class Advert(
     var location = player.location
     var name: String = category?.name ?: ""
     var description: String = category?.description ?: ""
-    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name)
+    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
     var iconMaterial: Material? = null
     var iconCustomModelData: Int? = null
 
