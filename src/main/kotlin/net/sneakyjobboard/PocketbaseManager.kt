@@ -621,6 +621,7 @@ class PocketbaseManager {
 
                     for (item in items) {
                         val category = item.get("category").asString
+                        val posterDisplayString = item.get("posterDisplayString").asString
                         val name = item.get("name").asString
                         val description = item.get("description").asString
                         val iconMaterialStr = item.get("iconMaterial").asString
@@ -643,6 +644,7 @@ class PocketbaseManager {
                         ).apply {
                             this.name = name
                             this.description = description
+                            this.posterString = posterDisplayString
                             this.recordID = item.get("id").asString
                             this.iconMaterial = Material.matchMaterial(iconMaterialStr)
                             this.iconCustomModelData = iconCustomModelData

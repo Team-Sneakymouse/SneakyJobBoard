@@ -243,7 +243,7 @@ class Advert(
     var location = player.location
     var name: String = category?.name ?: ""
     var description: String = category?.description ?: ""
-    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(
+    var posterString: String = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(
         player,
         SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]"
     ).replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
