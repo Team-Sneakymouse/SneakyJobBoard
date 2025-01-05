@@ -55,8 +55,7 @@ class AdvertManager {
         val invitation = Invitation(
             advert = advert,
             inviter = inviter,
-            location = inviter.location,
-            startTime = System.currentTimeMillis()
+            location = inviter.location
         )
         invitations[invitation.id] = invitation
         return invitation

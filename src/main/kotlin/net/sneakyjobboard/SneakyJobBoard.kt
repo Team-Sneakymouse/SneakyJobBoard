@@ -5,11 +5,13 @@ import net.sneakyjobboard.commands.CommandJobHistory
 import net.sneakyjobboard.commands.CommandListJob
 import net.sneakyjobboard.commands.CommandUnlistJob
 import net.sneakyjobboard.commands.CommandInvitations
+import net.sneakyjobboard.commands.CommandAdvertBoard
 import net.sneakyjobboard.job.JobCategoryManager
 import net.sneakyjobboard.job.JobHistoryInventoryListener
 import net.sneakyjobboard.job.JobManager
 import net.sneakyjobboard.advert.AdvertCategoryManager
 import net.sneakyjobboard.advert.AdvertManager
+import net.sneakyjobboard.advert.AdvertBoardListener
 import net.sneakyjobboard.jobboard.*
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
@@ -54,11 +56,13 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.commandMap.register(IDENTIFIER, CommandUnlistJob())
         server.commandMap.register(IDENTIFIER, CommandJobHistory())
         server.commandMap.register(IDENTIFIER, CommandInvitations())
+        server.commandMap.register(IDENTIFIER, CommandAdvertBoard())
 
         server.pluginManager.registerEvents(PluginListener(this), this)
         server.pluginManager.registerEvents(JobInventoryListener(), this)
         server.pluginManager.registerEvents(JobHistoryInventoryListener(), this)
         server.pluginManager.registerEvents(JobBoardListener(), this)
+        server.pluginManager.registerEvents(AdvertBoardListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.admin"))

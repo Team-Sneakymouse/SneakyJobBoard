@@ -70,7 +70,7 @@ class AdvertInvitationListener : Listener {
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
         val holder = event.inventory.holder
-        if (holder !is AdvertInvitationUI) return
+        if (holder !is AdvertInvitationInterface) return
 
         event.isCancelled = true
 
@@ -92,7 +92,7 @@ class AdvertInvitationListener : Listener {
 
     @EventHandler
     fun onInventoryClose(event: InventoryCloseEvent) {
-        if (event.inventory.holder !is AdvertInvitationUI) return
+        if (event.inventory.holder !is AdvertInvitationInterface) return
         // Additional cleanup if needed
     }
 } 
