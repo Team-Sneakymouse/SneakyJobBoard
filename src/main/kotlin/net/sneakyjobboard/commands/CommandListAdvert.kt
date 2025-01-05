@@ -2,7 +2,6 @@ package net.sneakyjobboard.commands
 
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.minimessage.MiniMessage
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.advert.Advert
 import net.sneakyjobboard.advert.AdvertCategory
@@ -35,7 +34,7 @@ class CommandListAdvert : CommandBase("listadvert") {
         }
 
         /** Registers a new chat listener for a player, removing any existing one. */
-        fun registerListener(player: Player, listener: Listener) {
+        private fun registerListener(player: Player, listener: Listener) {
             unregisterListener(player)
             playerListeners[player] = listener
             Bukkit.getPluginManager().registerEvents(listener, SneakyJobBoard.getInstance())

@@ -1,7 +1,6 @@
 package net.sneakyjobboard.jobboard
 
 import net.sneakyjobboard.SneakyJobBoard
-import net.sneakyjobboard.commands.CommandJobBoard
 import net.sneakyjobboard.job.Job
 import org.bukkit.*
 import org.bukkit.block.BlockFace

@@ -21,7 +21,7 @@ import org.bukkit.persistence.PersistentDataType
  * Manages the user interface for viewing and interacting with job listings.
  * Provides a paginated inventory interface for players to browse and accept jobs.
  *
- * @property isJobBoardInteract Whether this interface was opened by interacting with a physical job board
+ * @param isJobBoardInteract Whether this interface was opened by interacting with a physical job board
  */
 class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     private var inventory: Inventory

@@ -2,12 +2,7 @@ package net.sneakyjobboard.advert
 
 import net.sneakyjobboard.SneakyJobBoard
 import org.bukkit.Material
-import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
-import org.bukkit.entity.Display.Brightness
-import org.bukkit.util.Transformation
-import org.joml.Quaternionf
-import org.joml.Vector3f
 
 /**
  * Manages advert categories and their configurations, loading them from a configuration file.
@@ -43,9 +38,6 @@ class AdvertCategoryManager {
                 val iconCustomModelData = advertCategoriesSection.getInt("$key.icon-custom-model-data")
 
                 val iconMaterial = Material.matchMaterial(iconMaterialString) ?: Material.MUSIC_DISC_CAT
-
-                val brightnessBlock = advertCategoriesSection.getInt("$key.item-display-brightness.block")
-                val brightnessSky = advertCategoriesSection.getInt("$key.item-display-brightness.sky")
 
                 advertCategories[key] = AdvertCategory(
                     id = key,

@@ -3,7 +3,6 @@ package net.sneakyjobboard.advert
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.TextComponent
 import net.sneakyjobboard.SneakyJobBoard
-import net.sneakyjobboard.commands.CommandListAdvert
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Material

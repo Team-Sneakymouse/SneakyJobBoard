@@ -236,13 +236,13 @@ data class Job(
             field = value
             updateTextDisplays()
         }
-    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
+    private val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
 
     /**
      * Gets the remaining duration of this job in milliseconds.
      * @return The time remaining before the job expires
      */
-    fun remainingDurationMillis(): Long {
+    private fun remainingDurationMillis(): Long {
         return ((startTime + durationMillis) - System.currentTimeMillis())
     }
 

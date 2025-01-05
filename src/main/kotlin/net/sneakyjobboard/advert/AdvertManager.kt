@@ -2,24 +2,18 @@ package net.sneakyjobboard.advert
 
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
-import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
-import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
-import org.bukkit.entity.TextDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
-import org.bukkit.util.Transformation
-import org.joml.Quaternionf
-import org.joml.Vector3f
 import java.util.*
 import kotlin.math.floor
 
@@ -122,7 +116,7 @@ class AdvertManager : Listener {
     /**
      * Removes expired invitations.
      */
-    fun cleanupExpiredInvitations() {
+    private fun cleanupExpiredInvitations() {
         val now = System.currentTimeMillis()
         val expireDuration = SneakyJobBoard.getInstance().config.getLong("invitation-expire-duration", 300000)
         invitations.values.removeIf { (now - it.startTime) >= expireDuration }
@@ -132,7 +126,7 @@ class AdvertManager : Listener {
      * Removes all advertisements for a specific player.
      * @param player The player whose advertisements should be removed
      */
-    fun removePlayerAdverts(player: Player) {
+    private fun removePlayerAdverts(player: Player) {
         adverts.values.removeIf { it.player == player }
     }
 
@@ -150,7 +144,7 @@ class AdvertManager : Listener {
 
     /**
      * Dispatches a player to the specified advertisement.
-     * @param uuid The UUID of the advertisement to dispatch to.
+     * @param advert The advertisement to dispatch to.
      * @param pl The player to be dispatched.
      */
     fun dispatch(advert: Advert, pl: Player) {
@@ -184,12 +178,12 @@ data class Invitation(
 ) {
     val id: String = UUID.randomUUID().toString()
     val startTime: Long = System.currentTimeMillis()
-    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(
+    private val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(
         inviter,
         SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]"
     ).replace("[playerName]", inviter.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
         ?: "&eFrom: &b[playerName]").replace("[playerName]", inviter.name)
-    var displayStringLocation =
+    private var displayStringLocation =
         (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
             "[x]", location.blockX.toString()
         ).replace("[y]", location.blockY.toString()).replace("[z]", location.blockZ.toString())
@@ -220,7 +214,7 @@ data class Invitation(
         val filledBars = (barLength * (1.0 - progress)).toInt().coerceIn(0, barLength)
         val progressBar = "&a" + "█".repeat(filledBars) + "&7" + "█".repeat(barLength - filledBars)
         lore.add("&eTime remaining:")
-        lore.add("${progressBar}")
+        lore.add(progressBar)
 
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
 
