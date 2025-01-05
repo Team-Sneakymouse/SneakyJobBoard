@@ -214,7 +214,7 @@ data class Invitation(
         val progress = (now - startTime).toDouble() / expireDuration.toDouble()
         val barLength = 10
         val filledBars = (barLength * (1.0 - progress)).toInt().coerceIn(0, barLength)
-        val progressBar = "&b" + "█".repeat(filledBars) + "&7" + "█".repeat(barLength - filledBars)
+        val progressBar = "&a" + "█".repeat(filledBars) + "&7" + "█".repeat(barLength - filledBars)
         lore.add("&eTime remaining:")
 		lore.add("${progressBar}")
 
