@@ -80,10 +80,9 @@ class AdvertInvitationListener : Listener {
 
         val invitation = SneakyJobBoard.getAdvertManager().getInvitation(invitationId) ?: return
 
-        // Teleport the player to the invitation location
-        player.teleport(invitation.location)
-        player.sendMessage(TextUtility.convertToComponent("&aTeleported to invitation location!"))
-        player.closeInventory()
+		player.closeInventory()
+
+        SneakyJobBoard.getAdvertManager().dispatch(invitation.advert, player)
     }
 	
 } 

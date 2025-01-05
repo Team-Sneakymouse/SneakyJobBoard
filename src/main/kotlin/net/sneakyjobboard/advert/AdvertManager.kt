@@ -89,6 +89,9 @@ class AdvertManager : Listener {
             location = inviter.location
         )
         invitations[invitation.id] = invitation
+
+		Bukkit.getServer().dispatchCommand(Bukkit.getServer().consoleSender, "cast forcecast ${inviter.name} jobboard-invitation-received ${advert.uuid}")
+		
         return invitation
     }
 
@@ -145,9 +148,7 @@ class AdvertManager : Listener {
      * @param uuid The UUID of the advert to dispatch to.
      * @param pl The player to be dispatched.
      */
-    fun dispatch(uuid: String, pl: Player) {
-        val advert = adverts[uuid] ?: return
-
+    fun dispatch(advert: Advert, pl: Player) {
         if (advert.player.isOnline) {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
@@ -157,7 +158,7 @@ class AdvertManager : Listener {
             )
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${advert.player.name} jobboard-dispatch-other ${pl.name} ${advert.category?.iconMaterial} ${advert.category?.iconCustomModelData}"
+                "cast forcecast ${advert.player.name} advert-dispatch-other ${pl.name} ${advert.category?.iconMaterial} ${advert.category?.iconCustomModelData}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
