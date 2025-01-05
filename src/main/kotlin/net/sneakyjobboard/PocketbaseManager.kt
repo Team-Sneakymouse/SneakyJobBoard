@@ -6,6 +6,7 @@ import com.google.gson.JsonParser
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobHistoryInventoryHolder
+import net.sneakyjobboard.advert.Advert
 import net.sneakyjobboard.util.TextUtility
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
@@ -14,6 +15,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import org.bukkit.Material
 import org.json.JSONObject
 import java.awt.Graphics2D
 import java.awt.Image
@@ -499,6 +501,8 @@ class PocketbaseManager {
                         "posterDisplayString" to advert.posterString,
                         "name" to advert.name,
                         "description" to advert.description,
+                        "iconMaterial" to (advert.iconMaterial?.name ?: ""),
+                        "iconCustomModelData" to (advert.iconCustomModelData ?: 0),
                         "enabled" to true,
                         "deleted" to false
                     )
@@ -556,6 +560,8 @@ class PocketbaseManager {
                         "posterDisplayString" to advert.posterString,
                         "name" to advert.name,
                         "description" to advert.description,
+                        "iconMaterial" to (advert.iconMaterial?.name ?: ""),
+                        "iconCustomModelData" to (advert.iconCustomModelData ?: 0),
                         "enabled" to true,
                         "deleted" to false
                     )
@@ -629,6 +635,8 @@ class PocketbaseManager {
                         val category = item.get("category").asString
                         val name = item.get("name").asString
                         val description = item.get("description").asString
+                        val iconMaterialStr = item.get("iconMaterial").asString
+                        val iconCustomModelData = item.get("iconCustomModelData").asInt
 
                         val advertKey = Triple(category, name, description)
                         if (seenAdverts.contains(advertKey)) continue
@@ -648,6 +656,8 @@ class PocketbaseManager {
                             this.name = name
                             this.description = description
                             this.recordID = item.get("id").asString
+                            this.iconMaterial = Material.matchMaterial(iconMaterialStr)
+                            this.iconCustomModelData = iconCustomModelData
                         }
 
                         adverts.add(advert)
