@@ -144,26 +144,26 @@ class AdvertManager : Listener {
 
     /**
      * Dispatches a player to the specified advertisement.
-     * @param advert The advertisement to dispatch to.
+     * @param invitation The invitation to dispatch to.
      * @param pl The player to be dispatched.
      */
-    fun dispatch(advert: Advert, pl: Player) {
-        if (advert.player.isOnline) {
+    fun dispatch(invitation: Invitation, pl: Player) {
+        if (invitation.advert.player.isOnline) {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self ${floor(advert.location.x)} ${floor(advert.location.y)} ${
-                    floor(advert.location.z)
+                "cast forcecast ${pl.name} jobboard-dispatch-self ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
+                    floor(invitation.location.z)
                 }"
             )
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${advert.player.name} advert-dispatch-other ${pl.name} ${advert.iconMaterial} ${advert.iconCustomModelData}"
+                "cast forcecast ${invitation.advert.player.name} advert-dispatch-other ${pl.name} ${invitation.advert.iconMaterial} ${invitation.advert.iconCustomModelData}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self-offline ${floor(advert.location.x)} ${floor(advert.location.y)} ${
-                    floor(advert.location.z)
+                "cast forcecast ${pl.name} jobboard-dispatch-self-offline ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
+                    floor(invitation.location.z)
                 }"
             )
         }
@@ -234,7 +234,6 @@ class Advert(
 ) {
     val uuid = UUID.randomUUID().toString()
     var recordID = ""
-    var location = player.location
     var name: String = category?.name ?: ""
     var description: String = category?.description ?: ""
     var posterString: String = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(
