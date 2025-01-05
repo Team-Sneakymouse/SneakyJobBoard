@@ -472,6 +472,116 @@ class PocketbaseManager {
             "data:image/png;base64,$base64String"
         }
     }
+
+    /**
+     * Lists an advert in the PocketBase database. This method sends a POST request containing advert details to PocketBase.
+     * If authentication is required, it will authenticate before sending the advert listing request.
+     *
+     * @param advert The advert object containing all relevant information to be listed in PocketBase.
+     */
+    @Synchronized
+    fun listAdvert(advert: Advert) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+
+        if (url.isNullOrEmpty()) return
+
+        Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
+            try {
+                if (authToken.isEmpty()) auth()
+
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
+
+                    val advertData = mapOf(
+                        "uuid" to advert.uuid,
+                        "category" to (advert.category?.name ?: ""),
+                        "posteruuid" to advert.player.uniqueId.toString(),
+                        "posterDisplayString" to advert.posterString,
+                        "name" to advert.name,
+                        "description" to advert.description,
+                        "enabled" to true,
+                        "deleted" to false
+                    )
+
+                    val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
+
+                    val request = Request.Builder()
+                        .url("$url")
+                        .header("Authorization", authToken)
+                        .post(jsonRequestBody)
+                        .build()
+
+                    val response = client.newCall(request).execute()
+
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        val jsonResponse = JSONObject(responseBody)
+                        advert.recordID = jsonResponse.getString("id")
+                    } else {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                        )
+                    }
+                    response.close()
+                }
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
+    }
+
+    /**
+     * Updates an existing advert in PocketBase with all current values from the advert object.
+     * The advert's recordID is used to identify the advert in PocketBase.
+     *
+     * @param advert The advert containing the updated information.
+     */
+    @Synchronized
+    fun updateAdvert(advert: Advert) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+
+        if (url.isNullOrEmpty() || advert.recordID.isEmpty()) return
+
+        Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
+            try {
+                if (authToken.isEmpty()) auth()
+
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
+
+                    val advertData = mapOf(
+                        "uuid" to advert.uuid,
+                        "category" to (advert.category?.name ?: ""),
+                        "posteruuid" to advert.player.uniqueId.toString(),
+                        "posterDisplayString" to advert.posterString,
+                        "name" to advert.name,
+                        "description" to advert.description,
+                        "enabled" to true,
+                        "deleted" to false
+                    )
+
+                    val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
+
+                    val request = Request.Builder()
+                        .url("$url/${advert.recordID}")
+                        .header("Authorization", authToken)
+                        .patch(jsonRequestBody)
+                        .build()
+
+                    val response = client.newCall(request).execute()
+
+                    if (!response.isSuccessful) {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                        )
+                    }
+                    response.close()
+                }
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
+    }
 }
 
 fun String.toBooleanOrNull(): Boolean? {
