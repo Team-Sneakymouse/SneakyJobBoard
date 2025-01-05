@@ -18,7 +18,8 @@ import org.bukkit.persistence.PersistentDataType
  * Manages the UI for viewing and interacting with advert invitations.
  */
 class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
-    private val inventory: Inventory = Bukkit.createInventory(this, 27, TextUtility.convertToComponent("&6Your Invitations"))
+    private val invitations = SneakyJobBoard.getAdvertManager().getActiveInvitationsForPlayer(player)
+    private val inventory: Inventory = createInventory()
 
     init {
         updateInventory()
@@ -27,29 +28,24 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
     override fun getInventory(): Inventory = inventory
 
     /**
+     * Creates an inventory sized appropriately for the number of invitations.
+     */
+    private fun createInventory(): Inventory {
+        // Calculate rows needed (9 slots per row)
+        val rows = ((invitations.size + 8) / 9).coerceIn(1, 6)
+        return Bukkit.createInventory(this, rows * 9, TextUtility.convertToComponent("&6Your Invitations"))
+    }
+
+    /**
      * Updates the inventory with current invitations.
      */
     private fun updateInventory() {
         inventory.clear()
 
-        // Get active invitations for the player
-        val invitations = SneakyJobBoard.getAdvertManager().getActiveInvitationsForPlayer(player)
-
         // Add invitations to the inventory
         invitations.forEachIndexed { index, invitation ->
             if (index < inventory.size) {
                 inventory.setItem(index, invitation.createDisplayItem())
-            }
-        }
-
-        // Fill empty slots with glass panes
-        for (i in 0 until inventory.size) {
-            if (inventory.getItem(i) == null) {
-                val filler = ItemStack(Material.BLACK_STAINED_GLASS_PANE)
-                val meta = filler.itemMeta
-                meta.displayName(TextUtility.convertToComponent(""))
-                filler.itemMeta = meta
-                inventory.setItem(i, filler)
             }
         }
     }
@@ -89,10 +85,5 @@ class AdvertInvitationListener : Listener {
         player.sendMessage(TextUtility.convertToComponent("&aTeleported to invitation location!"))
         player.closeInventory()
     }
-
-    @EventHandler
-    fun onInventoryClose(event: InventoryCloseEvent) {
-        if (event.inventory.holder !is AdvertInvitationInterface) return
-        // Additional cleanup if needed
-    }
+	
 } 

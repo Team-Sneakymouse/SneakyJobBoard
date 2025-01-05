@@ -241,9 +241,13 @@ class AdvertBoardListener : Listener {
                 // It's an advert, handle invitation creation
                 val advert = SneakyJobBoard.getAdvertManager().getAdverts().find { it.uuid == id }
                 if (advert != null) {
-                    val invitation = SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
-                    player.sendMessage(TextUtility.convertToComponent("&aYou have invited ${advert.player.name} to come to you!"))
+                    // Close the advert board first to prevent inventory issues
                     player.closeInventory()
+                    
+                    // Create the invitation
+                    val invitation = SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
+					SneakyJobBoard.getAdvertManager().storeInvitation(invitation)
+                    player.sendMessage(TextUtility.convertToComponent("&aYou have invited ${advert.player.name} to come to you!"))
                 }
             }
         }

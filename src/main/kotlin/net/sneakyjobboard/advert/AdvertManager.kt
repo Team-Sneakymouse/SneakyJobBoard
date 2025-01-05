@@ -29,6 +29,15 @@ class AdvertManager {
     private val invitations = mutableMapOf<String, Invitation>()
 
     /**
+     * Stores an invitation in the map and notifies the advert owner.
+     * @param invitation The invitation to store
+     */
+    fun storeInvitation(invitation: Invitation) {
+        invitations[invitation.id] = invitation
+        invitation.advert.player.sendMessage(TextUtility.convertToComponent("&a${invitation.inviter.name} has sent you an invitation! Use /invitations to view it."))
+    }
+
+    /**
      * Lists a new advert, spawning its display and scheduling unlisting.
      * @param advert The advert to be listed.
      */
@@ -57,7 +66,7 @@ class AdvertManager {
             inviter = inviter,
             location = inviter.location
         )
-        invitations[invitation.id] = invitation
+        storeInvitation(invitation)
         return invitation
     }
 
@@ -212,7 +221,7 @@ class Advert(
 
         // Set persistent data.
         val persistentData = meta.persistentDataContainer
-        persistentData.set(NamespacedKey(SneakyJobBoard.getInstance(), "advert_id"), PersistentDataType.STRING, uuid)
+        persistentData.set(SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING, uuid)
 
         itemStack.itemMeta = meta
         return itemStack
