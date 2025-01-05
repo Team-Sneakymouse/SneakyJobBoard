@@ -12,7 +12,8 @@ tracking-jobs-update-interval: 100
 invitation-expire-duration: 300000
 
 ## The api URL of your pocketbase collection, in case you want to track job listings and build listeners for social media integration.
-pocketbase-url: "http://127.0.0.1:8090/api/collections/collectionIdOrName/records"
+pocketbase-jobs-url: "http://127.0.0.1:8090/api/collections/collectionIdOrName/records"
+pocketbase-adverts-url: "http://127.0.0.1:8090/api/collections/collectionIdOrName/records"
 ## The authorization for your pocketbase collection.
 pocketbase-auth-url: "http://127.0.0.1:8090/api/admins/auth-with-password"
 pocketbase-email: ""

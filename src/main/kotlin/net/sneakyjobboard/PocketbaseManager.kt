@@ -98,7 +98,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun listJob(job: Job) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -144,7 +144,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun unlistJob(job: Job, endReason: String) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty() || job.recordID.isEmpty()) return
 
@@ -185,7 +185,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun unlistAllJobs() {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -253,7 +253,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun getJobHistory(player: Player, durationMillis: Long) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -483,7 +483,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun listAdvert(advert: Advert) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -542,7 +542,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun updateAdvert(advert: Advert) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-url")
 
         if (url.isNullOrEmpty() || advert.recordID.isEmpty()) return
 
@@ -597,7 +597,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun getAdvertHistory(playerUUID: String) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -665,9 +665,9 @@ class PocketbaseManager {
 
                     responseGet.close()
 
-                    // Return the list of adverts
-                    // Note: You'll need to implement the UI part similar to JobHistoryInventoryHolder
-                    // or handle the results in a way that fits your needs
+                    adverts.forEach { advert ->
+						SneakyJobBoard.getAdvertManager().list(advert)
+                    }
                 }
             } catch (e: Exception) {
                 SneakyJobBoard.log("Error occurred: ${e.message}")

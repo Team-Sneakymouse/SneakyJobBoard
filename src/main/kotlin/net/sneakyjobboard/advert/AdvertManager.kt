@@ -11,6 +11,10 @@ import org.bukkit.NamespacedKey
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
@@ -20,7 +24,7 @@ import java.util.*
 import kotlin.math.floor
 
 /** Manages listed adverts, invitations, and dispatching. */
-class AdvertManager {
+class AdvertManager : Listener {
 
     val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
     val INVITATION_IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "invitation_id")
@@ -41,8 +45,8 @@ class AdvertManager {
      * @param advert The advert to be listed.
      */
     fun list(advert: Advert) {
-        // TODO: Implement pocketbase manager for adverts
         adverts[advert.uuid] = advert
+		SneakyJobBoard.getPocketbaseManager().listAdvert(advert)
     }
 
     /**
@@ -95,6 +99,26 @@ class AdvertManager {
         val now = System.currentTimeMillis()
         val expireDuration = SneakyJobBoard.getInstance().config.getLong("invitation-expire-duration", 300000)
         invitations.values.removeIf { (now - it.startTime) >= expireDuration }
+    }
+
+    /**
+     * Removes all adverts for a specific player.
+     * @param player The player whose adverts should be removed
+     */
+    fun removePlayerAdverts(player: Player) {
+        adverts.values.removeIf { it.player == player }
+    }
+
+    @EventHandler
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        // Load player's advert history from PocketBase
+        SneakyJobBoard.getPocketbaseManager().getAdvertHistory(event.player.uniqueId.toString())
+    }
+
+    @EventHandler
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        // Clean up player's adverts
+        removePlayerAdverts(event.player)
     }
 
     /**

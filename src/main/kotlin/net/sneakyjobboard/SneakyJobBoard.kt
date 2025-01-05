@@ -63,6 +63,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.pluginManager.registerEvents(AdvertBoardListener(), this)
         server.pluginManager.registerEvents(AdvertIconSelectorListener(), this)
         server.pluginManager.registerEvents(AdvertInvitationListener(), this)
+        server.pluginManager.registerEvents(advertManager, this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.admin"))

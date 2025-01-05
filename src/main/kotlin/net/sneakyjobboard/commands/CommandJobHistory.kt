@@ -29,7 +29,7 @@ class CommandJobHistory : CommandBase("jobhistory") {
     override fun execute(
         sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
-        val pocketbaseUrl = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val pocketbaseUrl = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (pocketbaseUrl.isNullOrEmpty()) {
             sender.sendMessage(
