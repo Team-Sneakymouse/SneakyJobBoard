@@ -633,9 +633,7 @@ class PocketbaseManager {
 
                         seenAdverts.add(advertKey)
 
-                        val advertCategory = SneakyJobBoard.getAdvertCategoryManager()
-                            .getAdvertCategories().values.find { it.name == category }
-                            ?: SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories().values.first()
+                        val advertCategory = SneakyJobBoard.getAdvertCategoryManager().getCategory(category)
 
                         val player = Bukkit.getPlayer(UUID.fromString(playerUUID)) ?: continue
 
