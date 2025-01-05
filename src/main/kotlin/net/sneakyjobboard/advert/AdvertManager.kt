@@ -147,22 +147,22 @@ class AdvertManager : Listener {
      * @param invitation The invitation to dispatch to.
      * @param pl The player to be dispatched.
      */
-    fun dispatch(invitation: Invitation, pl: Player) {
+    fun dispatch(invitation: Invitation) {
         if (invitation.advert.player.isOnline) {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
+                "cast forcecast ${invitation.advert.player.name} jobboard-dispatch-self ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
                     floor(invitation.location.z)
                 }"
             )
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${invitation.advert.player.name} advert-dispatch-other ${pl.name} ${invitation.advert.iconMaterial} ${invitation.advert.iconCustomModelData}"
+                "cast forcecast ${invitation.inviter.name} advert-dispatch-other ${invitation.advert.player.name} ${invitation.advert.iconMaterial} ${invitation.advert.iconCustomModelData}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self-offline ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
+                "cast forcecast ${invitation.advert.player.name} jobboard-dispatch-self-offline ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
                     floor(invitation.location.z)
                 }"
             )
