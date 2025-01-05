@@ -88,7 +88,7 @@ class AdvertManager : Listener {
 
         Bukkit.getServer().dispatchCommand(
             Bukkit.getServer().consoleSender,
-            "cast forcecast ${inviter.name} jobboard-invitation-received ${advert.uuid}"
+            "cast forcecast ${invitation.inviter.name} jobboard-invitation-received ${invitation.advert.iconMaterial} ${invitation.advert.iconCustomModelData}"
         )
 
         return invitation
@@ -157,7 +157,7 @@ class AdvertManager : Listener {
             )
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${advert.player.name} advert-dispatch-other ${pl.name} ${advert.category?.iconMaterial} ${advert.category?.iconCustomModelData}"
+                "cast forcecast ${advert.player.name} advert-dispatch-other ${pl.name} ${advert.iconMaterial} ${advert.iconCustomModelData}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
