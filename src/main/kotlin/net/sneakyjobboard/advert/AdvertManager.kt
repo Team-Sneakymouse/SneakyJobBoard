@@ -33,14 +33,6 @@ class AdvertManager : Listener {
     private val invitations = mutableMapOf<String, Invitation>()
 
     /**
-     * Stores an invitation in the map and notifies the advert owner.
-     * @param invitation The invitation to store
-     */
-    fun storeInvitation(invitation: Invitation) {
-        invitations[invitation.id] = invitation
-    }
-
-    /**
      * Lists a new advert, spawning its display and scheduling unlisting.
      * @param advert The advert to be listed.
      * @param sendToPocketbase Whether to send the advert to PocketBase.
@@ -96,7 +88,7 @@ class AdvertManager : Listener {
             inviter = inviter,
             location = inviter.location
         )
-        storeInvitation(invitation)
+        invitations[invitation.id] = invitation
         return invitation
     }
 
