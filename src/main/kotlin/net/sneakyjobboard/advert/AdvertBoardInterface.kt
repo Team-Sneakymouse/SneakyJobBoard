@@ -246,7 +246,7 @@ class AdvertBoardListener : Listener {
                     
                     // Create the invitation
                     SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
-                    player.sendMessage(TextUtility.convertToComponent("&aYou have invited ${advert.player.name} to come to you!"))
+                    player.sendMessage(TextUtility.convertToComponent("&aInvitation sent!"))
                 }
             }
         }
