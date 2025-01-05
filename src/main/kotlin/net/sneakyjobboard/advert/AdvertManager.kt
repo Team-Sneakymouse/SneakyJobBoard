@@ -199,8 +199,12 @@ data class Invitation(
      * @return The ItemStack for this invitation
      */
     fun createDisplayItem(): ItemStack {
-        val itemStack = ItemStack(Material.PAPER)
+        val itemStack = ItemStack(advert.iconMaterial ?: advert.category?.iconMaterial ?: Material.PAPER)
         val meta = itemStack.itemMeta
+
+        // Set custom model data if available
+        advert.iconCustomModelData?.let { meta.setCustomModelData(it) }
+            ?: advert.category?.iconCustomModelData?.let { meta.setCustomModelData(it) }
 
         meta.displayName(TextUtility.convertToComponent("&a${advert.name}"))
 
