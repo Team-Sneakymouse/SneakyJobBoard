@@ -10,20 +10,24 @@ import org.joml.Quaternionf
 import org.joml.Vector3f
 
 /**
- * Manages job categories and their configurations, loading them from a configuration file.
+ * Manages job categories and their configurations.
+ * Handles loading and providing access to job categories defined in the config.
  */
 class JobCategoryManager {
 
     private val jobCategories = mutableMapOf<String, JobCategory>()
 
-    /** Initializes the manager by loading job categories from the configuration file. */
     init {
         parseConfig()
     }
 
     /**
      * Loads job categories from the configuration file.
-     * Throws an IllegalStateException if the configuration file is not found.
+     * Each category can be configured with:
+     * - Display name and description
+     * - Icon material and model data
+     * - Display brightness and transformation
+     * - Integration icons for Dynmap and Discord
      */
     private fun parseConfig() {
         try {
@@ -79,9 +83,9 @@ class JobCategoryManager {
     }
 
     /**
-     * Parses a Transformation from the configuration section.
-     * @param key The key for the job category in the configuration.
-     * @return The Transformation object created from the configuration values.
+     * Parses transformation values for a job category from config.
+     * @param key The category key in the configuration
+     * @return A Transformation object with the parsed values
      */
     private fun ConfigurationSection.getVectorTransformation(key: String): Transformation {
         val leftRotationString =
@@ -115,8 +119,8 @@ class JobCategoryManager {
     }
 
     /**
-     * Retrieves a read-only map of job categories.
-     * @return A map where the key is the job category ID and the value is the JobCategory object.
+     * Gets all registered job categories.
+     * @return An immutable map of category IDs to JobCategory objects
      */
     fun getJobCategories(): Map<String, JobCategory> {
         return jobCategories
@@ -124,15 +128,16 @@ class JobCategoryManager {
 }
 
 /**
- * Represents a job category with associated properties for display and functionality.
- * @property name The display name of the job category.
- * @property description A brief description of the job category.
- * @property iconMaterial The material used for the icon representation.
- * @property iconCustomModelData Custom model data for the icon.
- * @property brightness The brightness settings for item display.
- * @property transformation The transformation applied to the item display.
- * @property dynmapMapIcon The icon used in the Dynmap integration.
- * @property discordEmbedIcon The icon used in Discord embeds.
+ * Represents a job category with its display and functionality settings.
+ *
+ * @property name Display name of the category
+ * @property description Brief description of the category
+ * @property iconMaterial Material used for category icons
+ * @property iconCustomModelData Custom model data for the icon
+ * @property brightness Display brightness settings
+ * @property transformation Display transformation settings
+ * @property dynmapMapIcon Icon used on Dynmap
+ * @property discordEmbedIcon Icon used in Discord embeds
  */
 data class JobCategory(
     val name: String,

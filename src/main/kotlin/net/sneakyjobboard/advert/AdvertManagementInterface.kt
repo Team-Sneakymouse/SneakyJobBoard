@@ -15,7 +15,10 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
 /**
- * Interface for managing your own advertisements.
+ * Interface for managing personal advertisements.
+ * Provides options to edit, enable/disable, and delete advertisements.
+ *
+ * @property player The player managing their advertisements
  */
 class AdvertManagementInterface(private val player: Player) : InventoryHolder {
     private val inventory: Inventory = createInventory()
@@ -26,12 +29,21 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
 
     override fun getInventory(): Inventory = inventory
 
+    /**
+     * Creates the base inventory for advertisement management.
+     * Sizes the inventory based on the number of player's advertisements.
+     * @return A new inventory with appropriate size and title
+     */
     private fun createInventory(): Inventory {
         val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
         val rows = ((adverts.size + 8) / 9).coerceIn(1, 6)
         return Bukkit.createInventory(this, rows * 9, TextUtility.convertToComponent("&6Your Advertisements"))
     }
 
+    /**
+     * Updates the inventory with current advertisements.
+     * Shows status indicators and available actions for each advertisement.
+     */
     private fun updateInventory() {
         inventory.clear()
         
@@ -91,6 +103,10 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
     }
 
     companion object {
+        /**
+         * Opens the management interface for a player.
+         * @param player The player managing their advertisements
+         */
         fun open(player: Player) {
             player.openInventory(AdvertManagementInterface(player).inventory)
         }
@@ -98,7 +114,8 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
 }
 
 /**
- * Listener for handling advertisement management interface interactions.
+ * Handles inventory interaction events for the advertisement management interface.
+ * Processes edit, enable/disable, and delete actions.
  */
 class AdvertManagementListener : Listener {
 

@@ -22,6 +22,10 @@ import org.dynmap.DynmapAPI
 import org.dynmap.markers.MarkerAPI
 import java.io.File
 
+/**
+ * Main plugin class for SneakyJobBoard.
+ * Handles plugin initialization, manager setup, and provides global access to core components.
+ */
 class SneakyJobBoard : JavaPlugin(), Listener {
 
     private lateinit var jobCategoryManager: JobCategoryManager
@@ -36,10 +40,21 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     private val jobBoardMaintenance = JobBoardMaintenance()
     private val trackingJobsUpdater = TrackingJobsUpdater()
 
+    /**
+     * Initializes the plugin instance during server load.
+     */
     override fun onLoad() {
         instance = this
     }
 
+    /**
+     * Performs plugin setup on enable:
+     * - Initializes managers
+     * - Registers commands and listeners
+     * - Sets up permissions
+     * - Starts scheduled tasks
+     * - Integrates with PlaceholderAPI and Dynmap if available
+     */
     override fun onEnable() {
         saveDefaultConfig()
 
@@ -99,14 +114,26 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         const val VERSION = "1.0.0"
         private lateinit var instance: SneakyJobBoard
 
+        /**
+         * Logs a message to the plugin's logger.
+         * @param msg The message to log
+         */
         fun log(msg: String) {
             instance.logger.info(msg)
         }
 
+        /**
+         * Gets the plugin's configuration file.
+         * @return The config.yml file
+         */
         fun getConfigFile(): File {
             return File(instance.dataFolder, "config.yml")
         }
 
+        /**
+         * Gets the plugin instance.
+         * @return The SneakyJobBoard plugin instance
+         */
         fun getInstance(): SneakyJobBoard {
             return instance
         }
@@ -145,12 +172,15 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     }
 }
 
+/**
+ * Listener for handling plugin lifecycle events.
+ * @property instance The SneakyJobBoard plugin instance
+ */
 class PluginListener(private val instance: SneakyJobBoard) : Listener {
 
     /**
-     * Handles the PluginDisableEvent, which is triggered when the plugin is disabled.
-     * Cleans up the job manager when the plugin is disabled.
-     * @param event the PluginDisableEvent indicating that a plugin has been disabled.
+     * Handles cleanup when the plugin is disabled.
+     * @param event The plugin disable event
      */
     @EventHandler
     fun onPluginDisable(event: PluginDisableEvent) {

@@ -19,7 +19,11 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
 /**
- * Interface for editing advertisement details.
+ * Interface for editing existing advertisements.
+ * Provides options to modify category, icon, name, and description.
+ *
+ * @property player The player editing the advertisement
+ * @property advert The advertisement being edited
  */
 class AdvertEditInterface(private val player: Player, val advert: Advert) : InventoryHolder {
     private val inventory: Inventory = createInventory()
@@ -30,10 +34,18 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
 
     override fun getInventory(): Inventory = inventory
 
+    /**
+     * Creates the base inventory for the edit interface.
+     * @return A new inventory with the edit title
+     */
     private fun createInventory(): Inventory {
         return Bukkit.createInventory(this, 9, TextUtility.convertToComponent("&6Edit Advertisement"))
     }
 
+    /**
+     * Updates the inventory with current edit options.
+     * Shows buttons for category, icon, and text editing.
+     */
     private fun updateInventory() {
         inventory.clear()
 
@@ -82,10 +94,19 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
     companion object {
         private val editListeners = mutableMapOf<Player, Listener>()
 
+        /**
+         * Opens the edit interface for a player.
+         * @param player The player editing the advertisement
+         * @param advert The advertisement to edit
+         */
         fun open(player: Player, advert: Advert) {
             player.openInventory(AdvertEditInterface(player, advert).inventory)
         }
 
+        /**
+         * Unregisters any active chat listeners for a player.
+         * @param player The player whose listeners to unregister
+         */
         fun unregisterListener(player: Player) {
             editListeners[player]?.let {
                 HandlerList.unregisterAll(it)
@@ -93,6 +114,11 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
             }
         }
 
+        /**
+         * Registers a new chat listener for a player.
+         * @param player The player to register the listener for
+         * @param listener The listener to register
+         */
         fun registerListener(player: Player, listener: Listener) {
             unregisterListener(player)
             editListeners[player] = listener
@@ -102,7 +128,8 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
 }
 
 /**
- * Listener for handling advertisement edit interface interactions.
+ * Handles inventory interaction events for the advertisement edit interface.
+ * Processes edit option selection and manages chat input for text changes.
  */
 class AdvertEditListener : Listener {
 

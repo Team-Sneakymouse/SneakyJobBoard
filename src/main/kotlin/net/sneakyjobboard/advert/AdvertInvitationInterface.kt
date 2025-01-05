@@ -15,7 +15,10 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 /**
- * Manages the UI for viewing and interacting with advert invitations.
+ * Interface for viewing and accepting advertisement invitations.
+ * Shows active invitations with their remaining time and location.
+ *
+ * @property player The player viewing their invitations
  */
 class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
     private val invitations = SneakyJobBoard.getAdvertManager().getActiveInvitationsForPlayer(player)
@@ -28,7 +31,9 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
     override fun getInventory(): Inventory = inventory
 
     /**
-     * Creates an inventory sized appropriately for the number of invitations.
+     * Creates the base inventory for invitation display.
+     * Sizes the inventory based on the number of active invitations.
+     * @return A new inventory with appropriate size and title
      */
     private fun createInventory(): Inventory {
         // Calculate rows needed (9 slots per row)
@@ -38,11 +43,10 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
 
     /**
      * Updates the inventory with current invitations.
+     * Each invitation shows sender, location, and remaining time.
      */
     private fun updateInventory() {
         inventory.clear()
-
-        // Add invitations to the inventory
         invitations.forEachIndexed { index, invitation ->
             if (index < inventory.size) {
                 inventory.setItem(index, invitation.createDisplayItem())
@@ -51,6 +55,10 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
     }
 
     companion object {
+        /**
+         * Opens the invitation interface for a player.
+         * @param player The player to show invitations to
+         */
         fun open(player: Player) {
             val ui = AdvertInvitationInterface(player)
             player.openInventory(ui.inventory)
@@ -59,7 +67,8 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
 }
 
 /**
- * Listener for handling invitation UI interactions.
+ * Handles inventory interaction events for the invitation interface.
+ * Processes invitation acceptance and prevents inventory manipulation.
  */
 class AdvertInvitationListener : Listener {
 

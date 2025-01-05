@@ -8,14 +8,13 @@ import org.bukkit.entity.Player
 
 /**
  * Command for unlisting jobs from the job board.
- *
- * This command allows players to unlist the last job they listed, or an admin to unlist a specified job by name.
+ * Allows players to remove their jobs and admins to remove any job by name.
+ * Supports both expiring and deleting jobs with different cleanup behaviors.
  */
 class CommandUnlistJob : CommandBase("unlistjob") {
 
     init {
-        this.usageMessage =
-            "/${this@CommandUnlistJob.name} <expire/delete. Delete will remove the discord message as well.> (Job Name (admin only))"
+        this.usageMessage = "/${this@CommandUnlistJob.name} <expire/delete. Delete will remove the discord message as well.> (Job Name (admin only))"
         this.description = "Unlist the last job that you listed."
     }
 
@@ -118,6 +117,11 @@ class CommandUnlistJob : CommandBase("unlistjob") {
         }
     }
 
+    /**
+     * Defines the possible actions when unlisting a job.
+     * DELETE removes all traces including Discord messages,
+     * EXPIRE just marks the job as expired.
+     */
     private enum class JobAction {
         DELETE, EXPIRE
     }

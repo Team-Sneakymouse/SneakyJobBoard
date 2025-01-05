@@ -18,16 +18,15 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerQuitEvent
 
 /**
- * Command for listing adverts to the job board.
- *
- * This command allows players to list an advert with specified details, including category, duration, and tracking options.
+ * Command for creating and listing advertisements.
+ * Handles both direct command listing and interactive advertisement creation through chat.
  */
 class CommandListAdvert : CommandBase("listadvert") {
 
     companion object {
         private val playerListeners = mutableMapOf<Player, Listener>()
 
-        /** Unregisters the listener associated with a player. */
+        /** Unregisters any active chat listener for a player. */
         fun unregisterListener(player: Player) {
             playerListeners[player]?.let {
                 HandlerList.unregisterAll(it)
@@ -35,14 +34,22 @@ class CommandListAdvert : CommandBase("listadvert") {
             }
         }
 
-        /** Registers a new listener for a player. */
+        /** Registers a new chat listener for a player, removing any existing one. */
         fun registerListener(player: Player, listener: Listener) {
             unregisterListener(player)
             playerListeners[player] = listener
             Bukkit.getPluginManager().registerEvents(listener, SneakyJobBoard.getInstance())
         }
 
-        /** Starts the advert creation process after an icon is selected. */
+        /**
+         * Starts the advertisement creation process after icon selection.
+         * Guides the player through entering title and description.
+         *
+         * @param player The player creating the advertisement
+         * @param iconMaterial The selected icon material
+         * @param iconCustomModelData The selected icon model data
+         * @param category Optional category for the advertisement
+         */
         fun startAdvertCreation(player: Player, iconMaterial: Material, iconCustomModelData: Int, category: AdvertCategory?) {
             val advert = Advert(category, player)
             advert.iconMaterial = iconMaterial

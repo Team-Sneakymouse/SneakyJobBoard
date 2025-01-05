@@ -16,7 +16,11 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 /**
- * Manages the UI for browsing adverts, either by category or all at once.
+ * Manages the user interface for browsing and interacting with advertisements.
+ * Provides category-based filtering and pagination of advertisements.
+ *
+ * @property category The currently selected advertisement category, if any
+ * @property page The current page number being displayed
  */
 class AdvertBoardInterface(
     val category: AdvertCategory? = null,
@@ -35,7 +39,8 @@ class AdvertBoardInterface(
     override fun getInventory(): Inventory = inventory
 
     /**
-     * Updates the inventory with either category buttons or adverts based on the selected category.
+     * Updates the inventory contents based on the current category and page.
+     * Handles both category selection view and advertisement listing view.
      */
     private fun updateInventory() {
         inventory.clear()
@@ -102,7 +107,10 @@ class AdvertBoardInterface(
     }
 
     /**
-     * Creates a button for a category showing how many active adverts it has.
+     * Creates a button representing an advertisement category.
+     * @param category The category to create a button for
+     * @param advertCount The number of active adverts in this category
+     * @return An ItemStack representing the category button
      */
     private fun createCategoryButton(category: AdvertCategory, advertCount: Int): ItemStack {
         val itemStack = ItemStack(category.iconMaterial)
@@ -188,6 +196,12 @@ class AdvertBoardInterface(
     }
 
     companion object {
+        /**
+         * Opens the advertisement board interface for a player.
+         * @param player The player to show the interface to
+         * @param category Optional category to filter advertisements
+         * @param page The page number to display
+         */
         fun open(player: Player, category: AdvertCategory? = null, page: Int = 0) {
             val ui = AdvertBoardInterface(category, page)
             player.openInventory(ui.inventory)

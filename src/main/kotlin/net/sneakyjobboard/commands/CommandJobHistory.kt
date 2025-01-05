@@ -7,9 +7,8 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 /**
- * Command for accessing a player's job history.
- *
- * This command allows players to view their recent job history, specified by a duration.
+ * Command for viewing a player's job history.
+ * Retrieves and displays jobs from a specified time period through PocketBase integration.
  */
 class CommandJobHistory : CommandBase("jobhistory") {
 

@@ -18,16 +18,17 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 /**
- * Holds and manages the job board inventory.
+ * Manages the user interface for viewing and interacting with job listings.
+ * Provides a paginated inventory interface for players to browse and accept jobs.
  *
- * This class implements an InventoryHolder to represent the job board, allowing players to interact with job listings
- * and special buttons defined in the configuration.
+ * @property isJobBoardInteract Whether this interface was opened by interacting with a physical job board
  */
 class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     private var inventory: Inventory
 
     /**
-     * Initializes the job inventory and populates it with job icons and extra buttons.
+     * Creates and populates the job board inventory with job listings and extra buttons.
+     * The size is dynamically calculated based on the number of jobs and buttons.
      */
     init {
         var i = (extraButtons.keys.maxOrNull()?.plus(1)) ?: 0
@@ -56,10 +57,11 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     }
 
     /**
-     * Processes an item click within the job board inventory.
+     * Processes a click on an item in the job board inventory.
+     * Handles both job acceptance and custom button commands.
      *
-     * @param clickedItem The ItemStack that was clicked by the player.
-     * @param player The player who clicked the item.
+     * @param clickedItem The item that was clicked
+     * @param player The player who clicked
      */
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
@@ -88,10 +90,8 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
         }
 
         /**
-         * Parses the job board extra buttons configuration from the configuration file.
-         *
-         * This method loads additional buttons from the configuration, which are shown on the job board at specific slots.
-         * If the configuration file is not found, an IllegalStateException is thrown.
+         * Parses the configuration file to load extra button definitions.
+         * Buttons can be configured with custom icons, commands, and display conditions.
          */
         private fun parseConfig() {
             try {
@@ -151,20 +151,21 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
         }
 
         /**
-         * Represents a job board button with its associated item and display properties.
+         * Represents a configurable button in the job board interface.
          *
-         * @property itemStack The ItemStack representing the button.
-         * @property showOnBoardInteract Whether the button is shown when interacting with the job board.
+         * @property itemStack The item representing the button
+         * @property showOnBoardInteract Whether to show this button when opened via board interaction
          */
         data class JobBoardButton(
-            val itemStack: ItemStack?, val showOnBoardInteract: Boolean
+            val itemStack: ItemStack?, 
+            val showOnBoardInteract: Boolean
         )
 
         /**
-         * Opens the job board inventory UI for a specific player.
+         * Opens the job board interface for a player.
          *
-         * @param player The player to show the job board to.
-         * @param isJobBoardInteract Indicates if the board was opened by interacting with a job board.
+         * @param player The player to show the interface to
+         * @param isJobBoardInteract Whether this was triggered by physical board interaction
          */
         fun openJobBoard(player: Player, isJobBoardInteract: Boolean) {
             player.openInventory(JobInventoryHolder(isJobBoardInteract).inventory)
@@ -173,7 +174,8 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
 }
 
 /**
- * Listener class for handling interactions with the job board inventory.
+ * Handles inventory interaction events for the job board interface.
+ * Prevents item manipulation and processes clicks on jobs and buttons.
  */
 class JobInventoryListener : Listener {
 

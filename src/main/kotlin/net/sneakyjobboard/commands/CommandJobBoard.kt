@@ -7,9 +7,8 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 /**
- * Command for opening the job board for players.
- *
- * This command allows players to access the job board interface where they can view available jobs.
+ * Command for opening the job board interface.
+ * Provides access to the job listing UI where players can view and accept jobs.
  */
 class CommandJobBoard : CommandBase("jobboard") {
 

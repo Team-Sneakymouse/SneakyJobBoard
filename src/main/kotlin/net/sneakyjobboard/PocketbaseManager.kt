@@ -26,9 +26,8 @@ import java.util.*
 import javax.imageio.ImageIO
 
 /**
- * Manages interactions with the PocketBase database, handling authentication and job listing updates.
- * This class handles various tasks such as listing jobs, unlisting jobs, retrieving job history, and
- * managing authentication with the PocketBase server.
+ * Manages interactions with PocketBase database for job and advertisement persistence.
+ * Handles authentication, data synchronization, and history retrieval.
  */
 class PocketbaseManager {
 
@@ -53,8 +52,8 @@ class PocketbaseManager {
     }
 
     /**
-     * Authenticates with the PocketBase server and retrieves an auth token. This method should be run asynchronously.
-     * The authentication details are pulled from the server's configuration file.
+     * Authenticates with PocketBase using configured credentials.
+     * Must be called asynchronously.
      */
     @Synchronized
     private fun auth() {
@@ -91,10 +90,10 @@ class PocketbaseManager {
     }
 
     /**
-     * Lists a job in the PocketBase database. This method sends a POST request containing job details to PocketBase.
-     * If authentication is required, it will authenticate before sending the job listing request.
+     * Lists a job in PocketBase.
+     * Creates a new record with job details and schedules cleanup.
      *
-     * @param job The job object containing all relevant information to be listed in PocketBase.
+     * @param job The job to be listed
      */
     @Synchronized
     fun listJob(job: Job) {
@@ -136,11 +135,11 @@ class PocketbaseManager {
     }
 
     /**
-     * Unlists a job in PocketBase by adding an end time to its record. The job's recordID is used to identify
-     * the job in PocketBase, and the method patches the job with the current system time as its endTime.
+     * Updates a job's end time in PocketBase.
+     * Used when a job is unlisted or expires.
      *
-     * @param job The job to be unlisted.
-     * @param endReason The unlisting reason. Can be "expired", "unlisted", "deleted" or "restart".
+     * @param job The job being unlisted
+     * @param endReason The reason for unlisting ("expired", "unlisted", "deleted", or "restart")
      */
     @Synchronized
     fun unlistJob(job: Job, endReason: String) {
@@ -678,6 +677,10 @@ class PocketbaseManager {
     }
 }
 
+/**
+ * Extension function to safely convert a string to a boolean.
+ * @return Boolean value if string is "true" or "false", null otherwise
+ */
 fun String.toBooleanOrNull(): Boolean? {
     return when (this.lowercase()) {
         "true" -> true
@@ -686,4 +689,8 @@ fun String.toBooleanOrNull(): Boolean? {
     }
 }
 
+/**
+ * Data class for holding four related values.
+ * Used for grouping related data in PocketBase operations.
+ */
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

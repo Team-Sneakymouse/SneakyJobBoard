@@ -7,7 +7,8 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 /**
- * Command for managing your own advertisements.
+ * Command for managing personal advertisements.
+ * Opens an interface where players can edit, enable/disable, or delete their advertisements.
  */
 class CommandManageAdverts : CommandBase("manageadverts") {
 

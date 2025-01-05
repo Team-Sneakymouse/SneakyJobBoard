@@ -4,7 +4,10 @@ import net.sneakyjobboard.SneakyJobBoard
 import org.bukkit.command.Command
 
 /**
- * Extension of the bukkit Command class, which sets all the properties as they are shared between our commands.
+ * Base class for all plugin commands.
+ * Provides common setup and permission handling.
+ *
+ * @property name The name of the command
  */
 abstract class CommandBase(name: String) : Command(name) {
 

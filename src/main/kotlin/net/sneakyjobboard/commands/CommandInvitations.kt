@@ -7,9 +7,8 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 /**
- * Command for opening the advert invitations interface for players.
- *
- * This command allows players to access their advert invitations where they can view and accept invites.
+ * Command for managing advertisement invitations.
+ * Opens an interface where players can view and accept invitations they've received.
  */
 class CommandInvitations : CommandBase("invitations") {
 

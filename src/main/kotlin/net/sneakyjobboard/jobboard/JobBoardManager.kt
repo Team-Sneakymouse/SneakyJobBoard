@@ -22,11 +22,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Manages job boards and their configurations.
- *
- * This class handles the loading and configuration of job boards
- * from a specified configuration file during initialization.
- * It maintains a list of job boards that can be accessed and manipulated.
+ * Manages physical job boards in the world and their configurations.
+ * Handles loading, spawning, and updating of job board displays.
  */
 class JobBoardManager {
 
@@ -788,7 +785,10 @@ class JobBoardUpdater : BukkitRunnable() {
     }
 }
 
-/** Performs maintenance tasks for job board displays. */
+/**
+ * Performs periodic maintenance on job board displays.
+ * Handles cleanup of orphaned entities and updates duration-based scaling.
+ */
 class JobBoardMaintenance : BukkitRunnable() {
 
     /**
@@ -843,7 +843,10 @@ class JobBoardMaintenance : BukkitRunnable() {
     }
 }
 
-/** Updates job locations for tracking jobs periodically. */
+/**
+ * Updates the locations of tracking jobs periodically.
+ * Ensures job displays and markers follow their owners' movements.
+ */
 class TrackingJobsUpdater : BukkitRunnable() {
 
     /**

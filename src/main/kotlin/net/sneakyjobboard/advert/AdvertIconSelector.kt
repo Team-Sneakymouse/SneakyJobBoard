@@ -17,7 +17,12 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 /**
- * Interface for selecting an icon for an advert.
+ * Manages the interface for selecting icons for advertisements.
+ * Provides a paginated inventory of available icons based on configuration.
+ *
+ * @property category The category context for icon selection, if any
+ * @property page The current page being displayed
+ * @property callback Optional callback to handle icon selection
  */
 class AdvertIconSelector(
     val category: AdvertCategory?, 
@@ -34,6 +39,10 @@ class AdvertIconSelector(
 
     override fun getInventory(): Inventory = inventory
 
+    /**
+     * Loads available icons from the plugin configuration.
+     * Supports both individual model data values and ranges.
+     */
     private fun loadIcons() {
         val config = SneakyJobBoard.getInstance().config
         val iconsSection = config.getConfigurationSection("advert-icons") ?: return
@@ -60,6 +69,10 @@ class AdvertIconSelector(
         }
     }
 
+    /**
+     * Updates the inventory with icons and navigation buttons.
+     * Handles pagination and button placement.
+     */
     private fun updateInventory() {
         inventory.clear()
 
@@ -102,6 +115,11 @@ class AdvertIconSelector(
         }
     }
 
+    /**
+     * Creates a button representing an icon option.
+     * @param icon The icon data to create a button for
+     * @return An ItemStack representing the icon option
+     */
     private fun createIconButton(icon: IconData): ItemStack {
         val itemStack = ItemStack(icon.material)
         val meta = itemStack.itemMeta
@@ -122,17 +140,28 @@ class AdvertIconSelector(
     }
 
     companion object {
+        /**
+         * Opens the icon selector interface for a player.
+         * @param player The player to show the interface to
+         * @param category Optional category context for the selection
+         * @param page The page number to display
+         * @param callback Optional callback to handle the selection
+         */
         fun open(player: Player, category: AdvertCategory?, page: Int = 0, callback: ((Material, Int) -> Unit)? = null) {
             val ui = AdvertIconSelector(category, page, callback)
             player.openInventory(ui.inventory)
         }
     }
 
+    /**
+     * Represents an icon option with its material and model data.
+     */
     data class IconData(val material: Material, val modelData: Int)
 }
 
 /**
- * Listener for handling icon selector UI interactions.
+ * Handles inventory interaction events for the icon selector interface.
+ * Processes icon selection and navigation actions.
  */
 class AdvertIconSelectorListener : Listener {
 

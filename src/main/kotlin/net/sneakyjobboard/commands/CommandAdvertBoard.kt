@@ -7,9 +7,8 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 /**
- * Command for opening the advert board interface for players.
- *
- * This command allows players to browse available adverts by category.
+ * Command for opening the advertisement board interface.
+ * Provides access to the advertisement browsing UI where players can view and respond to advertisements.
  */
 class CommandAdvertBoard : CommandBase("advertboard") {
 

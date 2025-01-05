@@ -14,7 +14,10 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-/** Holds the job history inventory for re-listing jobs. */
+/**
+ * Manages the interface for viewing and re-listing jobs from a player's history.
+ * @property jobHistory The list of historical jobs to display
+ */
 class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHolder {
 
     private var inventory: Inventory = Bukkit.createInventory(
@@ -40,9 +43,11 @@ class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHo
     }
 
     /**
-     * Handles a click on a job item, re-listing the associated job if found.
-     * @param clickedItem The item that was clicked.
-     * @param player The player who clicked the item.
+     * Handles clicks on job items in the history interface.
+     * Allows players to re-list previously created jobs.
+     *
+     * @param clickedItem The job item that was clicked
+     * @param player The player who clicked
      */
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
@@ -64,7 +69,10 @@ class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHo
     }
 }
 
-/** Listens for inventory interactions related to job history. */
+/**
+ * Handles inventory interactions for the job history interface.
+ * Prevents item manipulation and processes job re-listing requests.
+ */
 class JobHistoryInventoryListener : Listener {
 
     /**

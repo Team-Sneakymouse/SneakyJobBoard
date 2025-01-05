@@ -23,7 +23,11 @@ import org.joml.Vector3f
 import java.util.*
 import kotlin.math.floor
 
-/** Manages listed adverts, invitations, and dispatching. */
+/**
+ * Manages the lifecycle and operations of advertisements in the job board system.
+ * This class handles listing, unlisting, and dispatching of advertisements, as well as
+ * managing invitations between players.
+ */
 class AdvertManager : Listener {
 
     val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
@@ -33,9 +37,9 @@ class AdvertManager : Listener {
     private val invitations = mutableMapOf<String, Invitation>()
 
     /**
-     * Lists a new advert, spawning its display and scheduling unlisting.
-     * @param advert The advert to be listed.
-     * @param sendToPocketbase Whether to send the advert to PocketBase.
+     * Lists a new advertisement in the system.
+     * @param advert The advertisement to be listed
+     * @param sendToPocketbase Whether to persist the advertisement to PocketBase storage
      */
     fun list(advert: Advert, sendToPocketbase: Boolean = true) {
         adverts[advert.uuid] = advert
@@ -43,8 +47,8 @@ class AdvertManager : Listener {
     }
 
 	/**
-	 * Unlists an advert.
-	 * @param advert The advert to unlist.
+	 * Unlists an advertisement from the system.
+	 * @param advert The advertisement to unlist
 	 */
 	fun unlist(advert: Advert) {
 		advert.deleted = true
@@ -53,32 +57,32 @@ class AdvertManager : Listener {
 	}
 
 	/**
-	 * Gets an advert by its UUID.
-	 * @param uuid The UUID of the advert.
-	 * @return The advert if found, null otherwise.
+	 * Gets an advertisement by its UUID.
+	 * @param uuid The UUID of the advertisement.
+	 * @return The advertisement if found, null otherwise.
 	 */
 	fun getAdvert(uuid: String): Advert? = adverts[uuid]
 
     /**
-     * Gets the collection of currently listed adverts from online players.
-     * @return A mutable collection of adverts.
+     * Gets the collection of currently listed advertisements from online players.
+     * @return A mutable collection of advertisements.
      */
     fun getAdverts(): MutableCollection<Advert> {
         return adverts.values.filter { it.player.isOnline && it.enabled }.toMutableList()
     }
 
 	/**
-	 * Gets the adverts for a specific player.
-	 * @param player The player to get adverts for.
-	 * @return A mutable collection of adverts.
+	 * Gets the advertisements for a specific player.
+	 * @param player The player to get advertisements for.
+	 * @return A mutable collection of advertisements.
 	 */
 	fun getAdvertsForPlayer(player: Player): MutableCollection<Advert> {
 		return adverts.values.filter { it.player == player }.toMutableList()
 	}
 
     /**
-     * Creates a new invitation for an advert.
-     * @param advert The advert being responded to
+     * Creates a new invitation for an advertisement.
+     * @param advert The advertisement being responded to
      * @param inviter The player creating the invitation
      * @return The created invitation
      */
@@ -124,8 +128,8 @@ class AdvertManager : Listener {
     }
 
     /**
-     * Removes all adverts for a specific player.
-     * @param player The player whose adverts should be removed
+     * Removes all advertisements for a specific player.
+     * @param player The player whose advertisements should be removed
      */
     fun removePlayerAdverts(player: Player) {
         adverts.values.removeIf { it.player == player }
@@ -133,19 +137,19 @@ class AdvertManager : Listener {
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        // Load player's advert history from PocketBase
+        // Load player's advertisement history from PocketBase
         SneakyJobBoard.getPocketbaseManager().getAdvertHistory(event.player.uniqueId.toString())
     }
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        // Clean up player's adverts
+        // Clean up player's advertisements
         removePlayerAdverts(event.player)
     }
 
     /**
-     * Dispatches a player to the specified advert.
-     * @param uuid The UUID of the advert to dispatch to.
+     * Dispatches a player to the specified advertisement.
+     * @param uuid The UUID of the advertisement to dispatch to.
      * @param pl The player to be dispatched.
      */
     fun dispatch(advert: Advert, pl: Player) {
@@ -172,7 +176,7 @@ class AdvertManager : Listener {
 }
 
 /**
- * Represents an invitation from a player responding to an advert.
+ * Represents an invitation from a player responding to an advertisement.
  */
 data class Invitation(
     val advert: Advert,
@@ -246,8 +250,8 @@ class Advert(
     var deleted: Boolean = false
 
     /**
-     * Returns the ItemStack that represents this advert, including metadata.
-     * @return The item representing this advert.
+     * Returns the ItemStack that represents this advertisement, including metadata.
+     * @return The item representing this advertisement.
      */
     fun getIconItem(): ItemStack {
         val itemStack = ItemStack(iconMaterial ?: category?.iconMaterial ?: Material.BARRIER)
