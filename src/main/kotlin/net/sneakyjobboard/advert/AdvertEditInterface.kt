@@ -125,12 +125,18 @@ class AdvertEditListener : Listener {
                         if (event.player != player) return
                         event.isCancelled = true
 
-                        val categoryName = (event.message() as TextComponent).content()
-                        val category = SneakyJobBoard.getAdvertCategoryManager()
-                            .getAdvertCategories().values.find { it.name.equals(categoryName, ignoreCase = true) }
+                        val categoryId = (event.message() as TextComponent).content()
+                        val category = if (categoryId.equals("none", ignoreCase = true)) {
+                            null
+                        } else {
+                            SneakyJobBoard.getAdvertCategoryManager().getCategory(categoryId)
+                        }
 
-                        if (category == null) {
-                            player.sendMessage(TextUtility.convertToComponent("&cInvalid category name!"))
+                        if (category == null && !categoryId.equals("none", ignoreCase = true)) {
+                            player.sendMessage(TextUtility.convertToComponent("&cInvalid category ID!"))
+                            val categories = listOf("none") + SneakyJobBoard.getAdvertCategoryManager()
+                                .getAdvertCategories().values.map { it.id }
+                            player.sendMessage(TextUtility.convertToComponent("&eAvailable categories: &b${categories.joinToString(", ")}"))
                             return
                         }
 
@@ -152,7 +158,10 @@ class AdvertEditListener : Listener {
                 }
 
                 AdvertEditInterface.registerListener(player, chatListener)
-                player.sendMessage(TextUtility.convertToComponent("&aEnter the new category name:"))
+                player.sendMessage(TextUtility.convertToComponent("&aEnter the new category ID:"))
+                val categories = listOf("none") + SneakyJobBoard.getAdvertCategoryManager()
+					.getAdvertCategories().values.map { it.id }
+                player.sendMessage(TextUtility.convertToComponent("&eAvailable categories: &b${categories.joinToString(", ")}"))
             }
             4 -> {
                 // Icon change
