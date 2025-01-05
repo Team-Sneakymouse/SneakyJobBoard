@@ -149,3 +149,8 @@ advert-categories:
         description: "Physical and mental health services."
         icon-material: "jigsaw"
         icon-custom-model-data: 1
+
+advert-icons:
+    jigsaw:
+        - 1
+        - "5-7"

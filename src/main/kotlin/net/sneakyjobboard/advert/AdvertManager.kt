@@ -178,17 +178,21 @@ class Advert(
     var name: String = category?.name ?: ""
     var description: String = category?.description ?: ""
     val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&ePosted by: &b[playerName]").replace("[playerName]", player.name)
+    var iconMaterial: Material? = null
+    var iconCustomModelData: Int? = null
 
     /**
      * Returns the ItemStack that represents this advert, including metadata.
      * @return The item representing this advert.
      */
     fun getIconItem(): ItemStack {
-        val itemStack = ItemStack(category?.iconMaterial ?: Material.BARRIER)
+        val itemStack = ItemStack(iconMaterial ?: category?.iconMaterial ?: Material.BARRIER)
         val meta = itemStack.itemMeta ?: return itemStack
 
         // Set custom model data, display name, and lore.
-        category?.iconCustomModelData?.let { meta.setCustomModelData(it) }
+        iconCustomModelData?.let { meta.setCustomModelData(it) }
+            ?: category?.iconCustomModelData?.let { meta.setCustomModelData(it) }
+            
         meta.displayName(TextUtility.convertToComponent("&a${name}"))
 
         val lore = mutableListOf<String>()

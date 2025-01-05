@@ -6,8 +6,10 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.advert.Advert
 import net.sneakyjobboard.advert.AdvertCategory
+import net.sneakyjobboard.advert.AdvertIconSelector
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -39,18 +41,58 @@ class CommandListAdvert : CommandBase("listadvert") {
             playerListeners[player] = listener
             Bukkit.getPluginManager().registerEvents(listener, SneakyJobBoard.getInstance())
         }
+
+        /** Starts the advert creation process after an icon is selected. */
+        fun startAdvertCreation(player: Player, iconMaterial: Material, iconCustomModelData: Int, category: AdvertCategory?) {
+            val advert = Advert(category, player)
+            advert.iconMaterial = iconMaterial
+            advert.iconCustomModelData = iconCustomModelData
+
+            // Register chat listener for title and description
+            val chatListener = object : Listener {
+                var waitingForTitle = true
+
+                @EventHandler
+                fun onChat(event: AsyncChatEvent) {
+                    if (event.player != player) return
+
+                    event.isCancelled = true
+                    val message = (event.message() as TextComponent).content()
+
+                    if (waitingForTitle) {
+                        advert.name = message
+                        waitingForTitle = false
+                        player.sendMessage(TextUtility.convertToComponent("&aEnter the description for your advert:"))
+                    } else {
+                        advert.description = message
+                        unregisterListener(player)
+                        SneakyJobBoard.getInstance().advertManager.list(advert)
+                        player.sendMessage(TextUtility.convertToComponent("&aAdvert listed successfully!"))
+                    }
+                }
+
+                @EventHandler
+                fun onQuit(event: PlayerQuitEvent) {
+                    if (event.player == player) {
+                        unregisterListener(player)
+                    }
+                }
+            }
+
+            registerListener(player, chatListener)
+            player.sendMessage(TextUtility.convertToComponent("&aEnter the title for your advert:"))
+        }
     }
 
     init {
-        this.usageMessage =
-            "/${this@CommandListAdvert.name} [advertCategory] (\"name\") (\"description\")"
+        this.usageMessage = "/${this@CommandListAdvert.name}"
         this.description = "List an advert to the job board."
     }
 
     override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
+        val startIndex = if (sender is Player) 0 else 1
         val player: Player? = if (sender is Player) sender
         else if (args.isNotEmpty()) Bukkit.getPlayer(args[0]) else null
-        val remainingArgs: Array<out String> = if (sender is Player) args else args.drop(1).toTypedArray()
 
         if (player == null) {
             sender.sendMessage(
@@ -65,64 +107,19 @@ class CommandListAdvert : CommandBase("listadvert") {
             return false
         }
 
-        val advertCategories = SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories()
-        val category = if (remainingArgs.isNotEmpty()) advertCategories[remainingArgs[0]] else null
-
-        val advert = Advert(category, player)
-
-        // Now check if name and description are provided as arguments in the command
-        if (remainingArgs.size > 1) {
-            val nameAndDesc: List<String> = remainingArgs.drop(1).joinToString(" ").split("\" \"")
-
-            if (nameAndDesc.size == 2 && nameAndDesc[0].startsWith("\"") && nameAndDesc[1].endsWith("\"")) {
-                // Remove the quotes and set name and description
-                advert.name = nameAndDesc[0].substring(1)
-                advert.description = nameAndDesc[1].substring(0, nameAndDesc[1].length - 1)
-
-                // List the job without additional input
-                SneakyJobBoard.getAdvertManager().list(advert)
-
-                sender.sendMessage(TextUtility.convertToComponent("&eAdvert listed. Name: &3'${advert.name}'&e, Description: &3'${advert.description}'"))
-                return true
-            } else {
-                sender.sendMessage(TextUtility.convertToComponent("&4Invalid Usage: $usageMessage"))
+        // Get category from args if provided
+        val category = if (args.size > startIndex) {
+            val categoryId = args[startIndex]
+            val foundCategory = SneakyJobBoard.getAdvertCategoryManager().getCategory(categoryId)
+            if (foundCategory == null) {
+                sender.sendMessage(TextUtility.convertToComponent("&4Invalid advert category: $categoryId"))
                 return false
             }
-        }
+            foundCategory
+        } else null
 
-        // Otherwise, register chat listener for title and description
-        val chatListener = object : Listener {
-            var waitingForTitle = true
-
-            @EventHandler
-            fun onChat(event: AsyncChatEvent) {
-                if (event.player != player) return
-
-                event.isCancelled = true
-                val message = (event.message() as TextComponent).content()
-
-                if (waitingForTitle) {
-                    advert.name = message
-                    waitingForTitle = false
-                    sender.sendMessage(TextUtility.convertToComponent("&aEnter the description for your advert:"))
-                } else {
-                    advert.description = message
-                    unregisterListener(player)
-                    SneakyJobBoard.getInstance().advertManager.list(advert)
-                    sender.sendMessage(TextUtility.convertToComponent("&aAdvert listed successfully!"))
-                }
-            }
-
-            @EventHandler
-            fun onQuit(event: PlayerQuitEvent) {
-                if (event.player == player) {
-                    unregisterListener(player)
-                }
-            }
-        }
-
-        registerListener(player, chatListener)
-        sender.sendMessage(TextUtility.convertToComponent("&aEnter the title for your advert:"))
+        // Open the icon selector with the selected category (or null)
+        AdvertIconSelector.open(player, category)
         return true
     }
 
@@ -137,20 +134,17 @@ class CommandListAdvert : CommandBase("listadvert") {
     override fun tabComplete(
         sender: CommandSender, alias: String, args: Array<String>
     ): List<String> {
-        val startIndex: Int = if (sender is Player) 0 else 1
-
+        val startIndex = if (sender is Player) 0 else 1
         return when {
             args.size == 1 && sender !is Player -> {
                 Bukkit.getOnlinePlayers().filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
                     .filter { it.name.startsWith(args.last(), ignoreCase = true) }.map { it.name }
             }
-
-            args.size - startIndex == 1 -> {
-                SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories().keys.toList().filter {
-                    it.startsWith(args.last(), ignoreCase = true)
-                }
+            args.size == startIndex + 1 -> {
+                // Get all advert category keys and filter based on input
+                val categories = SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories().keys
+                categories.filter { it.startsWith(args[startIndex], ignoreCase = true) }.toList()
             }
-
             else -> emptyList()
         }
     }
