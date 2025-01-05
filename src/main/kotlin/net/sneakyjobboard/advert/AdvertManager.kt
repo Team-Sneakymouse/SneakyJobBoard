@@ -88,7 +88,7 @@ class AdvertManager : Listener {
 
         Bukkit.getServer().dispatchCommand(
             Bukkit.getServer().consoleSender,
-            "cast forcecast ${invitation.inviter.name} jobboard-invitation-received ${invitation.advert.iconMaterial} ${invitation.advert.iconCustomModelData}"
+            "cast forcecast ${advert.player.name} jobboard-invitation-received ${advert.iconMaterial} ${advert.iconCustomModelData}"
         )
 
         return invitation
