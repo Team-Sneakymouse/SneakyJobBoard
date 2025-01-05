@@ -21,12 +21,12 @@ import java.io.File
 
 class SneakyJobBoard : JavaPlugin(), Listener {
 
-    lateinit var jobCategoryManager: JobCategoryManager
-    lateinit var jobBoardManager: JobBoardManager
-    lateinit var jobManager: JobManager
-    lateinit var pocketBaseManager: PocketbaseManager
-    lateinit var advertCategoryManager: AdvertCategoryManager
-    lateinit var advertManager: AdvertManager
+    private lateinit var jobCategoryManager: JobCategoryManager
+    private lateinit var jobBoardManager: JobBoardManager
+    private lateinit var jobManager: JobManager
+    private lateinit var pocketBaseManager: PocketbaseManager
+    private lateinit var advertCategoryManager: AdvertCategoryManager
+    private lateinit var advertManager: AdvertManager
     var papiActive = false
     var markerAPI: MarkerAPI? = null
     val jobBoardUpdater = JobBoardUpdater()

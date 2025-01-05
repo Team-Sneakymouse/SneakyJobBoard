@@ -57,7 +57,7 @@ class AdvertBoardInterface(
      */
     private fun populateCategoryButtons() {
         val advertManager = SneakyJobBoard.getAdvertManager()
-        val categoryManager = SneakyJobBoard.getInstance().advertCategoryManager
+        val categoryManager = SneakyJobBoard.getAdvertCategoryManager()
         var slot = 0
 
         // Add category buttons for categories that have active adverts
@@ -119,7 +119,7 @@ class AdvertBoardInterface(
 
         // Store category ID in persistent data
         meta.persistentDataContainer.set(
-            SneakyJobBoard.getInstance().advertManager.IDKEY,
+            SneakyJobBoard.getAdvertManager().IDKEY,
             PersistentDataType.STRING,
             "category_${category.id}" // Prefix with category_ to distinguish from other IDs
         )
@@ -150,7 +150,7 @@ class AdvertBoardInterface(
             val meta = prevButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&ePrevious Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getInstance().advertManager.IDKEY,
+                SneakyJobBoard.getAdvertManager().IDKEY,
                 PersistentDataType.STRING,
                 "prev_page"
             )
@@ -164,7 +164,7 @@ class AdvertBoardInterface(
             val meta = nextButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&eNext Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getInstance().advertManager.IDKEY,
+                SneakyJobBoard.getAdvertManager().IDKEY,
                 PersistentDataType.STRING,
                 "next_page"
             )
@@ -178,7 +178,7 @@ class AdvertBoardInterface(
             val meta = backButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&cBack"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getInstance().advertManager.IDKEY,
+                SneakyJobBoard.getAdvertManager().IDKEY,
                 PersistentDataType.STRING,
                 "back"
             )
@@ -211,7 +211,7 @@ class AdvertBoardListener : Listener {
         val player = event.whoClicked as? Player ?: return
 
         val id = clickedItem.itemMeta?.persistentDataContainer?.get(
-            SneakyJobBoard.getInstance().advertManager.IDKEY,
+            SneakyJobBoard.getAdvertManager().IDKEY,
             PersistentDataType.STRING
         ) ?: return
 

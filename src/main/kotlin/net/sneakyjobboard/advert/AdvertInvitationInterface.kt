@@ -78,7 +78,7 @@ class AdvertInvitationListener : Listener {
         val player = event.whoClicked as? Player ?: return
 
         val invitationId = clickedItem.itemMeta?.persistentDataContainer?.get(
-            SneakyJobBoard.getInstance().advertManager.INVITATION_IDKEY,
+            SneakyJobBoard.getAdvertManager().INVITATION_IDKEY,
             PersistentDataType.STRING
         ) ?: return
 

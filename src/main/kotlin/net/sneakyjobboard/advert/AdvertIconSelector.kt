@@ -76,7 +76,7 @@ class AdvertIconSelector(val category: AdvertCategory?, val page: Int = 0) : Inv
             val meta = prevButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&ePrevious Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getInstance().advertManager.IDKEY,
+                SneakyJobBoard.getAdvertManager().IDKEY,
                 PersistentDataType.STRING,
                 "prev_page"
             )
@@ -89,7 +89,7 @@ class AdvertIconSelector(val category: AdvertCategory?, val page: Int = 0) : Inv
             val meta = nextButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&eNext Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getInstance().advertManager.IDKEY,
+                SneakyJobBoard.getAdvertManager().IDKEY,
                 PersistentDataType.STRING,
                 "next_page"
             )
@@ -108,7 +108,7 @@ class AdvertIconSelector(val category: AdvertCategory?, val page: Int = 0) : Inv
         // Store icon data in persistent data container
         val container = meta.persistentDataContainer
         container.set(
-            SneakyJobBoard.getInstance().advertManager.IDKEY,
+            SneakyJobBoard.getAdvertManager().IDKEY,
             PersistentDataType.STRING,
             "${icon.material.name},${icon.modelData}"
         )
@@ -143,7 +143,7 @@ class AdvertIconSelectorListener : Listener {
         val player = event.whoClicked as? Player ?: return
 
         val id = clickedItem.itemMeta?.persistentDataContainer?.get(
-            SneakyJobBoard.getInstance().advertManager.IDKEY,
+            SneakyJobBoard.getAdvertManager().IDKEY,
             PersistentDataType.STRING
         ) ?: return
 

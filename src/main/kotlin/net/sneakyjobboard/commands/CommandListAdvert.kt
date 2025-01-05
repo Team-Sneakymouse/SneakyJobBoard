@@ -66,7 +66,7 @@ class CommandListAdvert : CommandBase("listadvert") {
                     } else {
                         advert.description = message
                         unregisterListener(player)
-                        SneakyJobBoard.getInstance().advertManager.list(advert)
+                        SneakyJobBoard.getAdvertManager().list(advert)
                         player.sendMessage(TextUtility.convertToComponent("&aAdvert listed successfully!"))
                     }
                 }

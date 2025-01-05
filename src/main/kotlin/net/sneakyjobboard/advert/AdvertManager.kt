@@ -158,7 +158,7 @@ data class Invitation(
         // Set persistent data
         val container = meta.persistentDataContainer
         container.set(
-            SneakyJobBoard.getInstance().advertManager.INVITATION_IDKEY,
+            SneakyJobBoard.getAdvertManager().INVITATION_IDKEY,
             PersistentDataType.STRING,
             id
         )
