@@ -50,7 +50,12 @@ class CommandListAdvert : CommandBase("listadvert") {
          * @param iconCustomModelData The selected icon model data
          * @param category Optional category for the advertisement
          */
-        fun startAdvertCreation(player: Player, iconMaterial: Material, iconCustomModelData: Int, category: AdvertCategory?) {
+        fun startAdvertCreation(
+            player: Player,
+            iconMaterial: Material,
+            iconCustomModelData: Int,
+            category: AdvertCategory?
+        ) {
             val advert = Advert(category, player)
             advert.iconMaterial = iconMaterial
             advert.iconCustomModelData = iconCustomModelData
@@ -147,11 +152,13 @@ class CommandListAdvert : CommandBase("listadvert") {
                 Bukkit.getOnlinePlayers().filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
                     .filter { it.name.startsWith(args.last(), ignoreCase = true) }.map { it.name }
             }
+
             args.size == startIndex + 1 -> {
                 // Get all advert category keys and filter based on input
                 val categories = SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories().keys
                 categories.filter { it.startsWith(args[startIndex], ignoreCase = true) }.toList()
             }
+
             else -> emptyList()
         }
     }

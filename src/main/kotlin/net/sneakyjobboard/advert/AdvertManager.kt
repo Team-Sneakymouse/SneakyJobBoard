@@ -43,25 +43,25 @@ class AdvertManager : Listener {
      */
     fun list(advert: Advert, sendToPocketbase: Boolean = true) {
         adverts[advert.uuid] = advert
-		if (sendToPocketbase) SneakyJobBoard.getPocketbaseManager().listAdvert(advert)
+        if (sendToPocketbase) SneakyJobBoard.getPocketbaseManager().listAdvert(advert)
     }
 
-	/**
-	 * Unlists an advertisement from the system.
-	 * @param advert The advertisement to unlist
-	 */
-	fun unlist(advert: Advert) {
-		advert.deleted = true
-		SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
-		adverts.remove(advert.uuid)
-	}
+    /**
+     * Unlists an advertisement from the system.
+     * @param advert The advertisement to unlist
+     */
+    fun unlist(advert: Advert) {
+        advert.deleted = true
+        SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
+        adverts.remove(advert.uuid)
+    }
 
-	/**
-	 * Gets an advertisement by its UUID.
-	 * @param uuid The UUID of the advertisement.
-	 * @return The advertisement if found, null otherwise.
-	 */
-	fun getAdvert(uuid: String): Advert? = adverts[uuid]
+    /**
+     * Gets an advertisement by its UUID.
+     * @param uuid The UUID of the advertisement.
+     * @return The advertisement if found, null otherwise.
+     */
+    fun getAdvert(uuid: String): Advert? = adverts[uuid]
 
     /**
      * Gets the collection of currently listed advertisements from online players.
@@ -71,14 +71,14 @@ class AdvertManager : Listener {
         return adverts.values.filter { it.player.isOnline && it.enabled }.toMutableList()
     }
 
-	/**
-	 * Gets the advertisements for a specific player.
-	 * @param player The player to get advertisements for.
-	 * @return A mutable collection of advertisements.
-	 */
-	fun getAdvertsForPlayer(player: Player): MutableCollection<Advert> {
-		return adverts.values.filter { it.player == player }.toMutableList()
-	}
+    /**
+     * Gets the advertisements for a specific player.
+     * @param player The player to get advertisements for.
+     * @return A mutable collection of advertisements.
+     */
+    fun getAdvertsForPlayer(player: Player): MutableCollection<Advert> {
+        return adverts.values.filter { it.player == player }.toMutableList()
+    }
 
     /**
      * Creates a new invitation for an advertisement.
@@ -88,14 +88,15 @@ class AdvertManager : Listener {
      */
     fun createInvitation(advert: Advert, inviter: Player): Invitation {
         val invitation = Invitation(
-            advert = advert,
-            inviter = inviter,
-            location = inviter.location
+            advert = advert, inviter = inviter, location = inviter.location
         )
         invitations[invitation.id] = invitation
 
-		Bukkit.getServer().dispatchCommand(Bukkit.getServer().consoleSender, "cast forcecast ${inviter.name} jobboard-invitation-received ${advert.uuid}")
-		
+        Bukkit.getServer().dispatchCommand(
+            Bukkit.getServer().consoleSender,
+            "cast forcecast ${inviter.name} jobboard-invitation-received ${advert.uuid}"
+        )
+
         return invitation
     }
 
@@ -112,8 +113,8 @@ class AdvertManager : Listener {
      * @return List of active invitations
      */
     fun getActiveInvitationsForPlayer(player: Player): List<Invitation> {
-		cleanupExpiredInvitations()
-        return invitations.values.filter { 
+        cleanupExpiredInvitations()
+        return invitations.values.filter {
             it.advert.player == player
         }
     }
@@ -179,17 +180,19 @@ class AdvertManager : Listener {
  * Represents an invitation from a player responding to an advertisement.
  */
 data class Invitation(
-    val advert: Advert,
-    val inviter: Player,
-    val location: Location
+    val advert: Advert, val inviter: Player, val location: Location
 ) {
     val id: String = UUID.randomUUID().toString()
     val startTime: Long = System.currentTimeMillis()
-	val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(inviter, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", inviter.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", inviter.name)
-	var displayStringLocation =
-		(SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
-			"[x]", location.blockX.toString()
-		).replace("[y]", location.blockY.toString()).replace("[z]", location.blockZ.toString())
+    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(
+        inviter,
+        SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]"
+    ).replace("[playerName]", inviter.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
+        ?: "&eFrom: &b[playerName]").replace("[playerName]", inviter.name)
+    var displayStringLocation =
+        (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
+            "[x]", location.blockX.toString()
+        ).replace("[y]", location.blockY.toString()).replace("[z]", location.blockZ.toString())
 
     /**
      * Creates an ItemStack representing this invitation in the UI.
@@ -206,9 +209,9 @@ data class Invitation(
         meta.displayName(TextUtility.convertToComponent("&a${advert.name}"))
 
         val lore = mutableListOf<String>()
-		lore.add(posterString)
+        lore.add(posterString)
         lore.add("&eLocation: &b${displayStringLocation}")
-        
+
         // Calculate time remaining
         val now = System.currentTimeMillis()
         val expireDuration = SneakyJobBoard.getInstance().config.getLong("invitation-expire-duration", 300000)
@@ -217,16 +220,14 @@ data class Invitation(
         val filledBars = (barLength * (1.0 - progress)).toInt().coerceIn(0, barLength)
         val progressBar = "&a" + "█".repeat(filledBars) + "&7" + "█".repeat(barLength - filledBars)
         lore.add("&eTime remaining:")
-		lore.add("${progressBar}")
+        lore.add("${progressBar}")
 
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
 
         // Set persistent data
         val container = meta.persistentDataContainer
         container.set(
-            SneakyJobBoard.getAdvertManager().INVITATION_IDKEY,
-            PersistentDataType.STRING,
-            id
+            SneakyJobBoard.getAdvertManager().INVITATION_IDKEY, PersistentDataType.STRING, id
         )
 
         itemStack.itemMeta = meta
@@ -235,15 +236,18 @@ data class Invitation(
 }
 
 class Advert(
-    var category: AdvertCategory?,
-    val player: Player
+    var category: AdvertCategory?, val player: Player
 ) {
     val uuid = UUID.randomUUID().toString()
     var recordID = ""
     var location = player.location
     var name: String = category?.name ?: ""
     var description: String = category?.description ?: ""
-    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
+    val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(
+        player,
+        SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]"
+    ).replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
+        ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
     var iconMaterial: Material? = null
     var iconCustomModelData: Int? = null
     var enabled: Boolean = true
@@ -260,7 +264,7 @@ class Advert(
         // Set custom model data, display name, and lore.
         iconCustomModelData?.let { meta.setCustomModelData(it) }
             ?: category?.iconCustomModelData?.let { meta.setCustomModelData(it) }
-            
+
         meta.displayName(TextUtility.convertToComponent("&a${name}"))
 
         val lore = mutableListOf<String>()

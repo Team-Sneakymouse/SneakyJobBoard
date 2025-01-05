@@ -69,7 +69,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.commandMap.register(IDENTIFIER, CommandJobBoard())
         server.commandMap.register(IDENTIFIER, CommandUnlistJob())
         server.commandMap.register(IDENTIFIER, CommandJobHistory())
-		server.commandMap.register(IDENTIFIER, CommandListAdvert())
+        server.commandMap.register(IDENTIFIER, CommandListAdvert())
         server.commandMap.register(IDENTIFIER, CommandInvitations())
         server.commandMap.register(IDENTIFIER, CommandAdvertBoard())
         server.commandMap.register(IDENTIFIER, CommandManageAdverts())

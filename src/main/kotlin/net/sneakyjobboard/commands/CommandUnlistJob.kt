@@ -14,7 +14,8 @@ import org.bukkit.entity.Player
 class CommandUnlistJob : CommandBase("unlistjob") {
 
     init {
-        this.usageMessage = "/${this@CommandUnlistJob.name} <expire/delete. Delete will remove the discord message as well.> (Job Name (admin only))"
+        this.usageMessage =
+            "/${this@CommandUnlistJob.name} <expire/delete. Delete will remove the discord message as well.> (Job Name (admin only))"
         this.description = "Unlist the last job that you listed."
     }
 

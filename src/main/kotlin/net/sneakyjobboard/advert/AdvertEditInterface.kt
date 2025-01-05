@@ -53,10 +53,12 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
         inventory.setItem(2, ItemStack(Material.NAME_TAG).apply {
             itemMeta = itemMeta?.also { meta ->
                 meta.displayName(TextUtility.convertToComponent("&eChange Category"))
-                meta.lore(listOf(
-                    TextUtility.convertToComponent("&7Current: &b${advert.category?.name ?: "None"}"),
-                    TextUtility.convertToComponent("&7Click to change")
-                ))
+                meta.lore(
+                    listOf(
+                        TextUtility.convertToComponent("&7Current: &b${advert.category?.name ?: "None"}"),
+                        TextUtility.convertToComponent("&7Click to change")
+                    )
+                )
             }
         })
 
@@ -64,9 +66,11 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
         inventory.setItem(4, ItemStack(Material.ITEM_FRAME).apply {
             itemMeta = itemMeta?.also { meta ->
                 meta.displayName(TextUtility.convertToComponent("&eChange Icon"))
-                meta.lore(listOf(
-                    TextUtility.convertToComponent("&7Click to select a new icon")
-                ))
+                meta.lore(
+                    listOf(
+                        TextUtility.convertToComponent("&7Click to select a new icon")
+                    )
+                )
             }
         })
 
@@ -74,9 +78,11 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
         inventory.setItem(6, ItemStack(Material.WRITABLE_BOOK).apply {
             itemMeta = itemMeta?.also { meta ->
                 meta.displayName(TextUtility.convertToComponent("&eChange Text"))
-                meta.lore(listOf(
-                    TextUtility.convertToComponent("&7Click to change name and description")
-                ))
+                meta.lore(
+                    listOf(
+                        TextUtility.convertToComponent("&7Click to change name and description")
+                    )
+                )
             }
         })
 
@@ -84,9 +90,11 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
         inventory.setItem(8, ItemStack(Material.BARRIER).apply {
             itemMeta = itemMeta?.also { meta ->
                 meta.displayName(TextUtility.convertToComponent("&cClose"))
-                meta.lore(listOf(
-                    TextUtility.convertToComponent("&7Click to close the interface")
-                ))
+                meta.lore(
+                    listOf(
+                        TextUtility.convertToComponent("&7Click to close the interface")
+                    )
+                )
             }
         })
     }
@@ -163,7 +171,15 @@ class AdvertEditListener : Listener {
                             player.sendMessage(TextUtility.convertToComponent("&cInvalid category ID!"))
                             val categories = listOf("none") + SneakyJobBoard.getAdvertCategoryManager()
                                 .getAdvertCategories().values.map { it.id }
-                            player.sendMessage(TextUtility.convertToComponent("&eAvailable categories: &b${categories.joinToString(", ")}"))
+                            player.sendMessage(
+                                TextUtility.convertToComponent(
+                                    "&eAvailable categories: &b${
+                                        categories.joinToString(
+                                            ", "
+                                        )
+                                    }"
+                                )
+                            )
                             return
                         }
 
@@ -187,9 +203,10 @@ class AdvertEditListener : Listener {
                 AdvertEditInterface.registerListener(player, chatListener)
                 player.sendMessage(TextUtility.convertToComponent("&aEnter the new category ID:"))
                 val categories = listOf("none") + SneakyJobBoard.getAdvertCategoryManager()
-					.getAdvertCategories().values.map { it.id }
+                    .getAdvertCategories().values.map { it.id }
                 player.sendMessage(TextUtility.convertToComponent("&eAvailable categories: &b${categories.joinToString(", ")}"))
             }
+
             4 -> {
                 // Icon change
                 player.closeInventory()
@@ -200,6 +217,7 @@ class AdvertEditListener : Listener {
                     AdvertEditInterface.open(player, advert)
                 }
             }
+
             6 -> {
                 // Text change
                 player.closeInventory()
@@ -217,9 +235,12 @@ class AdvertEditListener : Listener {
                             advert.name = message
                             waitingForTitle = false
                             player.sendMessage(TextUtility.convertToComponent("&aEnter the new description:"))
-                            player.sendMessage(TextUtility.convertToComponent("&7Current: &e[Click to use old description]").clickEvent(
-                                net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.description)
-                            ))
+                            player.sendMessage(
+                                TextUtility.convertToComponent("&7Current: &e[Click to use old description]")
+                                    .clickEvent(
+                                        net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.description)
+                                    )
+                            )
                         } else {
                             advert.description = message
                             SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
@@ -240,10 +261,13 @@ class AdvertEditListener : Listener {
 
                 AdvertEditInterface.registerListener(player, chatListener)
                 player.sendMessage(TextUtility.convertToComponent("&aEnter the new title:"))
-                player.sendMessage(TextUtility.convertToComponent("&7Current: &e[Click to use old title]").clickEvent(
-                    net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.name)
-                ))
+                player.sendMessage(
+                    TextUtility.convertToComponent("&7Current: &e[Click to use old title]").clickEvent(
+                        net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.name)
+                    )
+                )
             }
+
             8 -> {
                 // Close interface
                 player.closeInventory()

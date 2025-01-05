@@ -58,7 +58,7 @@ class AdvertCategoryManager {
                 }
 
                 advertCategories[key] = AdvertCategory(
-					id = key,
+                    id = key,
                     name,
                     description,
                     iconMaterial,

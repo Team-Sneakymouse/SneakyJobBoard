@@ -23,14 +23,11 @@ import org.bukkit.persistence.PersistentDataType
  * @property page The current page number being displayed
  */
 class AdvertBoardInterface(
-    val category: AdvertCategory? = null,
-    val page: Int = 0
+    val category: AdvertCategory? = null, val page: Int = 0
 ) : InventoryHolder {
-    private val inventory: Inventory = Bukkit.createInventory(
-        this,
+    private val inventory: Inventory = Bukkit.createInventory(this,
         54,
-        TextUtility.convertToComponent(category?.name?.let { "&6Adverts - $it" } ?: "&6Adverts")
-    )
+        TextUtility.convertToComponent(category?.name?.let { "&6Adverts - $it" } ?: "&6Adverts"))
 
     init {
         updateInventory()
@@ -68,7 +65,7 @@ class AdvertBoardInterface(
         // Add category buttons for categories that have active adverts
         for (category in categoryManager.getAdvertCategories().values) {
             val categoryAdverts = advertManager.getAdverts().filter { it.category == category }
-            
+
             if (categoryAdverts.isNotEmpty()) {
                 val button = createCategoryButton(category, categoryAdverts.size)
                 inventory.setItem(slot++, button)
@@ -79,10 +76,8 @@ class AdvertBoardInterface(
         slot = ((slot + 8) / 9) * 9
 
         // Add uncategorized adverts
-        val uncategorizedAdverts = advertManager.getAdverts()
-            .filter { it.category == null }
-            .drop(page * 50)
-            .take(50 - slot)
+        val uncategorizedAdverts =
+            advertManager.getAdverts().filter { it.category == null }.drop(page * 50).take(50 - slot)
 
         uncategorizedAdverts.forEach { advert ->
             if (slot < 50) {
@@ -96,10 +91,7 @@ class AdvertBoardInterface(
      */
     private fun populateCategoryAdverts() {
         val advertManager = SneakyJobBoard.getAdvertManager()
-        val adverts = advertManager.getAdverts()
-            .filter { it.category == category }
-            .drop(page * 50)
-            .take(50)
+        val adverts = advertManager.getAdverts().filter { it.category == category }.drop(page * 50).take(50)
 
         adverts.forEachIndexed { index, advert ->
             inventory.setItem(index, advert.getIconItem())
@@ -141,14 +133,14 @@ class AdvertBoardInterface(
      */
     private fun addNavigationButtons() {
         val advertManager = SneakyJobBoard.getAdvertManager()
-        
+
         // Calculate if we need previous/next buttons
         val totalAdverts = if (category != null) {
             advertManager.getAdverts().count { it.category == category }
         } else {
             advertManager.getAdverts().count { it.category == null }
         }
-        
+
         val hasNextPage = totalAdverts > (page + 1) * 50
         val hasPrevPage = page > 0
 
@@ -158,9 +150,7 @@ class AdvertBoardInterface(
             val meta = prevButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&ePrevious Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getAdvertManager().IDKEY,
-                PersistentDataType.STRING,
-                "prev_page"
+                SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING, "prev_page"
             )
             prevButton.itemMeta = meta
             inventory.setItem(51, prevButton)
@@ -172,9 +162,7 @@ class AdvertBoardInterface(
             val meta = nextButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&eNext Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getAdvertManager().IDKEY,
-                PersistentDataType.STRING,
-                "next_page"
+                SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING, "next_page"
             )
             nextButton.itemMeta = meta
             inventory.setItem(52, nextButton)
@@ -186,9 +174,7 @@ class AdvertBoardInterface(
             val meta = backButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&cBack"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getAdvertManager().IDKEY,
-                PersistentDataType.STRING,
-                "back"
+                SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING, "back"
             )
             backButton.itemMeta = meta
             inventory.setItem(53, backButton)
@@ -225,8 +211,7 @@ class AdvertBoardListener : Listener {
         val player = event.whoClicked as? Player ?: return
 
         val id = clickedItem.itemMeta?.persistentDataContainer?.get(
-            SneakyJobBoard.getAdvertManager().IDKEY,
-            PersistentDataType.STRING
+            SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING
         ) ?: return
 
         when {
@@ -236,13 +221,16 @@ class AdvertBoardListener : Listener {
                     AdvertBoardInterface.open(player, holder.category, currentPage - 1)
                 }
             }
+
             id == "next_page" -> {
                 val currentPage = (holder as? AdvertBoardInterface)?.page ?: 0
                 AdvertBoardInterface.open(player, holder.category, currentPage + 1)
             }
+
             id == "back" -> {
                 AdvertBoardInterface.open(player)
             }
+
             id.startsWith("category_") -> {
                 // Extract category key from the ID
                 val categoryKey = id.removePrefix("category_")
@@ -251,18 +239,19 @@ class AdvertBoardListener : Listener {
                     AdvertBoardInterface.open(player, category)
                 }
             }
+
             else -> {
                 // It's an advert, handle invitation creation
                 val advert = SneakyJobBoard.getAdvertManager().getAdverts().find { it.uuid == id }
                 if (advert != null) {
-					if (advert.player.uniqueId == player.uniqueId) {
-						player.sendMessage(TextUtility.convertToComponent("&4You cannot invite yourself!"))
-						return
-					}
+                    if (advert.player.uniqueId == player.uniqueId) {
+                        player.sendMessage(TextUtility.convertToComponent("&4You cannot invite yourself!"))
+                        return
+                    }
 
                     // Close the advert board first to prevent inventory issues
                     player.closeInventory()
-                    
+
                     // Create the invitation
                     SneakyJobBoard.getAdvertManager().createInvitation(advert, player)
                     player.sendMessage(TextUtility.convertToComponent("&aInvitation sent!"))

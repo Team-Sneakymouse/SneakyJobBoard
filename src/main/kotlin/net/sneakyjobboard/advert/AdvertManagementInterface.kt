@@ -46,7 +46,7 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
      */
     private fun updateInventory() {
         inventory.clear()
-        
+
         // Add all adverts belonging to the player
         val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
         adverts.forEachIndexed { index, advert ->
@@ -54,17 +54,19 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
                 val itemStack = if (advert.enabled) {
                     advert.getIconItem().apply {
                         itemMeta = itemMeta?.also { meta ->
-                            meta.lore(listOf(
-                                TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
-                                TextUtility.convertToComponent("&7Description:"),
-                                *TextUtility.splitIntoLines(advert.description, 30).map { 
-                                    TextUtility.convertToComponent("&7$it") 
-                                }.toTypedArray(),
-                                TextUtility.convertToComponent(""),
-                                TextUtility.convertToComponent("&eClick to disable"),
-                                TextUtility.convertToComponent("&ePress Q to delete"),
-                                TextUtility.convertToComponent("&ePress F to edit")
-                            ))
+                            meta.lore(
+                                listOf(
+                                    TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
+                                    TextUtility.convertToComponent("&7Description:"),
+                                    *TextUtility.splitIntoLines(advert.description, 30).map {
+                                        TextUtility.convertToComponent("&7$it")
+                                    }.toTypedArray(),
+                                    TextUtility.convertToComponent(""),
+                                    TextUtility.convertToComponent("&eClick to disable"),
+                                    TextUtility.convertToComponent("&ePress Q to delete"),
+                                    TextUtility.convertToComponent("&ePress F to edit")
+                                )
+                            )
                             // Store advert ID in persistent data
                             meta.persistentDataContainer.set(
                                 SneakyJobBoard.getAdvertManager().IDKEY,
@@ -77,17 +79,19 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
                     ItemStack(Material.RED_WOOL).apply {
                         itemMeta = itemMeta?.also { meta ->
                             meta.displayName(TextUtility.convertToComponent("&c${advert.name}"))
-                            meta.lore(listOf(
-                                TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
-                                TextUtility.convertToComponent("&7Description:"),
-                                *TextUtility.splitIntoLines(advert.description, 30).map { 
-                                    TextUtility.convertToComponent("&7$it") 
-                                }.toTypedArray(),
-                                TextUtility.convertToComponent(""),
-                                TextUtility.convertToComponent("&eClick to enable"),
-                                TextUtility.convertToComponent("&ePress Q to delete"),
-                                TextUtility.convertToComponent("&ePress F to edit")
-                            ))
+                            meta.lore(
+                                listOf(
+                                    TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
+                                    TextUtility.convertToComponent("&7Description:"),
+                                    *TextUtility.splitIntoLines(advert.description, 30).map {
+                                        TextUtility.convertToComponent("&7$it")
+                                    }.toTypedArray(),
+                                    TextUtility.convertToComponent(""),
+                                    TextUtility.convertToComponent("&eClick to enable"),
+                                    TextUtility.convertToComponent("&ePress Q to delete"),
+                                    TextUtility.convertToComponent("&ePress F to edit")
+                                )
+                            )
                             // Store advert ID in persistent data
                             meta.persistentDataContainer.set(
                                 SneakyJobBoard.getAdvertManager().IDKEY,
@@ -130,8 +134,7 @@ class AdvertManagementListener : Listener {
         val player = event.whoClicked as? Player ?: return
 
         val uuid = clickedItem.itemMeta?.persistentDataContainer?.get(
-            SneakyJobBoard.getAdvertManager().IDKEY,
-            org.bukkit.persistence.PersistentDataType.STRING
+            SneakyJobBoard.getAdvertManager().IDKEY, org.bukkit.persistence.PersistentDataType.STRING
         ) ?: return
 
         val advert = SneakyJobBoard.getAdvertManager().getAdvert(uuid) ?: return
@@ -144,17 +147,20 @@ class AdvertManagementListener : Listener {
                 player.closeInventory()
                 AdvertManagementInterface.open(player)
             }
+
             ClickType.DROP -> {
                 // Mark as deleted
                 SneakyJobBoard.getAdvertManager().unlist(advert)
                 player.closeInventory()
                 AdvertManagementInterface.open(player)
             }
+
             ClickType.SWAP_OFFHAND -> {
                 // Open edit interface
                 player.closeInventory()
                 AdvertEditInterface.open(player, advert)
             }
+
             else -> {}
         }
     }

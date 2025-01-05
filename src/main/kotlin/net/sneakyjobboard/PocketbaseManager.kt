@@ -155,8 +155,7 @@ class PocketbaseManager {
                     val client = OkHttpClient()
 
                     val jobData = mapOf(
-                        "endTime" to System.currentTimeMillis(),
-                        "endReason" to endReason
+                        "endTime" to System.currentTimeMillis(), "endReason" to endReason
                     )
                     val jsonRequestBody = Gson().toJson(jobData).toRequestBody("application/json".toMediaType())
 
@@ -218,8 +217,7 @@ class PocketbaseManager {
                     // Iterate over the jobs and update them
                     recordIDs.forEach { recordID ->
                         val jobData = mapOf(
-                            "endTime" to System.currentTimeMillis(),
-                            "endReason" to "restart"
+                            "endTime" to System.currentTimeMillis(), "endReason" to "restart"
                         )
                         val jsonRequestBody = Gson().toJson(jobData).toRequestBody(
                             "application/json".toMediaType()
@@ -508,11 +506,8 @@ class PocketbaseManager {
 
                     val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
 
-                    val request = Request.Builder()
-                        .url("$url")
-                        .header("Authorization", authToken)
-                        .post(jsonRequestBody)
-                        .build()
+                    val request =
+                        Request.Builder().url("$url").header("Authorization", authToken).post(jsonRequestBody).build()
 
                     val response = client.newCall(request).execute()
 
@@ -567,11 +562,8 @@ class PocketbaseManager {
 
                     val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
 
-                    val request = Request.Builder()
-                        .url("$url/${advert.recordID}")
-                        .header("Authorization", authToken)
-                        .patch(jsonRequestBody)
-                        .build()
+                    val request = Request.Builder().url("$url/${advert.recordID}").header("Authorization", authToken)
+                        .patch(jsonRequestBody).build()
 
                     val response = client.newCall(request).execute()
 
@@ -607,11 +599,8 @@ class PocketbaseManager {
                 if (authToken.isNotEmpty()) {
                     val client = OkHttpClient()
 
-                    val requestGet = Request.Builder()
-                        .url("$url?filter=(posteruuid='${playerUUID}')&&(deleted=false)")
-                        .header("Authorization", authToken)
-                        .get()
-                        .build()
+                    val requestGet = Request.Builder().url("$url?filter=(posteruuid='${playerUUID}')&&(deleted=false)")
+                        .header("Authorization", authToken).get().build()
 
                     val responseGet = client.newCall(requestGet).execute()
                     val responseBody = responseGet.body?.string()
@@ -636,7 +625,7 @@ class PocketbaseManager {
                         val description = item.get("description").asString
                         val iconMaterialStr = item.get("iconMaterial").asString
                         val iconCustomModelData = item.get("iconCustomModelData").asInt
-						val enabled = item.get("enabled").asBoolean
+                        val enabled = item.get("enabled").asBoolean
 
                         val advertKey = Triple(category, name, description)
                         if (seenAdverts.contains(advertKey)) continue
@@ -650,15 +639,14 @@ class PocketbaseManager {
                         val player = Bukkit.getPlayer(UUID.fromString(playerUUID)) ?: continue
 
                         val advert = Advert(
-                            category = advertCategory,
-                            player = player
+                            category = advertCategory, player = player
                         ).apply {
                             this.name = name
                             this.description = description
                             this.recordID = item.get("id").asString
                             this.iconMaterial = Material.matchMaterial(iconMaterialStr)
                             this.iconCustomModelData = iconCustomModelData
-							this.enabled = enabled
+                            this.enabled = enabled
                         }
 
                         adverts.add(advert)
@@ -667,7 +655,7 @@ class PocketbaseManager {
                     responseGet.close()
 
                     adverts.forEach { advert ->
-						SneakyJobBoard.getAdvertManager().list(advert, false)
+                        SneakyJobBoard.getAdvertManager().list(advert, false)
                     }
                 }
             } catch (e: Exception) {

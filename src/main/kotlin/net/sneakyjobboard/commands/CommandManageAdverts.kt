@@ -48,6 +48,7 @@ class CommandManageAdverts : CommandBase("manageadverts") {
                 Bukkit.getOnlinePlayers().filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
                     .filter { it.name.startsWith(args[0], ignoreCase = true) }.map { it.name }
             }
+
             else -> emptyList()
         }
     }

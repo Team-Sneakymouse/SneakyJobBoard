@@ -157,8 +157,7 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
          * @property showOnBoardInteract Whether to show this button when opened via board interaction
          */
         data class JobBoardButton(
-            val itemStack: ItemStack?, 
-            val showOnBoardInteract: Boolean
+            val itemStack: ItemStack?, val showOnBoardInteract: Boolean
         )
 
         /**

@@ -25,9 +25,7 @@ import org.bukkit.persistence.PersistentDataType
  * @property callback Optional callback to handle icon selection
  */
 class AdvertIconSelector(
-    val category: AdvertCategory?, 
-    val page: Int = 0,
-    val callback: ((Material, Int) -> Unit)? = null
+    val category: AdvertCategory?, val page: Int = 0, val callback: ((Material, Int) -> Unit)? = null
 ) : InventoryHolder {
     private val inventory: Inventory = Bukkit.createInventory(this, 54, TextUtility.convertToComponent("&6Select Icon"))
     private val icons = mutableListOf<IconData>()
@@ -93,9 +91,7 @@ class AdvertIconSelector(
             val meta = prevButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&ePrevious Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getAdvertManager().IDKEY,
-                PersistentDataType.STRING,
-                "prev_page"
+                SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING, "prev_page"
             )
             prevButton.itemMeta = meta
             inventory.setItem(51, prevButton)
@@ -106,9 +102,7 @@ class AdvertIconSelector(
             val meta = nextButton.itemMeta
             meta.displayName(TextUtility.convertToComponent("&eNext Page"))
             meta.persistentDataContainer.set(
-                SneakyJobBoard.getAdvertManager().IDKEY,
-                PersistentDataType.STRING,
-                "next_page"
+                SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING, "next_page"
             )
             nextButton.itemMeta = meta
             inventory.setItem(52, nextButton)
@@ -125,8 +119,8 @@ class AdvertIconSelector(
         val meta = itemStack.itemMeta
 
         meta.setCustomModelData(icon.modelData)
-		meta.isHideTooltip = true
-        
+        meta.isHideTooltip = true
+
         // Store icon data in persistent data container
         val container = meta.persistentDataContainer
         container.set(
@@ -147,7 +141,12 @@ class AdvertIconSelector(
          * @param page The page number to display
          * @param callback Optional callback to handle the selection
          */
-        fun open(player: Player, category: AdvertCategory?, page: Int = 0, callback: ((Material, Int) -> Unit)? = null) {
+        fun open(
+            player: Player,
+            category: AdvertCategory?,
+            page: Int = 0,
+            callback: ((Material, Int) -> Unit)? = null
+        ) {
             val ui = AdvertIconSelector(category, page, callback)
             player.openInventory(ui.inventory)
         }
@@ -174,8 +173,7 @@ class AdvertIconSelectorListener : Listener {
         val player = event.whoClicked as? Player ?: return
 
         val id = clickedItem.itemMeta?.persistentDataContainer?.get(
-            SneakyJobBoard.getAdvertManager().IDKEY,
-            PersistentDataType.STRING
+            SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING
         ) ?: return
 
         when (id) {
@@ -185,10 +183,12 @@ class AdvertIconSelectorListener : Listener {
                     AdvertIconSelector.open(player, holder.category, currentPage - 1, holder.callback)
                 }
             }
+
             "next_page" -> {
                 val currentPage = holder.page
                 AdvertIconSelector.open(player, holder.category, currentPage + 1, holder.callback)
             }
+
             else -> {
                 // Parse icon data
                 val (materialName, modelData) = id.split(",")
