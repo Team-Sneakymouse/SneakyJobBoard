@@ -65,7 +65,11 @@ class CommandListJob : CommandBase("listjob") {
         if (player == null) {
             sender.sendMessage(
                 TextUtility.convertToComponent(
-                    "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                    if (args.isEmpty()) {
+                        "&4When running this command from the console, the first arg must be the reporting player."
+                    } else {
+                        "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                    }
                 )
             )
             return false

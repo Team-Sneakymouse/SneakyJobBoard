@@ -55,14 +55,18 @@ class CommandListAdvert : CommandBase("listadvert") {
         if (player == null) {
             sender.sendMessage(
                 TextUtility.convertToComponent(
-                    "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                    if (args.isEmpty()) {
+                        "&4When running this command from the console, the first arg must be the reporting player."
+                    } else {
+                        "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                    }
                 )
             )
             return false
         }
 
         val advertCategories = SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories()
-        val category = advertCategories[args[0]]
+        val category = if (remainingArgs.isNotEmpty()) advertCategories[remainingArgs[0]] else null
 
         val advert = Advert(category, player)
 
@@ -120,5 +124,34 @@ class CommandListAdvert : CommandBase("listadvert") {
         registerListener(player, chatListener)
         sender.sendMessage(TextUtility.convertToComponent("&aEnter the title for your advert:"))
         return true
+    }
+
+    /**
+     * Provides tab completion for the command arguments.
+     *
+     * @param sender The entity that sent the command.
+     * @param alias The alias used to invoke the command.
+     * @param args The arguments provided with the command.
+     * @return A list of possible completions based on the current input.
+     */
+    override fun tabComplete(
+        sender: CommandSender, alias: String, args: Array<String>
+    ): List<String> {
+        val startIndex: Int = if (sender is Player) 0 else 1
+
+        return when {
+            args.size == 1 && sender !is Player -> {
+                Bukkit.getOnlinePlayers().filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
+                    .filter { it.name.startsWith(args.last(), ignoreCase = true) }.map { it.name }
+            }
+
+            args.size - startIndex == 1 -> {
+                SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories().keys.toList().filter {
+                    it.startsWith(args.last(), ignoreCase = true)
+                }
+            }
+
+            else -> emptyList()
+        }
     }
 } 

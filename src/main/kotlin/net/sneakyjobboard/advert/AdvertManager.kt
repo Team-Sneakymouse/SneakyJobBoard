@@ -184,13 +184,11 @@ class Advert(
      * @return The item representing this advert.
      */
     fun getIconItem(): ItemStack {
-        val itemStack = ItemStack(category?.iconMaterial ?: Material.AIR)
-        val customModelData: Int = category?.iconCustomModelData ?: 0
-
-        val meta = itemStack.itemMeta
+        val itemStack = ItemStack(category?.iconMaterial ?: Material.BARRIER)
+        val meta = itemStack.itemMeta ?: return itemStack
 
         // Set custom model data, display name, and lore.
-        meta.setCustomModelData(customModelData)
+        category?.iconCustomModelData?.let { meta.setCustomModelData(it) }
         meta.displayName(TextUtility.convertToComponent("&a${name}"))
 
         val lore = mutableListOf<String>()

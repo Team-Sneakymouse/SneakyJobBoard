@@ -25,7 +25,7 @@ class AdvertBoardInterface(
     private val inventory: Inventory = Bukkit.createInventory(
         this,
         54,
-        TextUtility.convertToComponent(category?.name?.let { "&6Adverts - $it" } ?: "&6Advert Categories")
+        TextUtility.convertToComponent(category?.name?.let { "&6Adverts - $it" } ?: "&6Adverts")
     )
 
     init {
@@ -179,7 +179,7 @@ class AdvertBoardInterface(
         if (category != null) {
             val backButton = ItemStack(Material.BARRIER)
             val meta = backButton.itemMeta
-            meta.displayName(TextUtility.convertToComponent("&cBack to Categories"))
+            meta.displayName(TextUtility.convertToComponent("&cBack"))
             meta.persistentDataContainer.set(
                 SneakyJobBoard.getInstance().advertManager.IDKEY,
                 PersistentDataType.STRING,
