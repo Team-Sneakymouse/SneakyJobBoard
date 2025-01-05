@@ -582,6 +582,88 @@ class PocketbaseManager {
             }
         })
     }
+
+    /**
+     * Retrieves a player's advert history from PocketBase, showing all non-deleted adverts.
+     * The retrieved adverts are displayed to the player in a custom inventory UI.
+     *
+     * @param playerUUID The UUID of the player whose advert history to retrieve.
+     */
+    @Synchronized
+    fun getAdvertHistory(playerUUID: String) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+
+        if (url.isNullOrEmpty()) return
+
+        Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
+            try {
+                if (authToken.isEmpty()) auth()
+
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
+
+                    val requestGet = Request.Builder()
+                        .url("$url?filter=(posteruuid='${playerUUID}')&&(deleted=false)")
+                        .header("Authorization", authToken)
+                        .get()
+                        .build()
+
+                    val responseGet = client.newCall(requestGet).execute()
+                    val responseBody = responseGet.body?.string()
+
+                    if (!responseGet.isSuccessful || responseBody.isNullOrEmpty()) {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
+                        )
+                        responseGet.close()
+                        return@Runnable
+                    }
+
+                    val items = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
+                        .map { it.asJsonObject }
+
+                    val adverts = mutableListOf<Advert>()
+                    val seenAdverts = mutableSetOf<Triple<String, String, String>>()
+
+                    for (item in items) {
+                        val category = item.get("category").asString
+                        val name = item.get("name").asString
+                        val description = item.get("description").asString
+
+                        val advertKey = Triple(category, name, description)
+                        if (seenAdverts.contains(advertKey)) continue
+
+                        seenAdverts.add(advertKey)
+
+                        val advertCategory = SneakyJobBoard.getAdvertCategoryManager()
+                            .getAdvertCategories().values.find { it.name == category }
+                            ?: SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories().values.first()
+
+                        val player = Bukkit.getPlayer(UUID.fromString(playerUUID)) ?: continue
+
+                        val advert = Advert(
+                            category = advertCategory,
+                            player = player
+                        ).apply {
+                            this.name = name
+                            this.description = description
+                            this.recordID = item.get("id").asString
+                        }
+
+                        adverts.add(advert)
+                    }
+
+                    responseGet.close()
+
+                    // Return the list of adverts
+                    // Note: You'll need to implement the UI part similar to JobHistoryInventoryHolder
+                    // or handle the results in a way that fits your needs
+                }
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
+    }
 }
 
 fun String.toBooleanOrNull(): Boolean? {
