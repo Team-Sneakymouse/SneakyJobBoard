@@ -35,9 +35,9 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
      * @return A new inventory with appropriate size and title
      */
     private fun createInventory(): Inventory {
-        val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
-        val rows = ((adverts.size + 8) / 9).coerceIn(1, 6)
-        return Bukkit.createInventory(this, rows * 9, TextUtility.convertToComponent("&6Your Advertisements"))
+        //val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
+        //val rows = ((adverts.size + 8) / 9).coerceIn(1, 6)
+        return Bukkit.createInventory(this, 1 * 9, TextUtility.convertToComponent("&6Your Advertisements"))
     }
 
     /**
@@ -47,10 +47,17 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
     private fun updateInventory() {
         inventory.clear()
 
+        // Add UI button
+        inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
+            itemMeta = itemMeta?.also { meta ->
+                meta.setCustomModelData(3035)
+            }
+        })
+
         // Add all adverts belonging to the player
         val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
         adverts.forEachIndexed { index, advert ->
-            if (index < inventory.size) {
+            if (index < inventory.size - 1) {
                 val itemStack = if (advert.enabled) {
                     advert.getIconItem().apply {
                         itemMeta = itemMeta?.also { meta ->
