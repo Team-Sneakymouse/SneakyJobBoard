@@ -595,7 +595,11 @@ class JobBoardListener : Listener {
 
                 jobBoards.forEach { jobBoard ->
                     if (jobBoard.interactable && jobBoard.isPartOfBoard(entity)) {
-                        JobInventoryHolder.openJobBoard(event.player, true)
+                        //JobInventoryHolder.openJobBoard(event.player, true)
+						Bukkit.getServer().dispatchCommand(
+							Bukkit.getServer().consoleSender,
+							"cast forcecast ${player.name} jobboard-menu-default"
+						)
                         event.isCancelled = true
                         return
                     }
