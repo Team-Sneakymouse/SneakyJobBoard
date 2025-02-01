@@ -9,7 +9,9 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
+import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.Material
 
 /**
  * Interface for viewing and accepting advertisement invitations.
@@ -34,8 +36,8 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
      */
     private fun createInventory(): Inventory {
         // Calculate rows needed (9 slots per row)
-        val rows = ((invitations.size + 8) / 9).coerceIn(1, 6)
-        return Bukkit.createInventory(this, rows * 9, TextUtility.convertToComponent("&6Your Invitations"))
+        //val rows = ((invitations.size + 8) / 9).coerceIn(1, 6)
+        return Bukkit.createInventory(this, 1 * 9, TextUtility.convertToComponent("&6Your Invitations"))
     }
 
     /**
@@ -45,10 +47,18 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
     private fun updateInventory() {
         inventory.clear()
         invitations.forEachIndexed { index, invitation ->
-            if (index < inventory.size) {
+            if (index < inventory.size - 1) {
                 inventory.setItem(index, invitation.createDisplayItem())
             }
         }
+
+		// Add UI button
+		inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
+			itemMeta = itemMeta?.also { meta ->
+				meta.setCustomModelData(3036)
+				meta.setHideTooltip(true)
+			}
+		})
     }
 
     companion object {

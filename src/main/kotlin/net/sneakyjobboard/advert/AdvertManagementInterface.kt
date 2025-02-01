@@ -50,7 +50,7 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
         // Add UI button
         inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
             itemMeta = itemMeta?.also { meta ->
-                meta.setCustomModelData(3032)
+                meta.setCustomModelData(3035)
 				meta.setHideTooltip(true)
             }
         })
