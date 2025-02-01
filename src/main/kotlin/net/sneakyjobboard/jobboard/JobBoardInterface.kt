@@ -66,10 +66,12 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     fun clickedItem(clickedItem: ItemStack, player: Player) {
         val meta = clickedItem.itemMeta
         val uuid = meta.persistentDataContainer.get(
-            NamespacedKey(SneakyJobBoard.getInstance(), "job_id"), PersistentDataType.STRING
+            NamespacedKey(SneakyJobBoard.getInstance(), "job_id"), 
+            PersistentDataType.STRING
         )
         val commandConsole = meta.persistentDataContainer.get(
-            NamespacedKey(SneakyJobBoard.getInstance(), "command_console"), PersistentDataType.STRING
+            NamespacedKey(SneakyJobBoard.getInstance(), "command_console"), 
+            PersistentDataType.STRING
         )
 
         if (!uuid.isNullOrEmpty()) {

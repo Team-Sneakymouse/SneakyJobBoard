@@ -14,6 +14,7 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.NamespacedKey
 
 /**
  * Manages the user interface for browsing and interacting with advertisements.
@@ -246,9 +247,9 @@ class AdvertBoardInterface(
 
 								commandConsole?.let { command ->
 									meta.persistentDataContainer.set(
-										SneakyJobBoard.getAdvertManager().IDKEY,
+										NamespacedKey(SneakyJobBoard.getInstance(), "command_console"),
 										PersistentDataType.STRING,
-										"command:$command"
+										command
 									)
 								}
 							}
@@ -287,12 +288,17 @@ class AdvertBoardListener : Listener {
 
         val id = clickedItem.itemMeta?.persistentDataContainer?.get(
             SneakyJobBoard.getAdvertManager().IDKEY, PersistentDataType.STRING
-        ) ?: return
+        ) ?: ""
+
+        val command = clickedItem.itemMeta?.persistentDataContainer?.get(
+            NamespacedKey(SneakyJobBoard.getInstance(), "command_console"), 
+            PersistentDataType.STRING
+        )
 
         when {
-            id.startsWith("command:") -> {
-                // Handle extra button commands
-                val command = id.removePrefix("command:")
+            command != null -> {
+                // Handle console command buttons
+                if (command.isEmpty()) return
                 player.closeInventory()
                 Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
                     Bukkit.getServer().dispatchCommand(
