@@ -96,6 +96,14 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
                 )
             }
         })
+
+		// Add UI button
+		inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
+			itemMeta = itemMeta?.also { meta ->
+				meta.setCustomModelData(3033)
+				meta.setHideTooltip(true)
+			}
+		})
     }
 
     companion object {
@@ -145,7 +153,6 @@ class AdvertEditListener : Listener {
         val holder = event.inventory.holder as? AdvertEditInterface ?: return
         event.isCancelled = true
 
-        val clickedItem = event.currentItem ?: return
         val player = event.whoClicked as? Player ?: return
         val advert = holder.advert
 

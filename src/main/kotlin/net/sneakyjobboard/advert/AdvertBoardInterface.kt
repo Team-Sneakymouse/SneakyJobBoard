@@ -156,13 +156,6 @@ class AdvertBoardInterface(
         val hasNextPage = totalAdverts > (page + 1) * 50
         val hasPrevPage = page > 0
 
-		// Add gui component
-		inventory.setItem(50, ItemStack(Material.JIGSAW).apply {
-			itemMeta = itemMeta?.also { meta ->
-				meta.setCustomModelData(3030)
-			}
-		})
-
         // Add previous button if needed
         if (hasPrevPage) {
             val prevButton = ItemStack(Material.ARROW)
