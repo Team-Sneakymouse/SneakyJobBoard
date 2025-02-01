@@ -124,7 +124,7 @@ class CommandListAdvert : CommandBase("listadvert") {
             sender.sendMessage(TextUtility.convertToComponent("&4You can only have up to 8 active advertisements at a time."))
             return false
         }
-
+/*
         // Get category from args if provided
         val category = if (args.size > startIndex) {
             val categoryId = args[startIndex]
@@ -135,9 +135,9 @@ class CommandListAdvert : CommandBase("listadvert") {
             }
             foundCategory
         } else null
-
+*/
         // Open the icon selector with the selected category (or null)
-        AdvertIconSelector.open(player, category)
+        AdvertIconSelector.open(player, null)
         return true
     }
 
@@ -158,12 +158,13 @@ class CommandListAdvert : CommandBase("listadvert") {
                 Bukkit.getOnlinePlayers().filter { !it.name.equals("CMI-Fake-Operator", ignoreCase = true) }
                     .filter { it.name.startsWith(args.last(), ignoreCase = true) }.map { it.name }
             }
-
+/*
             args.size == startIndex + 1 -> {
                 // Get all advert category keys and filter based on input
                 val categories = SneakyJobBoard.getAdvertCategoryManager().getAdvertCategories().keys
                 categories.filter { it.startsWith(args[startIndex], ignoreCase = true) }.toList()
             }
+*/
 
             else -> emptyList()
         }

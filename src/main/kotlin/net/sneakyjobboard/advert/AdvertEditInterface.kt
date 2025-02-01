@@ -47,7 +47,7 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
      */
     private fun updateInventory() {
         inventory.clear()
-
+/*
         // Category change button
         inventory.setItem(2, ItemStack(Material.NAME_TAG).apply {
             itemMeta = itemMeta?.also { meta ->
@@ -60,7 +60,7 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
                 )
             }
         })
-
+*/
         // Icon change button
         inventory.setItem(4, ItemStack(Material.ITEM_FRAME).apply {
             itemMeta = itemMeta?.also { meta ->
@@ -100,7 +100,7 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
 		// Add UI button
 		inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
 			itemMeta = itemMeta?.also { meta ->
-				meta.setCustomModelData(3033)
+				meta.setCustomModelData(3035)
 				meta.setHideTooltip(true)
 			}
 		})
