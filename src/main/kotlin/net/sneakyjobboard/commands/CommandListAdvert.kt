@@ -118,6 +118,13 @@ class CommandListAdvert : CommandBase("listadvert") {
             return false
         }
 
+        // Check if player has reached the maximum number of adverts
+        val currentAdverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player).size
+        if (currentAdverts >= 8) {
+            sender.sendMessage(TextUtility.convertToComponent("&4You can only have up to 8 active advertisements at a time."))
+            return false
+        }
+
         // Get category from args if provided
         val category = if (args.size > startIndex) {
             val categoryId = args[startIndex]
