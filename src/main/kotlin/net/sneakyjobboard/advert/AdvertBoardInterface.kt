@@ -13,6 +13,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.configuration.file.YamlConfiguration
 
 /**
  * Manages the user interface for browsing and interacting with advertisements.
@@ -49,6 +50,11 @@ class AdvertBoardInterface(
             populateCategoryAdverts()
         }
 
+        // Add extra buttons
+        extraButtons.forEach { (slot, button) ->
+            button.itemStack?.let { inventory.setItem(slot, it) }
+        }
+
         // Add navigation buttons
         addNavigationButtons()
     }
@@ -59,7 +65,12 @@ class AdvertBoardInterface(
     private fun populateCategoryButtons() {
         val advertManager = SneakyJobBoard.getAdvertManager()
         val categoryManager = SneakyJobBoard.getAdvertCategoryManager()
-        var slot = 0
+        
+        // Find the highest slot used by extra buttons
+        val lastExtraButtonSlot = extraButtons.keys.maxOrNull() ?: -1
+        
+        // Start at the first slot of the next row after extra buttons
+        var slot = ((lastExtraButtonSlot + 9) / 9) * 9
 
         // Add category buttons for categories that have active adverts
         for (category in categoryManager.getAdvertCategories().values) {
@@ -75,8 +86,10 @@ class AdvertBoardInterface(
         slot = ((slot + 8) / 9) * 9
 
         // Add uncategorized adverts
-        val uncategorizedAdverts =
-            advertManager.getAdverts().filter { it.category == null }.drop(page * 50).take(50 - slot)
+        val uncategorizedAdverts = advertManager.getAdverts()
+            .filter { it.category == null }
+            .drop(page * 50)
+            .take(50 - slot)
 
         uncategorizedAdverts.forEach { advert ->
             if (slot < 50) {
@@ -143,6 +156,13 @@ class AdvertBoardInterface(
         val hasNextPage = totalAdverts > (page + 1) * 50
         val hasPrevPage = page > 0
 
+		// Add gui component
+		inventory.setItem(50, ItemStack(Material.JIGSAW).apply {
+			itemMeta = itemMeta?.also { meta ->
+				meta.setCustomModelData(3030)
+			}
+		})
+
         // Add previous button if needed
         if (hasPrevPage) {
             val prevButton = ItemStack(Material.ARROW)
@@ -181,6 +201,12 @@ class AdvertBoardInterface(
     }
 
     companion object {
+		private val extraButtons = mutableMapOf<Int, AdvertBoardButton>()
+	
+		init {
+			parseConfig()
+		}
+
         /**
          * Opens the advertisement board interface for a player.
          * @param player The player to show the interface to
@@ -191,7 +217,64 @@ class AdvertBoardInterface(
             val ui = AdvertBoardInterface(category, page)
             player.openInventory(ui.inventory)
         }
-    }
+	
+		/**
+		 * Parses the configuration file to load extra button definitions.
+		 * Buttons can be configured with custom icons, commands, and display conditions.
+		 */
+		private fun parseConfig() {
+			try {
+				val configFile = SneakyJobBoard.getConfigFile()
+				if (!configFile.exists()) {
+					throw IllegalStateException("config.yml not found")
+				}
+
+				val config = YamlConfiguration.loadConfiguration(configFile)
+				val advertBoardButtonsSection = config.getConfigurationSection("advert-board-extra-buttons") ?: return
+
+				extraButtons.clear()
+
+				for (key in advertBoardButtonsSection.getKeys(false)) {
+					val slot = advertBoardButtonsSection.getInt("$key.slot")
+					val name = advertBoardButtonsSection.getString("$key.name") ?: key
+					val description = advertBoardButtonsSection.getString("$key.description") ?: key
+					val iconMaterialString = advertBoardButtonsSection.getString("$key.icon-material") ?: ""
+					val iconCustomModelData = advertBoardButtonsSection.getInt("$key.icon-custom-model-data")
+					val commandConsole = advertBoardButtonsSection.getString("$key.command-console")
+
+					val iconMaterial = Material.matchMaterial(iconMaterialString)
+
+					val itemStack = iconMaterial?.let {
+						ItemStack(it).apply {
+							itemMeta = itemMeta?.also { meta ->
+								meta.displayName(TextUtility.convertToComponent(name))
+								meta.lore(mutableListOf(TextUtility.convertToComponent(description)))
+								meta.setCustomModelData(iconCustomModelData)
+
+								commandConsole?.let { command ->
+									meta.persistentDataContainer.set(
+										SneakyJobBoard.getAdvertManager().IDKEY,
+										PersistentDataType.STRING,
+										"command:$command"
+									)
+								}
+							}
+						}
+					}
+
+					extraButtons[slot] = AdvertBoardButton(itemStack)
+				}
+			} catch (e: IllegalStateException) {
+				SneakyJobBoard.log("Error: ${e.message}")
+			} catch (e: Exception) {
+				SneakyJobBoard.log(
+					"An unexpected error occurred while loading advert board buttons: ${e.message}"
+				)
+			}
+		}
+
+		data class AdvertBoardButton(val itemStack: ItemStack?)
+	}
 }
 
 /**
@@ -214,6 +297,17 @@ class AdvertBoardListener : Listener {
         ) ?: return
 
         when {
+            id.startsWith("command:") -> {
+                // Handle extra button commands
+                val command = id.removePrefix("command:")
+                player.closeInventory()
+                Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
+                    Bukkit.getServer().dispatchCommand(
+                        Bukkit.getServer().consoleSender,
+                        command.replace("[playerName]", player.name)
+                    )
+                }, 1L)
+            }
             id == "prev_page" -> {
                 val currentPage = (holder as? AdvertBoardInterface)?.page ?: 0
                 if (currentPage > 0) {

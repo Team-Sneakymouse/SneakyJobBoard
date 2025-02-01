@@ -74,11 +74,15 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
 
         if (!uuid.isNullOrEmpty()) {
             player.closeInventory()
-
             SneakyJobBoard.getJobManager().dispatch(uuid, player)
         } else if (!commandConsole.isNullOrEmpty()) {
-            Bukkit.getServer()
-                .dispatchCommand(Bukkit.getServer().consoleSender, commandConsole.replace("[playerName]", player.name))
+            player.closeInventory()
+            Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
+                Bukkit.getServer().dispatchCommand(
+                    Bukkit.getServer().consoleSender,
+                    commandConsole.replace("[playerName]", player.name)
+                )
+            }, 1L)
         }
     }
 

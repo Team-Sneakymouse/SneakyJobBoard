@@ -43,6 +43,14 @@ world-central-vectors:
 ## Extra buttons to add to the job board.
 ## command-console is run on the console and replaces "[playerName]" with the name of the clicker.
 job-board-extra-buttons:
+    list-advert:
+        slot: 5
+        name: "&aPost New Advert"
+        description: "&ePost a new service advert."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 2
+        show-on-board-interact: false
+        command-console: "listadvert [playerName]"
     list-1800000:
         slot: 8
         name: "&aPost New Job"
@@ -51,13 +59,30 @@ job-board-extra-buttons:
         icon-custom-model-data: 1
         show-on-board-interact: false
         command-console: "listjob [playerName]"
+
+## Extra buttons to add to the advert board.
+## command-console is run on the console and replaces "[playerName]" with the name of the clicker.
+advert-board-extra-buttons:
+    manage-adverts:
+        slot: 6
+        name: "&aManage Adverts"
+        description: "&eManage your service adverts."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 3
+        command-console: "manageadverts [playerName]"
+    invitations:
+        slot: 7
+        name: "&aInvitations"
+        description: "&eView your received invitations."
+        icon-material: "jigsaw"
+        icon-custom-model-data: 4
+        command-console: "invitations [playerName]"
     list-advert:
-        slot: 5
+        slot: 8
         name: "&aPost New Advert"
         description: "&ePost a new service advert."
         icon-material: "jigsaw"
         icon-custom-model-data: 2
-        show-on-board-interact: false
         command-console: "listadvert [playerName]"
 
 ## Different categories that a job can have. This is used to set icons for various displays.
