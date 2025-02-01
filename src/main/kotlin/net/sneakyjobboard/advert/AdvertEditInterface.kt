@@ -216,12 +216,16 @@ class AdvertEditListener : Listener {
             4 -> {
                 // Icon change
                 player.closeInventory()
-                AdvertIconSelector.open(player, advert.category) { material, modelData ->
-                    advert.iconMaterial = material
-                    advert.iconCustomModelData = modelData
-                    SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
-                    AdvertEditInterface.open(player, advert)
-                }
+				Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
+					AdvertIconSelector.open(player, advert.category) { material, modelData ->
+						advert.iconMaterial = material
+						advert.iconCustomModelData = modelData
+						SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
+						Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
+							AdvertEditInterface.open(player, advert)
+						}, 1L)
+					}
+				}, 1L)
             }
 
             6 -> {
