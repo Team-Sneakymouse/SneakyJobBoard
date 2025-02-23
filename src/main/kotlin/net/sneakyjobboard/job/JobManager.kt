@@ -17,7 +17,10 @@ import org.joml.Vector3f
 import java.util.*
 import kotlin.math.floor
 
-/** Manages listed jobs and dispatching. */
+/**
+ * Manages the lifecycle and operations of jobs in the system.
+ * Handles job listing, unlisting, dispatching, and cleanup operations.
+ */
 class JobManager {
 
     val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
@@ -26,8 +29,10 @@ class JobManager {
     val pendingSpawns = mutableMapOf<JobBoard, MutableList<Job>>()
 
     /**
-     * Lists a new job, spawning its display and scheduling unlisting.
-     * @param job The job to be listed.
+     * Lists a new job in the system, spawning its display entities and scheduling cleanup.
+     * Also integrates with Dynmap if available.
+     *
+     * @param job The job to be listed
      */
     fun list(job: Job) {
         job.startTime = System.currentTimeMillis()
@@ -78,7 +83,7 @@ class JobManager {
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringLocation =
-                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Dinky Dank")
+                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Moonwell Pass")
         }
 
         for (player in job.location.world.players) {
@@ -106,16 +111,16 @@ class JobManager {
 
     /**
      * Gets the collection of currently listed jobs.
-     * @return A mutable collection of jobs.
+     * @return A mutable collection of active jobs
      */
     fun getJobs(): MutableCollection<Job> {
         return jobs.values
     }
 
     /**
-     * Retrieves the last job that was listed by the specified player.
-     * @param player The player whose last listed job is to be retrieved.
-     * @return The last job listed by the player, or null if none exists.
+     * Retrieves the last job listed by a specific player.
+     * @param player The player whose last job to find
+     * @return The player's most recently listed job, or null if none exists
      */
     fun getLastListedJob(player: Player): Job? {
         for (job in jobs.values.reversed()) {
@@ -127,15 +132,18 @@ class JobManager {
     }
 
     /**
-     * Gets a listed job by its name, ignoring case.
-     * @param name The name of the job.
-     * @return The job matching the specified name, or null if not found.
+     * Finds a listed job by its name.
+     * @param name The name of the job to find (case-insensitive)
+     * @return The matching job, or null if not found
      */
     fun getJobByName(name: String): Job? {
         return jobs.values.find { it.name.equals(name, ignoreCase = true) }
     }
 
-    /** Cleans up all listed jobs, including removing associated markers. */
+    /**
+     * Cleans up all listed jobs and their associated entities.
+     * Called during plugin shutdown or reload.
+     */
     fun cleanup() {
         val jobIdsToRemove = jobs.values.toList()
         jobIdsToRemove.forEach { it.unlist("restart") }
@@ -158,28 +166,30 @@ class JobManager {
     }
 
     /**
-     * Dispatches a player to the specified job.
-     * @param uuid The UUID of the job to dispatch to.
-     * @param pl The player to be dispatched.
+     * Dispatches a player to a job's location.
+     * Handles both online and offline job posters.
+     *
+     * @param uuid The UUID of the job to dispatch to
+     * @param player The player to dispatch
      */
-    fun dispatch(uuid: String, pl: Player) {
+    fun dispatch(uuid: String, player: Player) {
         val job = jobs[uuid] ?: return
 
         if (job.player.isOnline) {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
+                "cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
                     floor(job.location.z)
                 }"
             )
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${job.player.name} jobboard-dispatch-other ${pl.name} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
+                "cast forcecast ${job.player.name} jobboard-dispatch-other ${player.name} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${pl.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${
+                "cast forcecast ${player.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${
                     floor(job.location.z)
                 }"
             )
@@ -187,8 +197,19 @@ class JobManager {
     }
 }
 
+/**
+ * Represents a job listing in the system.
+ *
+ * @property category The category this job belongs to
+ * @property player The player who created the job
+ * @property durationMillis How long the job should remain listed (in milliseconds)
+ * @property tracking Whether the job's location should track the player's movement
+ */
 data class Job(
-    val category: JobCategory, val player: Player, val durationMillis: Long, val tracking: Boolean
+    val category: JobCategory, 
+    val player: Player, 
+    val durationMillis: Long, 
+    val tracking: Boolean
 ) {
     val uuid = UUID.randomUUID().toString()
     var recordID = ""
@@ -196,53 +217,47 @@ data class Job(
     var startTime = 0L
     val itemDisplays = mutableMapOf<JobBoard, ItemDisplay>()
     val textDisplays = mutableMapOf<JobBoard, TextDisplay>()
+
+    /**
+     * The name of the job. Setting this value updates all display entities
+     * and Dynmap markers if enabled.
+     */
     var name: String = category.name
-        set(value) {
-            field = value
-            updateTextDisplays()
-            if (SneakyJobBoard.isDynmapActive()) {
-                val markerAPI = SneakyJobBoard.getInstance().markerAPI
-
-                val markerSet = markerAPI?.getMarkerSet("SneakyJobBoard") ?: run {
-                    markerAPI?.createMarkerSet(
-                        "SneakyJobBoard", "SneakyJobBoard", null, false
-                    ) ?: run {
-                        SneakyJobBoard.log(
-                            "Failed to create a new marker set."
-                        )
-                        null
-                    }
-                }
-
-                markerSet?.findMarker(uuid)?.label = value
-            }
-        }
-    var description: String = category.description
         set(value) {
             field = value
             updateTextDisplays()
         }
 
     /**
-     * Returns the remaining duration of this job in milliseconds.
-     * @return Remaining duration in milliseconds.
+     * The description of the job. Setting this value updates all display entities.
+     */
+    var description: String = category.description
+        set(value) {
+            field = value
+            updateTextDisplays()
+        }
+    private val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
+
+    /**
+     * Gets the remaining duration of this job in milliseconds.
+     * @return The time remaining before the job expires
      */
     private fun remainingDurationMillis(): Long {
         return ((startTime + durationMillis) - System.currentTimeMillis())
     }
 
     /**
-     * Checks if this job is expired based on its remaining duration.
-     * @return True if the job is expired, false otherwise.
+     * Checks if this job has expired.
+     * @return true if the job's duration has elapsed, false otherwise
      */
     fun isExpired(): Boolean {
         return remainingDurationMillis() < 0L
     }
 
     /**
-     * Unlists this job from all platforms and cleans up associated displays.
-     * @param endReason The unlisting reason. Can be "expired", "unlisted" or "restart".
-     * */
+     * Unlists this job from all platforms and cleans up associated entities.
+     * @param endReason The reason for unlisting ("expired", "unlisted", "deleted", or "restart")
+     */
     fun unlist(endReason: String) {
         if (!SneakyJobBoard.getJobManager().jobs.values.contains(this)) return
 
@@ -268,7 +283,8 @@ data class Job(
     }
 
     /**
-     * Updates all Text Display entities associated with this job.
+     * Updates all text display entities associated with this job.
+     * Handles formatting and positioning of the display text.
      */
     fun updateTextDisplays() {
         for (textDisplayEntity in textDisplays.values) {
@@ -279,7 +295,7 @@ data class Job(
             }
 
             var posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-                ?: "&ePosted by: &b[playerName]").replace(
+                ?: "&eFrom: &b[playerName]").replace(
                 "[playerName]", player.name
             )
 
@@ -300,8 +316,8 @@ data class Job(
     }
 
     /**
-     * Returns the ItemStack that represents this job, including metadata.
-     * @return The item representing this job.
+     * Creates an ItemStack representing this job for inventory displays.
+     * @return The item representing this job
      */
     fun getIconItem(): ItemStack {
         val itemStack = ItemStack(category.iconMaterial)
@@ -323,16 +339,6 @@ data class Job(
             lore.add("&e$line")
         }
 
-        // Add poster line
-        var posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-            ?: "&ePosted by: &b[playerName]").replace(
-            "[playerName]", player.name
-        )
-
-        if (SneakyJobBoard.isPapiActive()) {
-            posterString = PlaceholderAPI.setPlaceholders(player, posterString)
-        }
-
         lore.add(posterString)
 
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
@@ -348,8 +354,9 @@ data class Job(
     }
 
     /**
-     * Returns the transformation values for this job's item displays.
-     * @return The transformation to be applied to the job's item displays.
+     * Gets the transformation to apply to this job's display entities.
+     * Handles duration-based scaling if enabled in config.
+     * @return The transformation to apply
      */
     fun getTransformation(): Transformation {
         val config = SneakyJobBoard.getInstance().getConfig()

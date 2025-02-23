@@ -17,15 +17,14 @@ import org.bukkit.event.player.PlayerQuitEvent
 
 /**
  * Command for listing jobs to the job board.
- *
- * This command allows players to list a job with specified details, including category, duration, and tracking options.
+ * Handles both direct command listing and interactive job creation through chat.
  */
 class CommandListJob : CommandBase("listjob") {
 
     companion object {
         private val playerListeners = mutableMapOf<Player, Listener>()
 
-        /** Unregisters the listener associated with a player. */
+        /** Unregisters any active chat listener for a player. */
         fun unregisterListener(player: Player) {
             playerListeners[player]?.let {
                 HandlerList.unregisterAll(it)
@@ -33,7 +32,7 @@ class CommandListJob : CommandBase("listjob") {
             }
         }
 
-        /** Registers a new listener for a player. */
+        /** Registers a new chat listener for a player, removing any existing one. */
         fun registerListener(player: Player, listener: Listener) {
             unregisterListener(player)
             playerListeners[player] = listener
@@ -65,7 +64,11 @@ class CommandListJob : CommandBase("listjob") {
         if (player == null) {
             sender.sendMessage(
                 TextUtility.convertToComponent(
-                    "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                    if (args.isEmpty()) {
+                        "&4When running this command from the console, the first arg must be the reporting player."
+                    } else {
+                        "&4${args[0]} is not a player name. When running this command from the console, the first arg must be the reporting player."
+                    }
                 )
             )
             return false
@@ -176,9 +179,11 @@ class CommandListJob : CommandBase("listjob") {
 }
 
 /**
- * Listener for receiving job name input from the player.
+ * Listener for receiving job name input from a player.
+ * Handles chat events during the job creation process.
  *
- * This listener handles the chat events for a player who is in the process of setting a job name.
+ * @property sender The player creating the job
+ * @property job The job being created
  */
 class JobNameInputListener(private val sender: Player, private val job: Job) : Listener {
 
@@ -225,9 +230,11 @@ class JobNameInputListener(private val sender: Player, private val job: Job) : L
 }
 
 /**
- * Listener for receiving job description input from the player.
+ * Listener for receiving job description input from a player.
+ * Handles chat events during the job creation process.
  *
- * This listener handles the chat events for a player who is in the process of setting a job description.
+ * @property sender The player creating the job
+ * @property job The job being created
  */
 class JobDescriptionInputListener(private val sender: Player, private val job: Job) : Listener {
 

@@ -1,12 +1,16 @@
 package net.sneakyjobboard
 
-import net.sneakyjobboard.commands.CommandJobBoard
-import net.sneakyjobboard.commands.CommandJobHistory
-import net.sneakyjobboard.commands.CommandListJob
-import net.sneakyjobboard.commands.CommandUnlistJob
+import net.sneakyjobboard.commands.*
 import net.sneakyjobboard.job.JobCategoryManager
 import net.sneakyjobboard.job.JobHistoryInventoryListener
 import net.sneakyjobboard.job.JobManager
+import net.sneakyjobboard.advert.AdvertCategoryManager
+import net.sneakyjobboard.advert.AdvertManager
+import net.sneakyjobboard.advert.AdvertBoardListener
+import net.sneakyjobboard.advert.AdvertIconSelectorListener
+import net.sneakyjobboard.advert.AdvertInvitationListener
+import net.sneakyjobboard.advert.AdvertManagementListener
+import net.sneakyjobboard.advert.AdvertEditListener
 import net.sneakyjobboard.jobboard.*
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
@@ -18,18 +22,39 @@ import org.dynmap.DynmapAPI
 import org.dynmap.markers.MarkerAPI
 import java.io.File
 
+/**
+ * Main plugin class for SneakyJobBoard.
+ * Handles plugin initialization, manager setup, and provides global access to core components.
+ */
 class SneakyJobBoard : JavaPlugin(), Listener {
 
-    lateinit var jobCategoryManager: JobCategoryManager
-    lateinit var jobBoardManager: JobBoardManager
-    lateinit var jobManager: JobManager
-    lateinit var pocketBaseManager: PocketbaseManager
+    private lateinit var jobCategoryManager: JobCategoryManager
+    private lateinit var jobBoardManager: JobBoardManager
+    private lateinit var jobManager: JobManager
+    private lateinit var pocketBaseManager: PocketbaseManager
+    private lateinit var advertCategoryManager: AdvertCategoryManager
+    private lateinit var advertManager: AdvertManager
     var papiActive = false
     var markerAPI: MarkerAPI? = null
     val jobBoardUpdater = JobBoardUpdater()
     private val jobBoardMaintenance = JobBoardMaintenance()
     private val trackingJobsUpdater = TrackingJobsUpdater()
 
+    /**
+     * Initializes the plugin instance during server load.
+     */
+    override fun onLoad() {
+        instance = this
+    }
+
+    /**
+     * Performs plugin setup on enable:
+     * - Initializes managers
+     * - Registers commands and listeners
+     * - Sets up permissions
+     * - Starts scheduled tasks
+     * - Integrates with PlaceholderAPI and Dynmap if available
+     */
     override fun onEnable() {
         saveDefaultConfig()
 
@@ -37,16 +62,27 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         jobBoardManager = JobBoardManager()
         jobManager = JobManager()
         pocketBaseManager = PocketbaseManager()
+        advertCategoryManager = AdvertCategoryManager()
+        advertManager = AdvertManager()
 
         server.commandMap.register(IDENTIFIER, CommandListJob())
         server.commandMap.register(IDENTIFIER, CommandJobBoard())
         server.commandMap.register(IDENTIFIER, CommandUnlistJob())
         server.commandMap.register(IDENTIFIER, CommandJobHistory())
+        server.commandMap.register(IDENTIFIER, CommandListAdvert())
+        server.commandMap.register(IDENTIFIER, CommandInvitations())
+        server.commandMap.register(IDENTIFIER, CommandManageAdverts())
 
         server.pluginManager.registerEvents(PluginListener(this), this)
         server.pluginManager.registerEvents(JobInventoryListener(), this)
         server.pluginManager.registerEvents(JobHistoryInventoryListener(), this)
         server.pluginManager.registerEvents(JobBoardListener(), this)
+        server.pluginManager.registerEvents(AdvertBoardListener(), this)
+        server.pluginManager.registerEvents(AdvertIconSelectorListener(), this)
+        server.pluginManager.registerEvents(AdvertInvitationListener(), this)
+        server.pluginManager.registerEvents(advertManager, this)
+        server.pluginManager.registerEvents(AdvertManagementListener(), this)
+        server.pluginManager.registerEvents(AdvertEditListener(), this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.admin"))
@@ -78,98 +114,72 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         private lateinit var instance: SneakyJobBoard
 
         /**
-         * Logs a message to the console.
-         * @param msg the message to log.
+         * Logs a message to the plugin's logger.
+         * @param msg The message to log
          */
         fun log(msg: String) {
             instance.logger.info(msg)
         }
 
         /**
-         * Retrieves the plugin's data folder.
-         * @return the File object representing the data folder.
-         * @throws IllegalStateException if the data folder is not initialized.
-         */
-        private fun getDataFolder(): File {
-            return instance.dataFolder
-        }
-
-        /**
-         * Retrieves the configuration file for the plugin.
-         * @return the File object representing the config.yml file.
+         * Gets the plugin's configuration file.
+         * @return The config.yml file
          */
         fun getConfigFile(): File {
-            return File(getDataFolder(), "config.yml")
+            return File(instance.dataFolder, "config.yml")
         }
 
         /**
-         * Checks if PlaceholderAPI (PAPI) is active.
-         * @return true if PAPI is active, false otherwise.
-         */
-        fun isPapiActive(): Boolean {
-            return instance.papiActive
-        }
-
-        /**
-         * Checks if Dynmap is active.
-         * @return true if Dynmap is active, false otherwise.
-         */
-        fun isDynmapActive(): Boolean {
-            return (instance.markerAPI != null)
-        }
-
-        /**
-         * Retrieves the running instance of the SneakyJobBoard plugin.
-         * @return the SneakyJobBoard instance.
+         * Gets the plugin instance.
+         * @return The SneakyJobBoard plugin instance
          */
         fun getInstance(): SneakyJobBoard {
             return instance
         }
 
-        /**
-         * Retrieves the job category manager instance.
-         * @return the JobCategoryManager instance responsible for managing job categories.
-         */
         fun getJobCategoryManager(): JobCategoryManager {
             return instance.jobCategoryManager
         }
 
-        /**
-         * Retrieves the job board manager instance.
-         * @return the JobBoardManager instance responsible for managing job boards.
-         */
         fun getJobBoardManager(): JobBoardManager {
             return instance.jobBoardManager
         }
 
-        /**
-         * Retrieves the job manager instance.
-         * @return the JobManager instance responsible for managing jobs.
-         */
         fun getJobManager(): JobManager {
             return instance.jobManager
         }
 
-        /**
-         * Retrieves the PocketBase manager instance.
-         * @return the PocketbaseManager instance responsible for interacting with the PocketBase API.
-         */
         fun getPocketbaseManager(): PocketbaseManager {
             return instance.pocketBaseManager
         }
-    }
 
-    override fun onLoad() {
-        instance = this
+        fun getAdvertCategoryManager(): AdvertCategoryManager {
+            return instance.advertCategoryManager
+        }
+
+        fun getAdvertManager(): AdvertManager {
+            return instance.advertManager
+        }
+
+        fun isPapiActive(): Boolean {
+            return instance.papiActive
+        }
+
+        fun isDynmapActive(): Boolean {
+            return instance.markerAPI != null
+        }
     }
 }
 
+/**
+ * Listener for handling plugin lifecycle events.
+ * @property instance The SneakyJobBoard plugin instance
+ */
 class PluginListener(private val instance: SneakyJobBoard) : Listener {
 
     /**
-     * Handles the PluginDisableEvent, which is triggered when the plugin is disabled.
-     * Cleans up the job manager when the plugin is disabled.
-     * @param event the PluginDisableEvent indicating that a plugin has been disabled.
+     * Handles cleanup when the plugin is disabled.
+     * @param event The plugin disable event
      */
     @EventHandler
     fun onPluginDisable(event: PluginDisableEvent) {

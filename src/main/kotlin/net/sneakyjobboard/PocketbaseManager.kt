@@ -6,6 +6,7 @@ import com.google.gson.JsonParser
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobHistoryInventoryHolder
+import net.sneakyjobboard.advert.Advert
 import net.sneakyjobboard.util.TextUtility
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
@@ -14,6 +15,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import org.bukkit.Material
 import org.json.JSONObject
 import java.awt.Graphics2D
 import java.awt.Image
@@ -24,9 +26,8 @@ import java.util.*
 import javax.imageio.ImageIO
 
 /**
- * Manages interactions with the PocketBase database, handling authentication and job listing updates.
- * This class handles various tasks such as listing jobs, unlisting jobs, retrieving job history, and
- * managing authentication with the PocketBase server.
+ * Manages interactions with PocketBase database for job and advertisement persistence.
+ * Handles authentication, data synchronization, and history retrieval.
  */
 class PocketbaseManager {
 
@@ -51,8 +52,8 @@ class PocketbaseManager {
     }
 
     /**
-     * Authenticates with the PocketBase server and retrieves an auth token. This method should be run asynchronously.
-     * The authentication details are pulled from the server's configuration file.
+     * Authenticates with PocketBase using configured credentials.
+     * Must be called asynchronously.
      */
     @Synchronized
     private fun auth() {
@@ -89,14 +90,14 @@ class PocketbaseManager {
     }
 
     /**
-     * Lists a job in the PocketBase database. This method sends a POST request containing job details to PocketBase.
-     * If authentication is required, it will authenticate before sending the job listing request.
+     * Lists a job in PocketBase.
+     * Creates a new record with job details and schedules cleanup.
      *
-     * @param job The job object containing all relevant information to be listed in PocketBase.
+     * @param job The job to be listed
      */
     @Synchronized
     fun listJob(job: Job) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -134,15 +135,15 @@ class PocketbaseManager {
     }
 
     /**
-     * Unlists a job in PocketBase by adding an end time to its record. The job's recordID is used to identify
-     * the job in PocketBase, and the method patches the job with the current system time as its endTime.
+     * Updates a job's end time in PocketBase.
+     * Used when a job is unlisted or expires.
      *
-     * @param job The job to be unlisted.
-     * @param endReason The unlisting reason. Can be "expired", "unlisted", "deleted" or "restart".
+     * @param job The job being unlisted
+     * @param endReason The reason for unlisting ("expired", "unlisted", "deleted", or "restart")
      */
     @Synchronized
     fun unlistJob(job: Job, endReason: String) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty() || job.recordID.isEmpty()) return
 
@@ -154,8 +155,7 @@ class PocketbaseManager {
                     val client = OkHttpClient()
 
                     val jobData = mapOf(
-                        "endTime" to System.currentTimeMillis(),
-                        "endReason" to endReason
+                        "endTime" to System.currentTimeMillis(), "endReason" to endReason
                     )
                     val jsonRequestBody = Gson().toJson(jobData).toRequestBody("application/json".toMediaType())
 
@@ -183,7 +183,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun unlistAllJobs() {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -217,8 +217,7 @@ class PocketbaseManager {
                     // Iterate over the jobs and update them
                     recordIDs.forEach { recordID ->
                         val jobData = mapOf(
-                            "endTime" to System.currentTimeMillis(),
-                            "endReason" to "restart"
+                            "endTime" to System.currentTimeMillis(), "endReason" to "restart"
                         )
                         val jsonRequestBody = Gson().toJson(jobData).toRequestBody(
                             "application/json".toMediaType()
@@ -251,7 +250,7 @@ class PocketbaseManager {
      */
     @Synchronized
     fun getJobHistory(player: Player, durationMillis: Long) {
-        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-url")
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty()) return
 
@@ -472,8 +471,206 @@ class PocketbaseManager {
             "data:image/png;base64,$base64String"
         }
     }
+
+    /**
+     * Lists an advert in the PocketBase database. This method sends a POST request containing advert details to PocketBase.
+     * If authentication is required, it will authenticate before sending the advert listing request.
+     *
+     * @param advert The advert object containing all relevant information to be listed in PocketBase.
+     */
+    @Synchronized
+    fun listAdvert(advert: Advert) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-url")
+
+        if (url.isNullOrEmpty()) return
+
+        Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
+            try {
+                if (authToken.isEmpty()) auth()
+
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
+
+                    val advertData = mapOf(
+                        "uuid" to advert.uuid,
+                        "category" to (advert.category?.name ?: ""),
+                        "posteruuid" to advert.player.uniqueId.toString(),
+                        "posterDisplayString" to advert.posterString,
+                        "name" to advert.name,
+                        "description" to advert.description,
+                        "iconMaterial" to (advert.iconMaterial?.name ?: ""),
+                        "iconCustomModelData" to (advert.iconCustomModelData ?: 0),
+                        "enabled" to advert.enabled,
+                        "deleted" to advert.deleted
+                    )
+
+                    val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
+
+                    val request =
+                        Request.Builder().url("$url").header("Authorization", authToken).post(jsonRequestBody).build()
+
+                    val response = client.newCall(request).execute()
+
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        val jsonResponse = JSONObject(responseBody)
+                        advert.recordID = jsonResponse.getString("id")
+                    } else {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                        )
+                    }
+                    response.close()
+                }
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
+    }
+
+    /**
+     * Updates an existing advert in PocketBase with all current values from the advert object.
+     * The advert's recordID is used to identify the advert in PocketBase.
+     *
+     * @param advert The advert containing the updated information.
+     */
+    @Synchronized
+    fun updateAdvert(advert: Advert) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-url")
+
+        if (url.isNullOrEmpty() || advert.recordID.isEmpty()) return
+
+        Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
+            try {
+                if (authToken.isEmpty()) auth()
+
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
+
+                    val advertData = mapOf(
+                        "uuid" to advert.uuid,
+                        "category" to (advert.category?.name ?: ""),
+                        "posteruuid" to advert.player.uniqueId.toString(),
+                        "posterDisplayString" to advert.posterString,
+                        "name" to advert.name,
+                        "description" to advert.description,
+                        "iconMaterial" to (advert.iconMaterial?.name ?: ""),
+                        "iconCustomModelData" to (advert.iconCustomModelData ?: 0),
+                        "enabled" to advert.enabled,
+                        "deleted" to advert.deleted
+                    )
+
+                    val jsonRequestBody = Gson().toJson(advertData).toRequestBody("application/json".toMediaType())
+
+                    val request = Request.Builder().url("$url/${advert.recordID}").header("Authorization", authToken)
+                        .patch(jsonRequestBody).build()
+
+                    val response = client.newCall(request).execute()
+
+                    if (!response.isSuccessful) {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${response.code}, ${response.body?.string()}"
+                        )
+                    }
+                    response.close()
+                }
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
+    }
+
+    /**
+     * Retrieves a player's advert history from PocketBase, showing all non-deleted adverts.
+     * The retrieved adverts are displayed to the player in a custom inventory UI.
+     *
+     * @param playerUUID The UUID of the player whose advert history to retrieve.
+     */
+    @Synchronized
+    fun getAdvertHistory(playerUUID: String) {
+        val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-url")
+
+        if (url.isNullOrEmpty()) return
+
+        Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
+            try {
+                if (authToken.isEmpty()) auth()
+
+                if (authToken.isNotEmpty()) {
+                    val client = OkHttpClient()
+
+                    val requestGet = Request.Builder().url("$url?filter=(posteruuid='${playerUUID}')&&(deleted=false)")
+                        .header("Authorization", authToken).get().build()
+
+                    val responseGet = client.newCall(requestGet).execute()
+                    val responseBody = responseGet.body?.string()
+
+                    if (!responseGet.isSuccessful || responseBody.isNullOrEmpty()) {
+                        SneakyJobBoard.log(
+                            "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
+                        )
+                        responseGet.close()
+                        return@Runnable
+                    }
+
+                    val items = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
+                        .map { it.asJsonObject }
+
+                    val adverts = mutableListOf<Advert>()
+                    val seenAdverts = mutableSetOf<Triple<String, String, String>>()
+
+                    for (item in items) {
+                        val uuid = item.get("uuid").asString
+                        val category = item.get("category").asString
+                        val posterDisplayString = item.get("posterDisplayString").asString
+                        val name = item.get("name").asString
+                        val description = item.get("description").asString
+                        val iconMaterialStr = item.get("iconMaterial").asString
+                        val iconCustomModelData = item.get("iconCustomModelData").asInt
+                        val enabled = item.get("enabled").asBoolean
+
+                        val advertKey = Triple(category, name, description)
+                        if (seenAdverts.contains(advertKey)) continue
+
+                        seenAdverts.add(advertKey)
+
+                        val advertCategory = SneakyJobBoard.getAdvertCategoryManager().getCategory(category)
+
+                        val player = Bukkit.getPlayer(UUID.fromString(playerUUID)) ?: continue
+
+                        val advert = Advert(
+                            category = advertCategory, player = player
+                        ).apply {
+                            this.uuid = uuid
+                            this.name = name
+                            this.description = description
+                            this.posterString = posterDisplayString
+                            this.recordID = item.get("id").asString
+                            this.iconMaterial = Material.matchMaterial(iconMaterialStr)
+                            this.iconCustomModelData = iconCustomModelData
+                            this.enabled = enabled
+                        }
+
+                        adverts.add(advert)
+                    }
+
+                    responseGet.close()
+
+                    adverts.forEach { advert ->
+                        SneakyJobBoard.getAdvertManager().list(advert, false)
+                    }
+                }
+            } catch (e: Exception) {
+                SneakyJobBoard.log("Error occurred: ${e.message}")
+            }
+        })
+    }
 }
 
+/**
+ * Extension function to safely convert a string to a boolean.
+ * @return Boolean value if string is "true" or "false", null otherwise
+ */
 fun String.toBooleanOrNull(): Boolean? {
     return when (this.lowercase()) {
         "true" -> true
@@ -482,4 +679,8 @@ fun String.toBooleanOrNull(): Boolean? {
     }
 }
 
+/**
+ * Data class for holding four related values.
+ * Used for grouping related data in PocketBase operations.
+ */
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

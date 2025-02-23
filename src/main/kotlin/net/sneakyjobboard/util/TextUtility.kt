@@ -4,16 +4,32 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 
+/**
+ * Utility class for text formatting and manipulation.
+ * Handles color code conversion and text wrapping for the plugin.
+ */
 object TextUtility {
 
-    // * Replaces legacy format codes and returns a Component. */
+    /**
+     * Converts a string with legacy color codes to a Component.
+     * Automatically disables italic formatting.
+     * 
+     * @param message The message to convert
+     * @return A Component with the formatted text
+     */
     fun convertToComponent(message: String): Component {
         return MiniMessage.miniMessage()
                 .deserialize(replaceFormatCodes(message))
                 .decoration(TextDecoration.ITALIC, false)
     }
 
-    // * Replaces legacy format codes. */
+    /**
+     * Replaces legacy color codes with MiniMessage format.
+     * Handles both standard color codes and hex colors.
+     * 
+     * @param message The message containing legacy color codes
+     * @return The message with MiniMessage formatting
+     */
     fun replaceFormatCodes(message: String): String {
         return message.replace("\u00BA", "&")
                 .replace("\u00A7", "&")
@@ -42,32 +58,37 @@ object TextUtility {
                 .replace("&#([A-Fa-f0-9]{6})".toRegex(), "<color:#$1>")
     }
 
-    // * Split a line up as evenly as possible. */
+    /**
+     * Splits text into lines of a maximum length while trying to maintain even line lengths.
+     * Attempts to split at word boundaries when possible.
+     * 
+     * @param text The text to split
+     * @param maxLineLength The maximum length for each line
+     * @return List of lines containing the split text
+     */
     fun splitIntoLines(text: String, maxLineLength: Int): List<String> {
         val words = text.split("\\s+".toRegex())
         val lines = mutableListOf<String>()
 
-        // Calculate total symbol length of the text
+        // Calculate total length and minimum lines needed
         val totalSymbolLength = text.length
+        val minLinesNeeded = (totalSymbolLength / maxLineLength) +
+                if (totalSymbolLength % maxLineLength != 0) 1 else 0
 
-        // Calculate minimal amount of lines needed to fit the text
-        val minLinesNeeded =
-                (totalSymbolLength / maxLineLength) +
-                        if (totalSymbolLength % maxLineLength != 0) 1 else 0
-
-        // Calculate average symbol length per line
+        // Calculate average length per line
         val averageSymbolLengthPerLine = totalSymbolLength / minLinesNeeded
 
-        // Distribute words evenly among lines
+        // Distribute words among lines
         var currentLine = StringBuilder()
         var currentSymbolLength = 0
         var remainingLines = minLinesNeeded
+
         for (word in words) {
             if (currentLine.isEmpty()) {
                 currentLine.append(word)
                 currentSymbolLength += word.length
             } else if (currentSymbolLength + word.length + 1 <= averageSymbolLengthPerLine ||
-                            remainingLines == 1
+                remainingLines == 1
             ) {
                 currentLine.append(" ").append(word)
                 currentSymbolLength += word.length + 1
