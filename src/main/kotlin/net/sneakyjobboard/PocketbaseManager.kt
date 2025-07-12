@@ -301,6 +301,7 @@ class PocketbaseManager {
                         val job = Job(
                             category = jobCategory,
                             player = player,
+							location = player.location,
                             durationMillis = durationMillis,
                             tracking = tracking.toBooleanOrNull() ?: false
                         ).apply {
@@ -342,7 +343,7 @@ class PocketbaseManager {
     private fun createJobDataMap(job: Job): Map<String, Any> {
         // Poster display string
         var displayStringPoster = (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-poster")
-            ?: "[playerName]").replace("[playerName]", job.player.name)
+            ?: "[playerName]").replace("[playerName]", job.player!!.name)
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringPoster = PlaceholderAPI.setPlaceholders(job.player, displayStringPoster)
@@ -356,7 +357,7 @@ class PocketbaseManager {
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringLocation =
-                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Dinky Dank")
+                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Moonwell Pass")
         }
 
         // Base64 face icon

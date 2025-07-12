@@ -12,6 +12,7 @@ import org.bukkit.entity.TextDisplay
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Transformation
+import org.bukkit.Location
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
@@ -36,7 +37,7 @@ class JobManager {
      */
     fun list(job: Job) {
         job.startTime = System.currentTimeMillis()
-        SneakyJobBoard.getPocketbaseManager().listJob(job)
+        if (job.player != null) SneakyJobBoard.getPocketbaseManager().listJob(job)
         jobs[job.uuid] = job
 
         // Spawn item displays
@@ -175,7 +176,7 @@ class JobManager {
     fun dispatch(uuid: String, player: Player) {
         val job = jobs[uuid] ?: return
 
-        if (job.player.isOnline) {
+        if (job.player?.isOnline == true) {
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
                 "cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
@@ -207,13 +208,13 @@ class JobManager {
  */
 data class Job(
     val category: JobCategory, 
-    val player: Player, 
+    val player: Player?,
+	var location: Location,
     val durationMillis: Long, 
     val tracking: Boolean
 ) {
     val uuid = UUID.randomUUID().toString()
     var recordID = ""
-    var location = player.location
     var startTime = 0L
     val itemDisplays = mutableMapOf<JobBoard, ItemDisplay>()
     val textDisplays = mutableMapOf<JobBoard, TextDisplay>()
@@ -236,7 +237,9 @@ data class Job(
             field = value
             updateTextDisplays()
         }
-    private val posterString = if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
+    private val posterString =
+		if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
+		else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
 
     /**
      * Gets the remaining duration of this job in milliseconds.
@@ -261,7 +264,7 @@ data class Job(
     fun unlist(endReason: String) {
         if (!SneakyJobBoard.getJobManager().jobs.values.contains(this)) return
 
-        SneakyJobBoard.getPocketbaseManager().unlistJob(this, endReason)
+        if (player != null) SneakyJobBoard.getPocketbaseManager().unlistJob(this, endReason)
         itemDisplays.values.forEach { entity -> entity.remove() }
         textDisplays.values.forEach { entity -> entity.remove() }
         SneakyJobBoard.getJobManager().jobs.remove(uuid)
@@ -296,7 +299,7 @@ data class Job(
 
             var posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
                 ?: "&eFrom: &b[playerName]").replace(
-                "[playerName]", player.name
+                "[playerName]", player?.name ?: "Moonwell Pass"
             )
 
             if (SneakyJobBoard.isPapiActive()) {

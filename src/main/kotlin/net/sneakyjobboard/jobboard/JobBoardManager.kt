@@ -857,6 +857,7 @@ class TrackingJobsUpdater : BukkitRunnable() {
      */
     override fun run() {
         for (job in SneakyJobBoard.getJobManager().getJobs()) {
+			if (job.player == null) continue
             if (job.tracking && job.player.isOnline && job.player.location.world == job.location.world) {
                 job.location = job.player.location
 
