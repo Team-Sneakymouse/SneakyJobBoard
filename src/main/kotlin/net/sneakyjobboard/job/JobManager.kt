@@ -176,25 +176,35 @@ class JobManager {
     fun dispatch(uuid: String, player: Player) {
         val job = jobs[uuid] ?: return
 
-        if (job.player?.isOnline == true) {
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
-                    floor(job.location.z)
-                }"
-            )
-            Bukkit.getServer().dispatchCommand(
+		if (job.player != null) {
+			if (job.player.isOnline == true) {
+				Bukkit.getServer().dispatchCommand(
+					Bukkit.getServer().consoleSender,
+					"cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
+						floor(job.location.z)
+					}"
+				)
+			} else {
+				Bukkit.getServer().dispatchCommand(
+					Bukkit.getServer().consoleSender,
+					"cast forcecast ${player.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${
+						floor(job.location.z)
+					}"
+				)
+			}
+
+			Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
                 "cast forcecast ${job.player.name} jobboard-dispatch-other ${player.name} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
             )
-        } else {
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${player.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${
-                    floor(job.location.z)
-                }"
-            )
-        }
+		} else {
+			Bukkit.getServer().dispatchCommand(
+				Bukkit.getServer().consoleSender,
+				"cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
+					floor(job.location.z)
+				}"
+			)
+		}
     }
 }
 
@@ -238,7 +248,8 @@ data class Job(
             updateTextDisplays()
         }
     private val posterString =
-		if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
+		if (player == null) "&eFrom: &6The Grand Paladin Order"
+		else if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
 		else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
 
     /**
