@@ -77,31 +77,33 @@ class JobManager {
         }
 
         // Play toast on all players
-        var displayStringLocation =
-            (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
-                "[x]", job.location.blockX.toString()
-            ).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
+		if (job.player != null) {
+			var displayStringLocation =
+				(SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
+					"[x]", job.location.blockX.toString()
+				).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
 
-        if (SneakyJobBoard.isPapiActive()) {
-            displayStringLocation =
-                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Moonwell Pass")
-        }
+			if (SneakyJobBoard.isPapiActive()) {
+				displayStringLocation =
+					PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Moonwell Pass")
+			}
 
-        for (player in job.location.world.players) {
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${player.name} jobboard-listed ${
-                    job.category.name.replace(
-                        " ",
-                        "\u00A0"
-                    )
-                } ${
-                    displayStringLocation.replace(
-                        " ",
-                        "\u00A0"
-                    )
-                } ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
-            )
+			for (player in job.location.world.players) {
+				Bukkit.getServer().dispatchCommand(
+					Bukkit.getServer().consoleSender,
+					"cast forcecast ${player.name} jobboard-listed ${
+						job.category.name.replace(
+							" ",
+							"\u00A0"
+						)
+					} ${
+						displayStringLocation.replace(
+							" ",
+							"\u00A0"
+						)
+					} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
+					)
+            }
         }
 
         // Schedule unlisting
