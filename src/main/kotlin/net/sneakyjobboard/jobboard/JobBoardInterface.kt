@@ -2,6 +2,7 @@ package net.sneakyjobboard.jobboard
 
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.util.TextUtility
+import me.clip.placeholderapi.PlaceholderAPI
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -23,7 +24,7 @@ import org.bukkit.persistence.PersistentDataType
  *
  * @param isJobBoardInteract Whether this interface was opened by interacting with a physical job board
  */
-class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
+class JobInventoryHolder(isJobBoardInteract: Boolean, player: Player) : InventoryHolder {
     private var inventory: Inventory
 
     /**
@@ -31,6 +32,7 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
      * The size is dynamically calculated based on the number of jobs and buttons.
      */
     init {
+        parseConfig(player)
         var i = (extraButtons.keys.maxOrNull()?.plus(1)) ?: 0
         val jobs = SneakyJobBoard.getJobManager().getJobs()
         //val size = (((jobs.size + i + 8) / 9) * 9).coerceAtLeast(9).coerceAtMost(54)
@@ -91,15 +93,11 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
     companion object {
         private val extraButtons = mutableMapOf<Int, JobBoardButton>()
 
-        init {
-            parseConfig()
-        }
-
         /**
          * Parses the configuration file to load extra button definitions.
          * Buttons can be configured with custom icons, commands, and display conditions.
          */
-        private fun parseConfig() {
+        private fun parseConfig(player: Player) {
             try {
                 val configFile = SneakyJobBoard.getConfigFile()
                 if (!configFile.exists()) {
@@ -114,8 +112,12 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
                 for (key in jobCategoriesSection.getKeys(false)) {
                     val slot = jobCategoriesSection.getInt("$key.slot")
 
-                    val name = jobCategoriesSection.getString("$key.name") ?: key
-                    val description = jobCategoriesSection.getString("$key.description") ?: key
+                    var name = jobCategoriesSection.getString("$key.name") ?: key
+                    var description = jobCategoriesSection.getString("$key.description") ?: key
+					if (SneakyJobBoard.isPapiActive()) {
+						name = PlaceholderAPI.setPlaceholders(player, name)
+						description = PlaceholderAPI.setPlaceholders(player, description)
+					}
                     val iconMaterialString = jobCategoriesSection.getString("$key.icon-material") ?: ""
                     val iconCustomModelData = jobCategoriesSection.getInt("$key.icon-custom-model-data")
 
@@ -129,7 +131,9 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
                         ItemStack(it).apply {
                             itemMeta = itemMeta?.also { meta ->
                                 meta.itemName(TextUtility.convertToComponent(name))
-                                meta.lore(mutableListOf(TextUtility.convertToComponent(description)))
+                                meta.lore(TextUtility.splitIntoLines(description, 30).map { line ->
+									TextUtility.convertToComponent("&e$line")
+								})
                                 meta.setCustomModelData(iconCustomModelData)
 
                                 commandConsole?.let { command ->
@@ -139,6 +143,9 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
                                         command
                                     )
                                 }
+								if (name.isEmpty()) {
+									meta.setHideTooltip(true)
+								}
                             }
                         }
                     }
@@ -151,7 +158,7 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
                 SneakyJobBoard.log("Error: ${e.message}")
             } catch (e: Exception) {
                 SneakyJobBoard.log(
-                    "An unexpected error occurred while loading job categories: ${e.message}"
+                    "An unexpected error occurred while parsing job board extra buttons: ${e.message}"
                 )
             }
         }
@@ -173,7 +180,7 @@ class JobInventoryHolder(isJobBoardInteract: Boolean) : InventoryHolder {
          * @param isJobBoardInteract Whether this was triggered by physical board interaction
          */
         fun openJobBoard(player: Player, isJobBoardInteract: Boolean) {
-            player.openInventory(JobInventoryHolder(isJobBoardInteract).inventory)
+            player.openInventory(JobInventoryHolder(isJobBoardInteract, player).inventory)
         }
     }
 }

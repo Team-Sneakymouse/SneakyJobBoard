@@ -67,6 +67,7 @@ object TextUtility {
      * @return List of lines containing the split text
      */
     fun splitIntoLines(text: String, maxLineLength: Int): List<String> {
+		if (text.isEmpty()) return listOf("")
         val words = text.split("\\s+".toRegex())
         val lines = mutableListOf<String>()
 
