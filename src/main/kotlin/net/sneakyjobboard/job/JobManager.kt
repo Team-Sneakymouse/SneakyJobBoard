@@ -24,7 +24,7 @@ import kotlin.math.floor
  */
 class JobManager {
 
-    val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "id")
+    val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "job_id")
 
     val jobs = mutableMapOf<String, Job>()
     val pendingSpawns = mutableMapOf<JobBoard, MutableList<Job>>()
@@ -361,7 +361,7 @@ data class Job(
 
         // Set persistent data.
         val persistentData = meta.persistentDataContainer
-        persistentData.set(NamespacedKey(SneakyJobBoard.getInstance(), "job_id"), PersistentDataType.STRING, uuid)
+        persistentData.set(SneakyJobBoard.getJobManager().IDKEY, PersistentDataType.STRING, uuid)
 
         meta.setEnchantmentGlintOverride(true)
 
