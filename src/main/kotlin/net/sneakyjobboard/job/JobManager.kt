@@ -249,7 +249,7 @@ data class Job(
             field = value
             updateTextDisplays()
         }
-    private val posterString =
+    private var posterString =
 		if (player == null) "&eFrom: &6The Grand Paladin Order"
 		else if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
 		else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
@@ -310,14 +310,16 @@ data class Job(
                 text.add("&e$line")
             }
 
-            var posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
-                ?: "&eFrom: &b[playerName]").replace(
-                "[playerName]", player?.name ?: "Moonwell Pass"
-            )
+			if (player != null) {
+            	posterString = (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
+                	?: "&eFrom: &b[playerName]").replace(
+                		"[playerName]", player?.name ?: "Moonwell Pass"
+            	)
 
-            if (SneakyJobBoard.isPapiActive()) {
-                posterString = PlaceholderAPI.setPlaceholders(player, posterString)
-            }
+            	if (SneakyJobBoard.isPapiActive()) {
+                	posterString = PlaceholderAPI.setPlaceholders(player, posterString)
+            	}
+			}
 
             text.add(posterString)
 
