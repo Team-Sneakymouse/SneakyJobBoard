@@ -261,7 +261,8 @@ class PocketbaseManager {
                 if (authToken.isNotEmpty()) {
                     val client = OkHttpClient()
 
-                    val requestGet = Request.Builder().url("$url?filter=(poster='${player.name}')")
+                    // Sort newest -> oldest so slot 0 is the latest post.
+                    val requestGet = Request.Builder().url("$url?filter=(poster='${player.name}')&sort=-created")
                         .header("Authorization", authToken).get().build()
 
                     val responseGet = client.newCall(requestGet).execute()
@@ -316,7 +317,7 @@ class PocketbaseManager {
                         if (jobHistory.isNotEmpty()) {
                             player.openInventory(
                                 JobHistoryInventoryHolder(
-                                    jobHistory.reversed()
+                                    jobHistory
                                 ).inventory
                             )
                         } else {
