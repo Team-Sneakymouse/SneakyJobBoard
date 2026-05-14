@@ -154,6 +154,7 @@ job-categories:
         icon-custom-model-data: 5
         dynmap-map-icon: "building"
         discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
+        duration-override: 999999999999999999
         item-display-brightness:
             block: 15
             sky: 15

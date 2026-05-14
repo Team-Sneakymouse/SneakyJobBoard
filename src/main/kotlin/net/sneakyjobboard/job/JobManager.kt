@@ -36,6 +36,7 @@ class JobManager {
      * @param job The job to be listed
      */
     fun list(job: Job) {
+        job.category.durationOverrideMillis?.let { job.durationMillis = it }
         job.startTime = System.currentTimeMillis()
         if (job.player != null) SneakyJobBoard.getPocketbaseManager().listJob(job)
         jobs[job.uuid] = job
@@ -222,7 +223,7 @@ data class Job(
     val category: JobCategory, 
     val player: Player?,
 	var location: Location,
-    val durationMillis: Long, 
+    var durationMillis: Long, 
     val tracking: Boolean
 ) {
     val uuid = UUID.randomUUID().toString()

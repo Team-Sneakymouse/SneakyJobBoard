@@ -28,6 +28,7 @@ class JobCategoryManager {
      * - Icon material and model data
      * - Display brightness and transformation
      * - Integration icons for Dynmap and Discord
+     * - Optional duration-override: when set, listed jobs always use this duration
      */
     private fun parseConfig() {
         try {
@@ -52,6 +53,13 @@ class JobCategoryManager {
                 val dynmapMapIcon = jobCategoriesSection.getString("$key.dynmap-map-icon") ?: ""
                 val discordEmbedIcon = jobCategoriesSection.getString("$key.discord-embed-icon") ?: ""
 
+                val durationOverrideMillis =
+                    if (jobCategoriesSection.isSet("$key.duration-override")) {
+                        jobCategoriesSection.getLong("$key.duration-override")
+                    } else {
+                        null
+                    }
+
                 val brightnessBlock = jobCategoriesSection.getInt("$key.item-display-brightness.block")
                 val brightnessSky = jobCategoriesSection.getInt("$key.item-display-brightness.sky")
                 val brightness = Brightness(brightnessBlock, brightnessSky)
@@ -70,7 +78,8 @@ class JobCategoryManager {
                     brightness,
                     transformation,
                     dynmapMapIcon,
-                    discordEmbedIcon
+                    discordEmbedIcon,
+                    durationOverrideMillis
                 )
             }
         } catch (e: IllegalStateException) {
@@ -138,6 +147,7 @@ class JobCategoryManager {
  * @property transformation Display transformation settings
  * @property dynmapMapIcon Icon used on Dynmap
  * @property discordEmbedIcon Icon used in Discord embeds
+ * @property durationOverrideMillis When non-null, jobs in this category always list for this many milliseconds
  */
 data class JobCategory(
     val name: String,
@@ -147,5 +157,6 @@ data class JobCategory(
     val brightness: Brightness,
     val transformation: Transformation,
     val dynmapMapIcon: String,
-    val discordEmbedIcon: String
+    val discordEmbedIcon: String,
+    val durationOverrideMillis: Long? = null
 )
