@@ -73,6 +73,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.commandMap.register(IDENTIFIER, CommandInvitations())
         server.commandMap.register(IDENTIFIER, CommandManageAdverts())
 
+        server.pluginManager.registerEvents(jobManager, this)
         server.pluginManager.registerEvents(PluginListener(this), this)
         server.pluginManager.registerEvents(JobInventoryListener(), this)
         server.pluginManager.registerEvents(JobHistoryInventoryListener(), this)

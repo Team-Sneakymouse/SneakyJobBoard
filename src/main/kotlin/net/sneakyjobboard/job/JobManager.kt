@@ -6,6 +6,9 @@ import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
@@ -22,7 +25,7 @@ import kotlin.math.floor
  * Manages the lifecycle and operations of jobs in the system.
  * Handles job listing, unlisting, dispatching, and cleanup operations.
  */
-class JobManager {
+class JobManager : Listener {
 
     val IDKEY: NamespacedKey = NamespacedKey(SneakyJobBoard.getInstance(), "job_id")
 
@@ -137,11 +140,24 @@ class JobManager {
      */
     fun getLastListedJob(player: Player): Job? {
         for (job in jobs.values.reversed()) {
-            if (job.player == player) {
+            if (job.isOwnedBy(player)) {
                 return job
             }
         }
         return null
+    }
+
+    /**
+     * Rebinds restored jobs to their poster when they join.
+     */
+    @EventHandler
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        for (job in jobs.values) {
+            if (job.player == null && job.posterName.equals(event.player.name, ignoreCase = true)) {
+                job.player = event.player
+                job.updateTextDisplays()
+            }
+        }
     }
 
     /**
@@ -190,9 +206,10 @@ class JobManager {
      */
     fun dispatch(uuid: String, player: Player) {
         val job = jobs[uuid] ?: return
+        val poster = job.player
 
-		if (job.player != null) {
-			if (job.player.isOnline == true) {
+		if (poster != null) {
+			if (poster.isOnline) {
 				Bukkit.getServer().dispatchCommand(
 					Bukkit.getServer().consoleSender,
 					"cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
@@ -210,7 +227,7 @@ class JobManager {
 
 			Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${job.player.name} jobboard-dispatch-other ${player.name} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
+                "cast forcecast ${poster.name} jobboard-dispatch-other ${player.name} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
             )
 		} else {
 			Bukkit.getServer().dispatchCommand(
@@ -227,18 +244,20 @@ class JobManager {
  * Represents a job listing in the system.
  *
  * @property category The category this job belongs to
- * @property player The player who created the job
+ * @property player The online player who created the job, when available
+ * @property posterName The poster's name, used for ownership when player is offline at restore
  * @property durationMillis How long the job should remain listed (in milliseconds)
  * @property tracking Whether the job's location should track the player's movement
  * @property persist Whether the job should be restored after a server restart
  */
 data class Job(
     val category: JobCategory, 
-    val player: Player?,
+    var player: Player?,
 	var location: Location,
     var durationMillis: Long, 
     val tracking: Boolean,
-    val persist: Boolean = false
+    val persist: Boolean = false,
+    val posterName: String? = player?.name
 ) {
     var uuid = UUID.randomUUID().toString()
     var recordID = ""
@@ -265,9 +284,16 @@ data class Job(
             updateTextDisplays()
         }
     private var posterString =
-		if (player == null) "&eFrom: &6The Grand Paladin Order"
-		else if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
-		else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", player?.name ?: "Moonwell Pass")
+		if (player == null && posterName == null) "&eFrom: &6The Grand Paladin Order"
+		else if (SneakyJobBoard.isPapiActive()) PlaceholderAPI.setPlaceholders(player, SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", posterName ?: player?.name ?: "Moonwell Pass")
+		else (SneakyJobBoard.getInstance().getConfig().getString("poster-string") ?: "&eFrom: &b[playerName]").replace("[playerName]", posterName ?: player?.name ?: "Moonwell Pass")
+
+    /**
+     * Whether this job was listed by the given player.
+     */
+    fun isOwnedBy(player: Player): Boolean {
+        return this.player == player || posterName.equals(player.name, ignoreCase = true)
+    }
 
     /**
      * Gets the remaining duration of this job in milliseconds.

@@ -262,7 +262,8 @@ class PocketbaseManager {
                     location = location,
                     durationMillis = durationMillis,
                     tracking = tracking,
-                    persist = true
+                    persist = true,
+                    posterName = posterName
                 ).apply {
                     this.uuid = item.get("uuid")?.asString ?: this.uuid
                     this.recordID = recordID
@@ -433,12 +434,14 @@ class PocketbaseManager {
      * @return A map containing job data ready to be converted to JSON and sent to PocketBase.
      */
     private fun createJobDataMap(job: Job): Map<String, Any> {
+        val poster = requireNotNull(job.player)
+
         // Poster display string
         var displayStringPoster = (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-poster")
-            ?: "[playerName]").replace("[playerName]", job.player!!.name)
+            ?: "[playerName]").replace("[playerName]", poster.name)
 
         if (SneakyJobBoard.isPapiActive()) {
-            displayStringPoster = PlaceholderAPI.setPlaceholders(job.player, displayStringPoster)
+            displayStringPoster = PlaceholderAPI.setPlaceholders(poster, displayStringPoster)
         }
 
         // Location display string
@@ -449,17 +452,17 @@ class PocketbaseManager {
 
         if (SneakyJobBoard.isPapiActive()) {
             displayStringLocation =
-                PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Moonwell Pass")
+                PlaceholderAPI.setPlaceholders(poster, displayStringLocation).replace("none", "Moonwell Pass")
         }
 
         // Base64 face icon
-        val skinURL = job.player.playerProfile.textures.skin
+        val skinURL = poster.playerProfile.textures.skin
 
         val faceIconBase64 = skinURL?.let {
             val skinImage = downloadImage(it)
             skinImage?.let { image ->
                 val faceIcon = createPlayerIcon(
-                    image, job.player.getClientOption(ClientOption.SKIN_PARTS).hasHatsEnabled()
+                    image, poster.getClientOption(ClientOption.SKIN_PARTS).hasHatsEnabled()
                 )
                 encodeImageToBase64(faceIcon)
             }
@@ -469,7 +472,7 @@ class PocketbaseManager {
         return mapOf(
             "uuid" to job.uuid,
             "category" to job.category.name,
-            "poster" to job.player.name,
+            "poster" to poster.name,
             "posterDisplayString" to displayStringPoster,
             "posterIconBase64" to faceIconBase64,
             "location" to job.location.toString(),

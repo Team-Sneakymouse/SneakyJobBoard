@@ -105,10 +105,10 @@ class CommandUnlistJob : CommandBase("unlistjob") {
                 listOf("expire", "delete").filter { it.startsWith(args[0]) }
             }
 
-            args.size == 2 && sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin") -> {
-                val prefix = args.joinToString(" ").lowercase()
+            args.size >= 2 && sender.hasPermission("${SneakyJobBoard.IDENTIFIER}.admin") -> {
+                val prefix = args.drop(1).joinToString(" ")
                 return SneakyJobBoard.getJobManager().jobs.values.filter {
-                    it.name.lowercase().startsWith(prefix, ignoreCase = true)
+                    it.name.startsWith(prefix, ignoreCase = true)
                 }.map { it.name }
             }
 
