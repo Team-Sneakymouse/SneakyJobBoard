@@ -35,7 +35,7 @@ class PocketbaseManager {
 
     /**
      * Initializes the PocketbaseManager. Upon creation, it authenticates with PocketBase
-     * and unlists all active jobs that do not have an end time, running the operations asynchronously.
+     * and reconciles open jobs: ephemeral ones are ended, durable ones are restored.
      */
     init {
         Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
@@ -43,7 +43,7 @@ class PocketbaseManager {
                 auth()
 
                 if (authToken.isNotEmpty()) {
-                    unlistAllJobs()
+                    reconcileOpenJobs()
                 }
             } catch (e: Exception) {
                 SneakyJobBoard.log("Error occurred during startup: ${e.message}")
@@ -178,67 +178,158 @@ class PocketbaseManager {
     }
 
     /**
-     * Unlists all jobs in PocketBase that do not have an end time. This method retrieves all jobs with an empty endTime field
-     * and patches them to add the current system time as their endTime.
+     * Reconciles open PocketBase job records after a server start.
+     * Non-persist or expired jobs are ended; persist jobs still within duration are restored into JobManager.
+     * Must be called asynchronously.
      */
     @Synchronized
-    fun unlistAllJobs() {
+    fun reconcileOpenJobs() {
         val url = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
 
         if (url.isNullOrEmpty()) return
 
-        Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
-            try {
-                if (authToken.isEmpty()) auth()
+        try {
+            if (authToken.isEmpty()) auth()
 
-                if (authToken.isNotEmpty()) {
-                    val client = OkHttpClient()
+            if (authToken.isEmpty()) return
 
-                    // Retrieve all jobs with an empty endtime
-                    val requestGet =
-                        Request.Builder().url("$url?filter=(endTime='0')").header("Authorization", authToken).get()
-                            .build()
+            val client = OkHttpClient()
 
-                    val responseGet = client.newCall(requestGet).execute()
-                    val responseBody = responseGet.body?.string()
+            val requestGet =
+                Request.Builder().url("$url?filter=(endTime='0')").header("Authorization", authToken).get()
+                    .build()
 
-                    if (!responseGet.isSuccessful || responseBody == null) {
-                        SneakyJobBoard.log(
-                            "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
-                        )
-                        responseGet.close()
-                        return@Runnable
-                    }
+            val responseGet = client.newCall(requestGet).execute()
+            val responseBody = responseGet.body?.string()
 
-                    val recordIDs = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
-                        .map { it.asJsonObject.get("id").asString }
-
-                    responseGet.close()
-                    // Iterate over the jobs and update them
-                    recordIDs.forEach { recordID ->
-                        val jobData = mapOf(
-                            "endTime" to System.currentTimeMillis(), "endReason" to "restart"
-                        )
-                        val jsonRequestBody = Gson().toJson(jobData).toRequestBody(
-                            "application/json".toMediaType()
-                        )
-
-                        val requestPatch = Request.Builder().url("$url/${recordID}").header("Authorization", authToken)
-                            .patch(jsonRequestBody).build()
-
-                        val responsePatch = client.newCall(requestPatch).execute()
-                        if (!responsePatch.isSuccessful) {
-                            SneakyJobBoard.log(
-                                "Pocketbase request unsuccessful: ${responsePatch.code}, ${responsePatch.body?.string()}"
-                            )
-                        }
-                        responsePatch.close()
-                    }
-                }
-            } catch (e: Exception) {
-                SneakyJobBoard.log("Error occurred: ${e.message}")
+            if (!responseGet.isSuccessful || responseBody == null) {
+                SneakyJobBoard.log(
+                    "Pocketbase request unsuccessful: ${responseGet.code}, ${responseBody ?: "No response body"}"
+                )
+                responseGet.close()
+                return
             }
-        })
+
+            val items = JsonParser.parseString(responseBody).asJsonObject.getAsJsonArray("items")
+                .map { it.asJsonObject }
+
+            responseGet.close()
+
+            val now = System.currentTimeMillis()
+            val jobsToRestore = mutableListOf<Job>()
+
+            items.forEach { item ->
+                val recordID = item.get("id").asString
+                val persist = parseBooleanField(item, "persist")
+                val startTime = item.get("startTime")?.takeUnless { it.isJsonNull }?.asLong ?: 0L
+                val durationMillis = item.get("durationMillis")?.takeUnless { it.isJsonNull }?.asLong ?: 0L
+                val expired = startTime + durationMillis <= now
+
+                if (!persist || expired) {
+                    endJobRecord(
+                        client,
+                        url,
+                        recordID,
+                        if (expired && persist) "expired" else "restart"
+                    )
+                    return@forEach
+                }
+
+                val categoryName = item.get("category")?.asString ?: return@forEach
+                val jobCategory = SneakyJobBoard.getJobCategoryManager()
+                    .getJobCategories().values.find { it.name == categoryName }
+                if (jobCategory == null) {
+                    SneakyJobBoard.log("Cannot restore job $recordID: unknown category '$categoryName'")
+                    endJobRecord(client, url, recordID, "restart")
+                    return@forEach
+                }
+
+                val locationString = item.get("location")?.asString
+                val location = locationString?.let { parseStoredLocation(it) }
+                if (location == null) {
+                    SneakyJobBoard.log("Cannot restore job $recordID: invalid location '$locationString'")
+                    endJobRecord(client, url, recordID, "restart")
+                    return@forEach
+                }
+
+                val posterName = item.get("poster")?.asString
+                val player = posterName?.let { Bukkit.getPlayerExact(it) }
+                val tracking = parseBooleanField(item, "tracking")
+
+                val job = Job(
+                    category = jobCategory,
+                    player = player,
+                    location = location,
+                    durationMillis = durationMillis,
+                    tracking = tracking,
+                    persist = true
+                ).apply {
+                    this.uuid = item.get("uuid")?.asString ?: this.uuid
+                    this.recordID = recordID
+                    this.startTime = startTime
+                    item.get("name")?.asString?.let { this.name = it }
+                    item.get("description")?.asString?.let { this.description = it }
+                }
+
+                jobsToRestore.add(job)
+            }
+
+            if (jobsToRestore.isNotEmpty()) {
+                Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
+                    jobsToRestore.forEach { job ->
+                        SneakyJobBoard.getJobManager().list(job, sendToPocketbase = false)
+                    }
+                    SneakyJobBoard.log("Restored ${jobsToRestore.size} persist job(s) from PocketBase.")
+                })
+            }
+        } catch (e: Exception) {
+            SneakyJobBoard.log("Error occurred: ${e.message}")
+        }
+    }
+
+    /**
+     * Patches a PocketBase job record with an end time and reason.
+     */
+    private fun endJobRecord(client: OkHttpClient, url: String, recordID: String, endReason: String) {
+        val jobData = mapOf(
+            "endTime" to System.currentTimeMillis(), "endReason" to endReason
+        )
+        val jsonRequestBody = Gson().toJson(jobData).toRequestBody(
+            "application/json".toMediaType()
+        )
+
+        val requestPatch = Request.Builder().url("$url/${recordID}").header("Authorization", authToken)
+            .patch(jsonRequestBody).build()
+
+        val responsePatch = client.newCall(requestPatch).execute()
+        if (!responsePatch.isSuccessful) {
+            SneakyJobBoard.log(
+                "Pocketbase request unsuccessful: ${responsePatch.code}, ${responsePatch.body?.string()}"
+            )
+        }
+        responsePatch.close()
+    }
+
+    /**
+     * Parses a Bukkit Location.toString() value stored in PocketBase.
+     */
+    private fun parseStoredLocation(locationString: String): org.bukkit.Location? {
+        val worldName = Regex("""name=([^}]+)""").find(locationString)?.groupValues?.get(1) ?: return null
+        val world = Bukkit.getWorld(worldName) ?: return null
+        val x = Regex("""x=([-\d.]+)""").find(locationString)?.groupValues?.get(1)?.toDoubleOrNull() ?: return null
+        val y = Regex("""y=([-\d.]+)""").find(locationString)?.groupValues?.get(1)?.toDoubleOrNull() ?: return null
+        val z = Regex("""z=([-\d.]+)""").find(locationString)?.groupValues?.get(1)?.toDoubleOrNull() ?: return null
+        return org.bukkit.Location(world, x, y, z)
+    }
+
+    private fun parseBooleanField(item: com.google.gson.JsonObject, field: String): Boolean {
+        if (!item.has(field) || item.get(field).isJsonNull) return false
+        val element = item.get(field)
+        return when {
+            element.isJsonPrimitive && element.asJsonPrimitive.isBoolean -> element.asBoolean
+            element.isJsonPrimitive -> element.asString.toBooleanOrNull() ?: false
+            else -> false
+        }
     }
 
     /**
@@ -386,6 +477,7 @@ class PocketbaseManager {
             "startTime" to job.startTime,
             "durationMillis" to job.durationMillis,
             "tracking" to job.tracking,
+            "persist" to job.persist,
             "name" to job.name,
             "description" to job.description,
             "discordEmbedIcon" to job.category.discordEmbedIcon,

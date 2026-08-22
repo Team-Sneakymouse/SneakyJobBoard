@@ -43,10 +43,10 @@ class CommandListJob : CommandBase("listjob") {
 
     init {
         this.usageMessage =
-            "/${this@CommandListJob.name} [jobCategory] [durationMillis] (tracking) (\"name\") (\"description\")" +
+            "/${this@CommandListJob.name} [jobCategory] [durationMillis] (tracking) (persist) (\"name\") (\"description\")" +
 			"\r\nIf the command is run from the console, use one of the following:" +
-			"\r\n${this@CommandListJob.name} [playerName] [jobCategory] [durationMillis] (tracking) (\"name\") (\"description\")" +
-			"\r\n${this@CommandListJob.name} [jobCategory] [durationMillis] [\"name\"] [\"description\"] [world] [x] [y] [z]"
+			"\r\n${this@CommandListJob.name} [playerName] [jobCategory] [durationMillis] (tracking) (persist) (\"name\") (\"description\")" +
+			"\r\n${this@CommandListJob.name} [jobCategory] [durationMillis] (persist) [\"name\"] [\"description\"] [world] [x] [y] [z]"
         this.description = "List a job to the job board."
     }
 
@@ -91,13 +91,24 @@ class CommandListJob : CommandBase("listjob") {
         }
 
         val tracking = if (player != null && args.size > nextArg + 1) {
-            args[++nextArg].toBooleanOrNull() ?: run {
-                sender.sendMessage(
-                    TextUtility.convertToComponent(
-                        "&4Invalid boolean value '${args[nextArg]}'. Please provide 'true' or 'false'."
-                    )
-                )
-                return false
+            val maybeTracking = args[nextArg + 1].toBooleanOrNull()
+            if (maybeTracking != null) {
+                nextArg++
+                maybeTracking
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+
+        val persist = if (args.size > nextArg + 1) {
+            val maybePersist = args[nextArg + 1].toBooleanOrNull()
+            if (maybePersist != null) {
+                nextArg++
+                maybePersist
+            } else {
+                false
             }
         } else {
             false
@@ -146,7 +157,12 @@ class CommandListJob : CommandBase("listjob") {
         }
 
         val job = Job(
-            category = jobcategory, player = player, location = location, durationMillis = durationMillis, tracking = tracking
+            category = jobcategory,
+            player = player,
+            location = location,
+            durationMillis = durationMillis,
+            tracking = tracking,
+            persist = persist
         )
 
         // Now check if name and description are provided as arguments in the command
@@ -208,6 +224,10 @@ class CommandListJob : CommandBase("listjob") {
             }
 
             args.size - startIndex == 3 -> {
+                listOf("TRUE", "FALSE").filter { it.startsWith(args.last(), ignoreCase = true) }
+            }
+
+            args.size - startIndex == 4 -> {
                 listOf("TRUE", "FALSE").filter { it.startsWith(args.last(), ignoreCase = true) }
             }
 

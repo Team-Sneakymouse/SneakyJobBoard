@@ -34,11 +34,14 @@ class JobManager {
      * Also integrates with Dynmap if available.
      *
      * @param job The job to be listed
+     * @param sendToPocketbase Whether to create a new PocketBase record (false when restoring)
      */
-    fun list(job: Job) {
-        job.category.durationOverrideMillis?.let { job.durationMillis = it }
-        job.startTime = System.currentTimeMillis()
-        if (job.player != null) SneakyJobBoard.getPocketbaseManager().listJob(job)
+    fun list(job: Job, sendToPocketbase: Boolean = true) {
+        if (sendToPocketbase) {
+            job.category.durationOverrideMillis?.let { job.durationMillis = it }
+            job.startTime = System.currentTimeMillis()
+            if (job.player != null) SneakyJobBoard.getPocketbaseManager().listJob(job)
+        }
         jobs[job.uuid] = job
 
         // Spawn item displays
@@ -77,8 +80,8 @@ class JobManager {
             }
         }
 
-        // Play toast on all players
-		if (job.player != null) {
+        // Play toast on all players (skip when restoring from PocketBase)
+		if (sendToPocketbase && job.player != null) {
 			var displayStringLocation =
 				(SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
 					"[x]", job.location.blockX.toString()
@@ -107,9 +110,15 @@ class JobManager {
             }
         }
 
-        // Schedule unlisting
+        val remainingMillis = (job.startTime + job.durationMillis) - System.currentTimeMillis()
+        if (remainingMillis <= 0) {
+            job.unlist("expired")
+            return
+        }
+
+        // Schedule unlisting for remaining duration
         Bukkit.getScheduler().runTaskLater(
-            SneakyJobBoard.getInstance(), Runnable { job.unlist("expired") }, 20 * job.durationMillis / 1000
+            SneakyJobBoard.getInstance(), Runnable { job.unlist("expired") }, 20 * remainingMillis / 1000
         )
     }
 
@@ -147,10 +156,13 @@ class JobManager {
     /**
      * Cleans up all listed jobs and their associated entities.
      * Called during plugin shutdown or reload.
+     * Persist jobs are removed from memory only so PocketBase can restore them on startup.
      */
     fun cleanup() {
         val jobIdsToRemove = jobs.values.toList()
-        jobIdsToRemove.forEach { it.unlist("restart") }
+        jobIdsToRemove.forEach { job ->
+            job.unlist("restart", syncToPocketbase = !job.persist)
+        }
 
         // Clean up dynmap markers
         if (SneakyJobBoard.isDynmapActive()) {
@@ -218,15 +230,17 @@ class JobManager {
  * @property player The player who created the job
  * @property durationMillis How long the job should remain listed (in milliseconds)
  * @property tracking Whether the job's location should track the player's movement
+ * @property persist Whether the job should be restored after a server restart
  */
 data class Job(
     val category: JobCategory, 
     val player: Player?,
 	var location: Location,
     var durationMillis: Long, 
-    val tracking: Boolean
+    val tracking: Boolean,
+    val persist: Boolean = false
 ) {
-    val uuid = UUID.randomUUID().toString()
+    var uuid = UUID.randomUUID().toString()
     var recordID = ""
     var startTime = 0L
     val itemDisplays = mutableMapOf<JobBoard, ItemDisplay>()
@@ -274,11 +288,12 @@ data class Job(
     /**
      * Unlists this job from all platforms and cleans up associated entities.
      * @param endReason The reason for unlisting ("expired", "unlisted", "deleted", or "restart")
+     * @param syncToPocketbase Whether to patch the PocketBase record with an end time
      */
-    fun unlist(endReason: String) {
+    fun unlist(endReason: String, syncToPocketbase: Boolean = true) {
         if (!SneakyJobBoard.getJobManager().jobs.values.contains(this)) return
 
-        if (player != null) SneakyJobBoard.getPocketbaseManager().unlistJob(this, endReason)
+        if (syncToPocketbase) SneakyJobBoard.getPocketbaseManager().unlistJob(this, endReason)
         itemDisplays.values.forEach { entity -> entity.remove() }
         textDisplays.values.forEach { entity -> entity.remove() }
         SneakyJobBoard.getJobManager().jobs.remove(uuid)
