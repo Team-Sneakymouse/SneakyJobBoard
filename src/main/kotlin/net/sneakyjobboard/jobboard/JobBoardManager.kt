@@ -687,7 +687,7 @@ class JobBoardUpdater : BukkitRunnable() {
 
         // Build a map of players who are nearby a JobBoard
         for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
-            val nearbyPlayers = jobBoard.mapLocation.world?.entities?.filterIsInstance<Player>()?.filter {
+            val nearbyPlayers = jobBoard.mapLocation.world?.players?.filter {
                 it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
             } ?: emptyList()
 
@@ -798,18 +798,26 @@ class JobBoardMaintenance : BukkitRunnable() {
      * Runs the maintenance tasks for job board displays.
      */
     override fun run() {
-        // Build a list of all Display Entities that have the JobBoardIcon tag
-        val worlds = SneakyJobBoard.getJobBoardManager().jobBoards.map { it.mapLocation.world }.toSet()
-
+        // Collect JobBoardIcon Displays near each board (icons only spawn on the map plane)
         val displays = mutableSetOf<Entity>()
-        for (world in worlds) {
-            displays.addAll(world.entities.filterIsInstance<Display>().filter {
-                it.scoreboardTags.contains("JobBoardIcon")
-            })
+        val orphanScanRadius = 48.0
+
+        for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
+            val center = jobBoard.mapLocation.clone().add(0.5, 0.5, 0.5)
+            val world = center.world ?: continue
+
+            displays.addAll(
+                world.getNearbyEntities(center, orphanScanRadius, orphanScanRadius, orphanScanRadius)
+                    .filterIsInstance<Display>()
+                    .filter { it.scoreboardTags.contains("JobBoardIcon") }
+            )
         }
 
         // If any of these entities do not belong to a listed job, remove them
         SneakyJobBoard.getJobManager().jobs.values.forEach { job ->
+            job.itemDisplays.entries.removeIf { !it.value.isValid }
+            job.textDisplays.entries.removeIf { !it.value.isValid }
+
             displays.removeAll(job.itemDisplays.values.toSet())
             displays.removeAll(job.textDisplays.values.toSet())
         }
