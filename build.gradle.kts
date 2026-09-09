@@ -1,7 +1,7 @@
 plugins {
 	java
-	id("org.jetbrains.kotlin.jvm") version "1.9.22"
-	id("xyz.jpenilla.run-paper") version "2.2.2"
+	id("org.jetbrains.kotlin.jvm") version "2.4.10"
+	id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
 repositories {
@@ -19,9 +19,9 @@ repositories {
 }
 
 dependencies {
-	implementation("org.jetbrains.kotlin:kotlin-stdlib:1.6.0")
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
-	compileOnly("me.clip:placeholderapi:2.11.5")
+	implementation(kotlin("stdlib"))
+    compileOnly("io.papermc.paper:paper-api:26.2.build.121-stable")
+	compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
     compileOnly("us.dynmap:DynmapCoreAPI:3.4")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
@@ -36,7 +36,7 @@ tasks.jar {
 	from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
 
-configure<JavaPluginConvention> {
+configure<JavaPluginExtension> {
 	sourceSets {
 		main {
 			java.srcDir("src/main/kotlin")
@@ -47,12 +47,12 @@ configure<JavaPluginConvention> {
 
 java {
 	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
+		languageVersion.set(JavaLanguageVersion.of(25))
 	}
 }
 
 tasks {
 	runServer {
-		minecraftVersion("1.21.4")
+		minecraftVersion("26.2")
 	}
 }
