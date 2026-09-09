@@ -1,6 +1,8 @@
 package net.sneakyjobboard.job
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelDefinition
+import net.sneakyjobboard.util.ItemModelUtility
 import org.bukkit.Material
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
@@ -46,7 +48,7 @@ class JobCategoryManager {
                 val name = jobCategoriesSection.getString("$key.name") ?: key
                 val description = jobCategoriesSection.getString("$key.description") ?: key
                 val iconMaterialString = jobCategoriesSection.getString("$key.icon-material") ?: ""
-                val iconCustomModelData = jobCategoriesSection.getInt("$key.icon-custom-model-data")
+                val iconModel = ItemModelUtility.readConfiguredModel(jobCategoriesSection, key)
 
                 val iconMaterial = Material.matchMaterial(iconMaterialString) ?: Material.MUSIC_DISC_CAT
 
@@ -74,7 +76,7 @@ class JobCategoryManager {
                     name,
                     description,
                     iconMaterial,
-                    iconCustomModelData,
+                    iconModel,
                     brightness,
                     transformation,
                     dynmapMapIcon,
@@ -142,7 +144,7 @@ class JobCategoryManager {
  * @property name Display name of the category
  * @property description Brief description of the category
  * @property iconMaterial Material used for category icons
- * @property iconCustomModelData Custom model data for the icon
+ * @property iconModel Item model and custom model data for the icon
  * @property brightness Display brightness settings
  * @property transformation Display transformation settings
  * @property dynmapMapIcon Icon used on Dynmap
@@ -153,10 +155,13 @@ data class JobCategory(
     val name: String,
     val description: String,
     val iconMaterial: Material,
-    val iconCustomModelData: Int,
+    val iconModel: ItemModelDefinition,
     val brightness: Brightness,
     val transformation: Transformation,
     val dynmapMapIcon: String,
     val discordEmbedIcon: String,
     val durationOverrideMillis: Long? = null
-)
+) {
+    val iconCustomModelData: Int
+        get() = iconModel.legacyCustomModelData
+}

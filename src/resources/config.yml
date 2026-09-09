@@ -61,6 +61,9 @@ world-central-vectors:
 
 ## Extra buttons to add to the job board.
 ## command-console is run on the console and replaces "[playerName]" with the name of the clicker.
+## icon-item-model optionally sets the item's namespaced item-model component.
+## icon-custom-model-data accepts either a number or a quoted string.
+## Lists may mix both types. Numeric placeholder results are stored as numbers.
 job-board-extra-buttons:
     list-advert:
         slot: 5
@@ -81,7 +84,17 @@ job-board-extra-buttons:
 
 ## Extra buttons to add to the advert board.
 ## command-console is run on the console and replaces "[playerName]" with the name of the clicker.
+## icon-item-model optionally sets the item's namespaced item-model component.
+## icon-custom-model-data accepts either a number or a quoted string.
+## Lists may mix both types. Numeric placeholder results are stored as numbers.
 advert-board-extra-buttons:
+    gui:
+        slot: 0
+        name: ""
+        description: ""
+        icon-material: "jigsaw"
+        icon-item-model: "lom:jobboard"
+        icon-custom-model-data: "people"
     manage-adverts:
         slot: 6
         name: "&aManage Adverts"
@@ -105,6 +118,9 @@ advert-board-extra-buttons:
         command-console: "listadvert [playerName]"
 
 ## Different categories that a job can have. This is used to set icons for various displays.
+## icon-item-model optionally sets the item's namespaced item-model component.
+## icon-custom-model-data accepts a number, quoted string, or a list containing either type.
+## Numeric placeholder results are stored as numbers.
 job-categories:
     aid_request:
         name: "Aid Request"

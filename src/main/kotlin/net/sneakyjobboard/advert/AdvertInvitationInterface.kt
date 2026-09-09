@@ -1,6 +1,7 @@
 package net.sneakyjobboard.advert
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelUtility
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -46,22 +47,22 @@ class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
      */
     private fun updateInventory() {
         inventory.clear()
-        invitations.forEachIndexed { index, invitation ->
-            if (index < inventory.size - 1) {
-                inventory.setItem(index, invitation.createDisplayItem())
-            }
+        invitations.take(CONTENT_SLOTS.size).forEachIndexed { index, invitation ->
+            inventory.setItem(CONTENT_SLOTS[index], invitation.createDisplayItem())
         }
 
 		// Add UI button
-		inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
+		inventory.setItem(0, ItemStack(Material.JIGSAW).apply {
 			itemMeta = itemMeta?.also { meta ->
-				meta.setCustomModelData(3036)
+				ItemModelUtility.applyModel(meta, "lom:jobboard", "invitations")
 				meta.setHideTooltip(true)
 			}
 		})
     }
 
     companion object {
+        private val CONTENT_SLOTS = intArrayOf(4, 3, 5, 2, 6, 1, 7, 8)
+
         /**
          * Opens the invitation interface for a player.
          * @param player The player to show invitations to
@@ -100,4 +101,4 @@ class AdvertInvitationListener : Listener {
         SneakyJobBoard.getAdvertManager().dispatch(invitation)
     }
 
-} 
+}

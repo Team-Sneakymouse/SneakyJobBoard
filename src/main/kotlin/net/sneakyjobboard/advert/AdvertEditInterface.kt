@@ -3,6 +3,7 @@ package net.sneakyjobboard.advert
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.TextComponent
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelUtility
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -98,9 +99,9 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
         })
 
 		// Add UI button
-		inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
+		inventory.setItem(0, ItemStack(Material.JIGSAW).apply {
 			itemMeta = itemMeta?.also { meta ->
-				meta.setCustomModelData(3035)
+				ItemModelUtility.applyModel(meta, "lom:jobboard", "manage_ads")
 				meta.setHideTooltip(true)
 			}
 		})
@@ -291,4 +292,4 @@ class AdvertEditListener : Listener {
             event.isCancelled = true
         }
     }
-} 
+}

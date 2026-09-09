@@ -1,6 +1,7 @@
 package net.sneakyjobboard.advert
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelUtility
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -23,14 +24,15 @@ import org.bukkit.NamespacedKey
  * @property category The currently selected advertisement category, if any
  * @property page The current page number being displayed
  */
-class AdvertBoardInterface(
-    val category: AdvertCategory? = null, val page: Int = 0
+class AdvertBoardInterface private constructor(
+    val category: AdvertCategory? = null, val page: Int = 0, player: Player
 ) : InventoryHolder {
     private val inventory: Inventory = Bukkit.createInventory(this,
         54,
         TextUtility.convertToComponent(category?.name?.let { "&6Adverts - $it" } ?: "&6Adverts"))
 
     init {
+        parseConfig(player)
         updateInventory()
     }
 
@@ -197,10 +199,6 @@ class AdvertBoardInterface(
     companion object {
 		private val extraButtons = mutableMapOf<Int, AdvertBoardButton>()
 	
-		init {
-			parseConfig()
-		}
-
         /**
          * Opens the advertisement board interface for a player.
          * @param player The player to show the interface to
@@ -208,7 +206,7 @@ class AdvertBoardInterface(
          * @param page The page number to display
          */
         fun open(player: Player, category: AdvertCategory? = null, page: Int = 0) {
-            val ui = AdvertBoardInterface(category, page)
+            val ui = AdvertBoardInterface(category, page, player)
             player.openInventory(ui.inventory)
         }
 	
@@ -216,7 +214,7 @@ class AdvertBoardInterface(
 		 * Parses the configuration file to load extra button definitions.
 		 * Buttons can be configured with custom icons, commands, and display conditions.
 		 */
-		private fun parseConfig() {
+		private fun parseConfig(player: Player) {
 			try {
 				val configFile = SneakyJobBoard.getConfigFile()
 				if (!configFile.exists()) {
@@ -233,7 +231,6 @@ class AdvertBoardInterface(
 					val name = advertBoardButtonsSection.getString("$key.name") ?: key
 					val description = advertBoardButtonsSection.getString("$key.description") ?: key
 					val iconMaterialString = advertBoardButtonsSection.getString("$key.icon-material") ?: ""
-					val iconCustomModelData = advertBoardButtonsSection.getInt("$key.icon-custom-model-data")
 					val commandConsole = advertBoardButtonsSection.getString("$key.command-console")
 
 					val iconMaterial = Material.matchMaterial(iconMaterialString)
@@ -243,7 +240,7 @@ class AdvertBoardInterface(
 							itemMeta = itemMeta?.also { meta ->
 								meta.displayName(TextUtility.convertToComponent(name))
 								meta.lore(mutableListOf(TextUtility.convertToComponent(description)))
-								meta.setCustomModelData(iconCustomModelData)
+								ItemModelUtility.applyConfiguredModel(meta, advertBoardButtonsSection, key, player)
 
 								commandConsole?.let { command ->
 									meta.persistentDataContainer.set(
@@ -251,6 +248,10 @@ class AdvertBoardInterface(
 										PersistentDataType.STRING,
 										command
 									)
+								}
+
+								if (name.isEmpty()) {
+									meta.setHideTooltip(true)
 								}
 							}
 						}
@@ -357,4 +358,4 @@ class AdvertBoardListener : Listener {
         if (event.inventory.holder !is AdvertBoardInterface) return
         // Additional cleanup if needed
     }
-} 
+}

@@ -1,6 +1,7 @@
 package net.sneakyjobboard.advert
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelUtility
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -48,73 +49,74 @@ class AdvertManagementInterface(private val player: Player) : InventoryHolder {
         inventory.clear()
 
         // Add UI button
-        inventory.setItem(8, ItemStack(Material.JIGSAW).apply {
+        inventory.setItem(0, ItemStack(Material.JIGSAW).apply {
             itemMeta = itemMeta?.also { meta ->
-                meta.setCustomModelData(3035)
+				ItemModelUtility.applyModel(meta, "lom:jobboard", "manage_ads")
 				meta.setHideTooltip(true)
             }
         })
 
         // Add all adverts belonging to the player
         val adverts = SneakyJobBoard.getAdvertManager().getAdvertsForPlayer(player)
-        adverts.forEachIndexed { index, advert ->
-            if (index < inventory.size - 1) {
-                val itemStack = if (advert.enabled) {
-                    advert.getIconItem().apply {
-                        itemMeta = itemMeta?.also { meta ->
-                            meta.lore(
-                                listOf(
-                                    TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
-                                    TextUtility.convertToComponent("&7Description:"),
-                                    *TextUtility.splitIntoLines(advert.description, 30).map {
-                                        TextUtility.convertToComponent("&7$it")
-                                    }.toTypedArray(),
-                                    TextUtility.convertToComponent(""),
-                                    TextUtility.convertToComponent("&eClick to disable"),
-                                    TextUtility.convertToComponent("&ePress Q to delete"),
-                                    TextUtility.convertToComponent("&ePress F to edit")
-                                )
+        adverts.take(CONTENT_SLOTS.size).forEachIndexed { index, advert ->
+            val slot = CONTENT_SLOTS[index]
+            val itemStack = if (advert.enabled) {
+                advert.getIconItem().apply {
+                    itemMeta = itemMeta?.also { meta ->
+                        meta.lore(
+                            listOf(
+                                TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
+                                TextUtility.convertToComponent("&7Description:"),
+                                *TextUtility.splitIntoLines(advert.description, 30).map {
+                                    TextUtility.convertToComponent("&7$it")
+                                }.toTypedArray(),
+                                TextUtility.convertToComponent(""),
+                                TextUtility.convertToComponent("&eClick to disable"),
+                                TextUtility.convertToComponent("&ePress Q to delete"),
+                                TextUtility.convertToComponent("&ePress F to edit")
                             )
-                            // Store advert ID in persistent data
-                            meta.persistentDataContainer.set(
-                                SneakyJobBoard.getAdvertManager().IDKEY,
-                                org.bukkit.persistence.PersistentDataType.STRING,
-                                advert.uuid
-                            )
-                        }
-                    }
-                } else {
-                    ItemStack(Material.RED_WOOL).apply {
-                        itemMeta = itemMeta?.also { meta ->
-                            meta.displayName(TextUtility.convertToComponent("&c${advert.name}"))
-                            meta.lore(
-                                listOf(
-                                    TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
-                                    TextUtility.convertToComponent("&7Description:"),
-                                    *TextUtility.splitIntoLines(advert.description, 30).map {
-                                        TextUtility.convertToComponent("&7$it")
-                                    }.toTypedArray(),
-                                    TextUtility.convertToComponent(""),
-                                    TextUtility.convertToComponent("&eClick to enable"),
-                                    TextUtility.convertToComponent("&ePress Q to delete"),
-                                    TextUtility.convertToComponent("&ePress F to edit")
-                                )
-                            )
-                            // Store advert ID in persistent data
-                            meta.persistentDataContainer.set(
-                                SneakyJobBoard.getAdvertManager().IDKEY,
-                                org.bukkit.persistence.PersistentDataType.STRING,
-                                advert.uuid
-                            )
-                        }
+                        )
+                        // Store advert ID in persistent data
+                        meta.persistentDataContainer.set(
+                            SneakyJobBoard.getAdvertManager().IDKEY,
+                            org.bukkit.persistence.PersistentDataType.STRING,
+                            advert.uuid
+                        )
                     }
                 }
-                inventory.setItem(index, itemStack)
+            } else {
+                ItemStack(Material.RED_WOOL).apply {
+                    itemMeta = itemMeta?.also { meta ->
+                        meta.displayName(TextUtility.convertToComponent("&c${advert.name}"))
+                        meta.lore(
+                            listOf(
+                                TextUtility.convertToComponent("&7Category: &e${advert.category?.name ?: "None"}"),
+                                TextUtility.convertToComponent("&7Description:"),
+                                *TextUtility.splitIntoLines(advert.description, 30).map {
+                                    TextUtility.convertToComponent("&7$it")
+                                }.toTypedArray(),
+                                TextUtility.convertToComponent(""),
+                                TextUtility.convertToComponent("&eClick to enable"),
+                                TextUtility.convertToComponent("&ePress Q to delete"),
+                                TextUtility.convertToComponent("&ePress F to edit")
+                            )
+                        )
+                        // Store advert ID in persistent data
+                        meta.persistentDataContainer.set(
+                            SneakyJobBoard.getAdvertManager().IDKEY,
+                            org.bukkit.persistence.PersistentDataType.STRING,
+                            advert.uuid
+                        )
+                    }
+                }
             }
+            inventory.setItem(slot, itemStack)
         }
     }
 
     companion object {
+        private val CONTENT_SLOTS = intArrayOf(4, 3, 5, 2, 6, 1, 7, 8)
+
         /**
          * Opens the management interface for a player.
          * @param player The player managing their advertisements
@@ -179,4 +181,4 @@ class AdvertManagementListener : Listener {
             event.isCancelled = true
         }
     }
-} 
+}

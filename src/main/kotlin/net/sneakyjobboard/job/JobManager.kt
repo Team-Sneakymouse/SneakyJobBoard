@@ -3,6 +3,7 @@ package net.sneakyjobboard.job
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobBoard
+import net.sneakyjobboard.util.ItemModelUtility
 import net.sneakyjobboard.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
@@ -381,12 +382,11 @@ data class Job(
      */
     fun getIconItem(): ItemStack {
         val itemStack = ItemStack(category.iconMaterial)
-        val customModelData: Int = category.iconCustomModelData
 
         val meta = itemStack.itemMeta
 
         // Set custom model data, display name, and lore.
-        meta.setCustomModelData(customModelData)
+        ItemModelUtility.applyModel(meta, category.iconModel, player)
         meta.displayName(TextUtility.convertToComponent("&a${name}"))
 
         val lore = mutableListOf<String>()

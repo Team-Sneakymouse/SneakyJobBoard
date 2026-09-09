@@ -1,6 +1,7 @@
 package net.sneakyjobboard.jobboard
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelUtility
 import net.sneakyjobboard.util.TextUtility
 import me.clip.placeholderapi.PlaceholderAPI
 import org.bukkit.Bukkit
@@ -119,8 +120,6 @@ class JobInventoryHolder(isJobBoardInteract: Boolean, player: Player) : Inventor
 						description = PlaceholderAPI.setPlaceholders(player, description)
 					}
                     val iconMaterialString = jobCategoriesSection.getString("$key.icon-material") ?: ""
-                    val iconCustomModelData = jobCategoriesSection.getInt("$key.icon-custom-model-data")
-
                     val showOnBoardInteract = jobCategoriesSection.getBoolean("$key.show-on-board-interact", true)
 
                     val commandConsole = jobCategoriesSection.getString("$key.command-console")
@@ -134,7 +133,7 @@ class JobInventoryHolder(isJobBoardInteract: Boolean, player: Player) : Inventor
                                 meta.lore(TextUtility.splitIntoLines(description, 30).map { line ->
 									TextUtility.convertToComponent("&e$line")
 								})
-                                meta.setCustomModelData(iconCustomModelData)
+                                ItemModelUtility.applyConfiguredModel(meta, jobCategoriesSection, key, player)
 
                                 commandConsole?.let { command ->
                                     meta.persistentDataContainer.set(
