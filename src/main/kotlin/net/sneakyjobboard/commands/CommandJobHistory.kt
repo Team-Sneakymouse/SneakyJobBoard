@@ -28,9 +28,10 @@ class CommandJobHistory : CommandBase("jobhistory") {
     override fun execute(
         sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
-        val pocketbaseUrl = SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-url")
+        val pocketbaseCollection =
+            SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-collection")
 
-        if (pocketbaseUrl.isNullOrEmpty()) {
+        if (pocketbaseCollection.isNullOrEmpty()) {
             sender.sendMessage(
                 TextUtility.convertToComponent(
                     "&4Job history cannot be viewed if Pocketbase is not set up."

@@ -24,8 +24,7 @@ dependencies {
 	compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
     compileOnly("us.dynmap:DynmapCoreAPI:3.4")
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
-    implementation("org.json:json:20211205")
+    compileOnly(files("../SneakyPocketbase/build/libs/SneakyPocketbase-1.0-api.jar"))
 }
 
 tasks.jar {
