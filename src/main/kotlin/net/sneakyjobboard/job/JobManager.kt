@@ -99,17 +99,7 @@ class JobManager : Listener {
 			for (player in job.location.world.players) {
 				Bukkit.getServer().dispatchCommand(
 					Bukkit.getServer().consoleSender,
-					"cast forcecast ${player.name} jobboard-listed ${
-						job.category.name.replace(
-							" ",
-							"\u00A0"
-						)
-					} ${
-						displayStringLocation.replace(
-							" ",
-							"\u00A0"
-						)
-					} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
+						"cast forcecast ${player.name} jobboard-listed \"${job.category.name}\" \"${displayStringLocation}\" ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
 					)
             }
         }
