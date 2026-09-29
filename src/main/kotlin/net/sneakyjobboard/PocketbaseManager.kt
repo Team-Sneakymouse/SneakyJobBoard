@@ -31,12 +31,26 @@ class PocketbaseManager {
     private fun api() = PocketbaseProvider.getApi()
 
     private fun jobsCollection(): String? =
-        SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-collection")
-            ?.takeIf { it.isNotEmpty() }
+        normalizeCollection(
+            SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-collection")
+        )
 
     private fun advertsCollection(): String? =
-        SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-collection")
-            ?.takeIf { it.isNotEmpty() }
+        normalizeCollection(
+            SneakyJobBoard.getInstance().getConfig().getString("pocketbase-adverts-collection")
+        )
+
+    /**
+     * Accepts a bare collection name, or an old full records URL
+     * (`.../api/collections/<name>/records`), and returns just the collection name.
+     */
+    private fun normalizeCollection(raw: String?): String? {
+        if (raw.isNullOrBlank()) return null
+        val trimmed = raw.trim()
+        val fromUrl = Regex("""/api/collections/([^/]+)/records""")
+            .find(trimmed)?.groupValues?.get(1)
+        return (fromUrl ?: trimmed).takeIf { it.isNotEmpty() }
+    }
 
     /**
      * Initializes the PocketbaseManager. After SneakyPocketbase auth completes, reconciles open jobs:

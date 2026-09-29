@@ -32,8 +32,9 @@ invitation-expire-duration: 300000
 ##   Optional  endTime               Number   Number value. Use 0 (or unset default 0) while the job is open.
 ##   Optional  endReason             String   Plain text. Values: expired, unlisted, deleted, restart.
 ## Leave empty to disable PocketBase sync for that feature. Auth lives in SneakyPocketbase's config.
-pocketbase-jobs-collection: ""
-pocketbase-adverts-collection: ""
+## Use the collection name only (e.g. lom2_listed_jobs), not a full API URL.
+pocketbase-jobs-collection: "lom2_listed_jobs"
+pocketbase-adverts-collection: "lom2_adverts"
 ## The poster display string that is provided to the pocketbase. Supports placeholders. "[playerName]" will also work, even without PAPI installed.
 pocketbase-poster: "From: %sneakycharacters_character_name_noformat%"
 ## The location display string that is provided to the pocketbase. Supports placeholders. "[x]", "[y]", "[z]" will also work, even without PAPI installed.
