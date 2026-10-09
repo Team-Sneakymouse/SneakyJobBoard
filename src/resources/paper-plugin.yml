@@ -1,5 +1,5 @@
 name: SneakyJobBoard
-version: 1.0.0
+version: "${version}"
 main: net.sneakyjobboard.SneakyJobBoard
 description: A Minecraft Paper plugin designed for managing the job board on the LoM2 server
 author: Team Sneakymouse
