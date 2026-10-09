@@ -33,6 +33,7 @@ repositories {
 	}
 	mavenCentral()
 	maven("https://repo.papermc.io/repository/maven-public/")
+	maven("https://maven.sneakyrp.com/releases")
 }
 
 dependencies {
@@ -41,8 +42,7 @@ dependencies {
 	compileOnly("me.clip:placeholderapi:2.11.6")
 	compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.4")
-	// Local sibling build output; maven migration deferred.
-	compileOnly(files("../SneakyPocketbase/build/libs/SneakyPocketbase-1.0-api.jar"))
+	compileOnly("io.github.team-sneakymouse:sneakypocketbase-api:2026.10.09-0233c4a041d5")
 }
 
 tasks.processResources {
