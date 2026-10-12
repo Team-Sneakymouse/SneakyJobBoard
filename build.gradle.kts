@@ -91,6 +91,7 @@ publishing {
 				name.set("SneakyJobBoard")
 				description.set("Paper plugin for managing the job board on the LoM2 server")
 				url.set("https://github.com/Team-Sneakymouse/SneakyJobBoard")
+				properties.put("sneakyrp.deployment.type", "paper-plugin")
 				scm {
 					url.set("https://github.com/Team-Sneakymouse/SneakyJobBoard")
 					connection.set("scm:git:https://github.com/Team-Sneakymouse/SneakyJobBoard.git")
