@@ -43,6 +43,21 @@ dependencies {
 	compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.4")
 	compileOnly("io.github.team-sneakymouse:sneakypocketbase-api:2026.10.09-0233c4a041d5")
+
+	testImplementation("org.junit.jupiter:junit-jupiter:5.14.1")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	testImplementation("org.mockito:mockito-core:5.23.0")
+	testImplementation("us.dynmap:dynmap-api:3.4-beta-3") {
+		exclude(group = "org.bukkit", module = "bukkit")
+	}
+	testImplementation("us.dynmap:DynmapCoreAPI:3.4")
+	testImplementation("me.clip:placeholderapi:2.11.6")
+	testImplementation("io.papermc.paper:paper-api:26.2.build.121-stable")
+	testImplementation("io.github.team-sneakymouse:sneakypocketbase-api:2026.10.09-0233c4a041d5")
+}
+
+tasks.test {
+	useJUnitPlatform()
 }
 
 tasks.processResources {

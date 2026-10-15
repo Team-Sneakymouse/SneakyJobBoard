@@ -163,12 +163,13 @@ class JobManager : Listener {
     /**
      * Cleans up all listed jobs and their associated entities.
      * Called during plugin shutdown or reload.
-     * Persist jobs are removed from memory only so PocketBase can restore them on startup.
+     * PocketBase reconciliation handles old records on the next server boot;
+     * shutdown/reload cleanup must not send API requests.
      */
     fun cleanup() {
         val jobIdsToRemove = jobs.values.toList()
         jobIdsToRemove.forEach { job ->
-            job.unlist("restart", syncToPocketbase = !job.persist)
+            job.unlist("restart", syncToPocketbase = false)
         }
 
         // Clean up dynmap markers
