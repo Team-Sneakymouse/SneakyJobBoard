@@ -16,6 +16,7 @@ import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.lang.management.ManagementFactory
 import java.net.URL
 import java.util.*
 import javax.imageio.ImageIO
@@ -27,6 +28,9 @@ import javax.imageio.ImageIO
 class PocketbaseManager {
 
     private val gson = Gson()
+    // Authentication can finish long after players start listing jobs. Plugin reloads
+    // must use the same boundary too: only an actual server boot ends old jobs.
+    private val serverBootTime = ManagementFactory.getRuntimeMXBean().startTime
 
     private fun api() = PocketbaseProvider.getApi()
 
@@ -109,8 +113,9 @@ class PocketbaseManager {
     }
 
     /**
-     * Reconciles open PocketBase job records after a server start.
-     * Non-persist or expired jobs are ended; persist jobs still within duration are restored into JobManager.
+     * Reconciles open PocketBase job records after plugin enable.
+     * Pre-boot ephemeral jobs and expired persistent jobs are ended; unexpired persistent
+     * jobs are restored, including those created during this boot before a plugin reload.
      * Must be called asynchronously.
      */
     @Synchronized
@@ -118,7 +123,7 @@ class PocketbaseManager {
         val collection = jobsCollection() ?: return
 
         try {
-            val items = api().getFullList(collection, 100, "", "endTime='0'").join()
+            val items = api().getFullList(collection, 100, "", "endTime='0' && (startTime<$serverBootTime || persist=true)").join()
                 .map { JsonParser.parseString(it).asJsonObject }
 
             val now = System.currentTimeMillis()
@@ -128,6 +133,10 @@ class PocketbaseManager {
                 val recordID = item.get("id").asString
                 val persist = parseBooleanField(item, "persist")
                 val startTime = item.get("startTime")?.takeUnless { it.isJsonNull }?.asLong ?: 0L
+                // Only jobs from before this JVM boot are eligible for restart cleanup.
+                // Durable jobs from this boot still need restoration on plugin re-enable.
+                val predatesBoot = startTime < serverBootTime
+                if (!predatesBoot && !persist) return@forEach
                 val durationMillis = item.get("durationMillis")?.takeUnless { it.isJsonNull }?.asLong ?: 0L
                 val expired = startTime + durationMillis <= now
 
@@ -145,7 +154,7 @@ class PocketbaseManager {
                     .getJobCategories().values.find { it.name == categoryName }
                 if (jobCategory == null) {
                     SneakyJobBoard.log("Cannot restore job $recordID: unknown category '$categoryName'")
-                    endJobRecord(collection, recordID, "restart")
+                    if (predatesBoot) endJobRecord(collection, recordID, "restart")
                     return@forEach
                 }
 
@@ -153,7 +162,7 @@ class PocketbaseManager {
                 val location = locationString?.let { parseStoredLocation(it) }
                 if (location == null) {
                     SneakyJobBoard.log("Cannot restore job $recordID: invalid location '$locationString'")
-                    endJobRecord(collection, recordID, "restart")
+                    if (predatesBoot) endJobRecord(collection, recordID, "restart")
                     return@forEach
                 }
 
@@ -182,10 +191,17 @@ class PocketbaseManager {
 
             if (jobsToRestore.isNotEmpty()) {
                 Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
+                    val manager = SneakyJobBoard.getJobManager()
+                    var restored = 0
                     jobsToRestore.forEach { job ->
-                        SneakyJobBoard.getJobManager().list(job, sendToPocketbase = false)
+                        // Check on the main thread: listings may arrive while auth or this task waits.
+                        if (manager.jobs.containsKey(job.uuid) || manager.jobs.values.any { it.recordID == job.recordID }) {
+                            return@forEach
+                        }
+                        manager.list(job, sendToPocketbase = false)
+                        restored++
                     }
-                    SneakyJobBoard.log("Restored ${jobsToRestore.size} persist job(s) from PocketBase.")
+                    SneakyJobBoard.log("Restored $restored persist job(s) from PocketBase.")
                 })
             }
         } catch (e: Exception) {
