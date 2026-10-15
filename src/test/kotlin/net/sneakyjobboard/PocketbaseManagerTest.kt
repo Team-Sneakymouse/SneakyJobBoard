@@ -13,6 +13,62 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.CompletableFuture
 
 class PocketbaseManagerTest {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = [25565, 25642])
+    fun `new job create payload includes the backend listening port as a JSON number`(port: Int) {
+        val plugin = mock(SneakyJobBoard::class.java)
+        // Identical plugin configuration on every backend: the port comes from Paper.
+        val config = YamlConfiguration().apply { set("pocketbase-jobs-collection", "jobs") }
+        `when`(plugin.config).thenReturn(config)
+        `when`(plugin.logger).thenReturn(java.util.logging.Logger.getAnonymousLogger())
+        val instance = SneakyJobBoard::class.java.getDeclaredField("instance").apply { isAccessible = true }
+        val previous = instance.get(null)
+        instance.set(null, plugin)
+        try {
+            val api = mock(PocketbaseApi::class.java)
+            `when`(api.create(eq("jobs"), anyString()))
+                .thenReturn(CompletableFuture.completedFuture("""{"id":"new-job"}"""))
+            val scheduler = mock(org.bukkit.scheduler.BukkitScheduler::class.java)
+            val tasks = mutableListOf<Runnable>()
+            `when`(scheduler.runTaskAsynchronously(eq(plugin), any(Runnable::class.java))).thenAnswer {
+                tasks.add(it.getArgument(1))
+                mock(org.bukkit.scheduler.BukkitTask::class.java)
+            }
+            val player = mock(org.bukkit.entity.Player::class.java, RETURNS_DEEP_STUBS)
+            `when`(player.name).thenReturn("Poster")
+            `when`(player.playerProfile.textures.skin).thenReturn(null)
+            val category = mock(net.sneakyjobboard.job.JobCategory::class.java)
+            `when`(category.name).thenReturn("category")
+            `when`(category.description).thenReturn("description")
+            `when`(category.discordEmbedIcon).thenReturn("https://example.com/icon.png")
+            val job = net.sneakyjobboard.job.Job(
+                category, player, org.bukkit.Location(null, 1.0, 2.0, 3.0), 60000L, false
+            )
+            mockStatic(org.bukkit.Bukkit::class.java).use { bukkit ->
+                bukkit.`when`<Int> { org.bukkit.Bukkit.getPort() }.thenReturn(port)
+                bukkit.`when`<org.bukkit.scheduler.BukkitScheduler> { org.bukkit.Bukkit.getScheduler() }.thenReturn(scheduler)
+                mockStatic(PocketbaseProvider::class.java).use { provider ->
+                    provider.`when`<PocketbaseApi> { PocketbaseProvider.getApi() }.thenReturn(api)
+                    PocketbaseManager().listJob(job)
+                    assertEquals(1, tasks.size)
+                    tasks.single().run()
+
+                    val payload = ArgumentCaptor.forClass(String::class.java)
+                    verify(api).create(eq("jobs"), payload.capture())
+                    val json = JsonParser.parseString(payload.value).asJsonObject
+                    assertTrue(json.has("serverPort"), "New jobs must include serverPort")
+                    assertTrue(json["serverPort"].asJsonPrimitive.isNumber, "serverPort must be a JSON number")
+                    assertEquals(port, json["serverPort"].asInt)
+                    assertEquals(job.uuid, json["uuid"].asString)
+                    assertEquals("Poster", json["poster"].asString)
+                    assertEquals("new-job", job.recordID)
+                }
+            }
+        } finally {
+            instance.set(null, previous)
+        }
+    }
+
     @Test
     fun `plugin re-enable restores an open persistent job from this boot`() {
         val boot = ManagementFactory.getRuntimeMXBean().startTime
