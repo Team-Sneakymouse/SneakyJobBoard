@@ -362,6 +362,7 @@ class PocketbaseManager {
 
         return mapOf(
             "uuid" to job.uuid,
+            "serverPort" to Bukkit.getPort(),
             "category" to job.category.name,
             "poster" to poster.name,
             "posterDisplayString" to displayStringPoster,
