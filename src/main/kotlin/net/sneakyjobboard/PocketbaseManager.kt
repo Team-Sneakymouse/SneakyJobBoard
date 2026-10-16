@@ -259,18 +259,23 @@ class PocketbaseManager {
     @Synchronized
     fun getJobHistory(player: Player, durationMillis: Long) {
         val collection = jobsCollection() ?: return
+        val serverPort = Bukkit.getPort()
 
         Bukkit.getScheduler().runTaskAsynchronously(SneakyJobBoard.getInstance(), Runnable {
             try {
                 // Sort newest -> oldest so slot 0 is the latest post.
                 val items = api().getFullList(
-                    collection, 100, "-created", "poster='${player.name}'"
+                    collection, 100, "-created", "poster='${player.name}' && serverPort=$serverPort"
                 ).join().map { JsonParser.parseString(it).asJsonObject }
 
                 val jobHistory = mutableListOf<Job>()
                 val seenJobs = mutableSetOf<Quadruple<String, String, String, String>>()
 
                 for (item in items) {
+                    // Fence before parsing listing fields, deduplicating, or filling history slots.
+                    // Missing/zero-port legacy records have no verified backend ownership.
+                    val recordPort = item.get("serverPort")?.takeUnless { it.isJsonNull }?.asString?.toBigDecimalOrNull()
+                    if (recordPort == null || recordPort.signum() == 0 || recordPort.compareTo(serverPort.toBigDecimal()) != 0) continue
                     if (jobHistory.size >= 9) break
 
                     val category = item.get("category").asString
