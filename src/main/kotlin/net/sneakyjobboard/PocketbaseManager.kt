@@ -121,15 +121,19 @@ class PocketbaseManager {
     @Synchronized
     fun reconcileOpenJobs() {
         val collection = jobsCollection() ?: return
+        val serverPort = Bukkit.getPort()
 
         try {
-            val items = api().getFullList(collection, 100, "", "endTime='0' && (startTime<$serverBootTime || persist=true)").join()
+            val items = api().getFullList(collection, 100, "", "endTime='0' && serverPort=$serverPort && (startTime<$serverBootTime || persist=true)").join()
                 .map { JsonParser.parseString(it).asJsonObject }
 
             val now = System.currentTimeMillis()
             val jobsToRestore = mutableListOf<Job>()
 
             items.forEach { item ->
+                // Unowned legacy rows (missing/zero port) must not be claimed by this server.
+                val recordPort = item.get("serverPort")?.takeUnless { it.isJsonNull }?.asString?.toBigDecimalOrNull()
+                if (recordPort == null || recordPort.signum() == 0 || recordPort.compareTo(serverPort.toBigDecimal()) != 0) return@forEach
                 val recordID = item.get("id").asString
                 val persist = parseBooleanField(item, "persist")
                 val startTime = item.get("startTime")?.takeUnless { it.isJsonNull }?.asLong ?: 0L
