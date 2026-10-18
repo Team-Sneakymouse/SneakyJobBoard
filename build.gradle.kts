@@ -43,7 +43,7 @@ dependencies {
 	compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.4")
 	compileOnly("io.github.team-sneakymouse:sneakypocketbase-api:2026.10.09-0233c4a041d5")
-	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.10.18-4b5831b0b997")
+	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.10.18-657d452bd6f4")
 
 	testImplementation("org.junit.jupiter:junit-jupiter:5.14.1")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
