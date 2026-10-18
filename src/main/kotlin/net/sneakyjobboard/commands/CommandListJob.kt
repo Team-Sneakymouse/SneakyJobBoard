@@ -6,7 +6,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobCategory
-import net.sneakyjobboard.util.TextUtility
+import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player

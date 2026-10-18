@@ -2,7 +2,6 @@ package net.sneakyjobboard
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
 import org.bukkit.entity.Player
-import org.jetbrains.annotations.NotNull
 
 /**
  * Provides PlaceholderAPI integration for the SneakyJobBoard plugin.
@@ -14,7 +13,7 @@ class Placeholders : PlaceholderExpansion() {
      * Returns the identifier used for this placeholder expansion.
      * @return The plugin's identifier
      */
-    override fun getIdentifier(): @NotNull String {
+    override fun getIdentifier(): String {
         return SneakyJobBoard.IDENTIFIER
     }
 
@@ -22,7 +21,7 @@ class Placeholders : PlaceholderExpansion() {
      * Returns the author(s) of this placeholder expansion.
      * @return The plugin's authors
      */
-    override fun getAuthor(): @NotNull String {
+    override fun getAuthor(): String {
         return SneakyJobBoard.AUTHORS
     }
 
@@ -30,7 +29,7 @@ class Placeholders : PlaceholderExpansion() {
      * Returns the version of this placeholder expansion.
      * @return The plugin's version
      */
-    override fun getVersion(): @NotNull String {
+    override fun getVersion(): String {
         return SneakyJobBoard.VERSION
     }
 

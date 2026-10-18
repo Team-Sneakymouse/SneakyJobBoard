@@ -2,7 +2,7 @@ package net.sneakyjobboard.advert
 
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.util.ItemModelUtility
-import net.sneakyjobboard.util.TextUtility
+import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler

@@ -4,7 +4,7 @@ import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.ItemModelUtility
-import net.sneakyjobboard.util.TextUtility
+import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.event.EventHandler

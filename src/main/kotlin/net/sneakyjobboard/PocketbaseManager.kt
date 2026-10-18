@@ -8,7 +8,7 @@ import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobHistoryInventoryHolder
 import net.sneakyjobboard.advert.Advert
-import net.sneakyjobboard.util.TextUtility
+import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.Material

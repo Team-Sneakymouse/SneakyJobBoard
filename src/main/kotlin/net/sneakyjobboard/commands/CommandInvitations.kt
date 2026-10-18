@@ -1,7 +1,7 @@
 package net.sneakyjobboard.commands
 
 import net.sneakyjobboard.advert.AdvertInvitationInterface
-import net.sneakyjobboard.util.TextUtility
+import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player

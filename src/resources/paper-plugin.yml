@@ -8,6 +8,10 @@ api-version: "26.2"
 
 dependencies:
   server:
+    SneakyUtils:
+      load: BEFORE
+      required: true
+      join-classpath: true
     SneakyPocketbase:
       load: BEFORE
       required: true

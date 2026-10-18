@@ -2,7 +2,7 @@ package net.sneakyjobboard.advert
 
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
-import net.sneakyjobboard.util.TextUtility
+import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material

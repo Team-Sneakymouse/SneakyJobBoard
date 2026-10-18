@@ -6,7 +6,7 @@ import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.advert.Advert
 import net.sneakyjobboard.advert.AdvertCategory
 import net.sneakyjobboard.advert.AdvertIconSelector
-import net.sneakyjobboard.util.TextUtility
+import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
