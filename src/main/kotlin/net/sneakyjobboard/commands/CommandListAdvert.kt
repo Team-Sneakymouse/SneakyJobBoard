@@ -1,7 +1,6 @@
 package net.sneakyjobboard.commands
 
-import io.papermc.paper.event.player.AsyncChatEvent
-import net.kyori.adventure.text.TextComponent
+import net.sneakyjobboard.dialog.TextInputDialogs
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.advert.Advert
 import net.sneakyjobboard.advert.AdvertCategory
@@ -11,35 +10,14 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.HandlerList
-import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerQuitEvent
 
 /**
  * Command for creating and listing advertisements.
- * Handles both direct command listing and interactive advertisement creation through chat.
+ * Handles both direct command listing and interactive advertisement creation through a dialog.
  */
 class CommandListAdvert : CommandBase("listadvert") {
 
     companion object {
-        private val playerListeners = mutableMapOf<Player, Listener>()
-
-        /** Unregisters any active chat listener for a player. */
-        fun unregisterListener(player: Player) {
-            playerListeners[player]?.let {
-                HandlerList.unregisterAll(it)
-                playerListeners.remove(player)
-            }
-        }
-
-        /** Registers a new chat listener for a player, removing any existing one. */
-        private fun registerListener(player: Player, listener: Listener) {
-            unregisterListener(player)
-            playerListeners[player] = listener
-            Bukkit.getPluginManager().registerEvents(listener, SneakyJobBoard.getInstance())
-        }
-
         /**
          * Starts the advertisement creation process after icon selection.
          * Guides the player through entering title and description.
@@ -59,39 +37,7 @@ class CommandListAdvert : CommandBase("listadvert") {
             advert.iconMaterial = iconMaterial
             advert.iconCustomModelData = iconCustomModelData
 
-            // Register chat listener for title and description
-            val chatListener = object : Listener {
-                var waitingForTitle = true
-
-                @EventHandler
-                fun onChat(event: AsyncChatEvent) {
-                    if (event.player != player) return
-
-                    event.isCancelled = true
-                    val message = (event.message() as TextComponent).content()
-
-                    if (waitingForTitle) {
-                        advert.name = message
-                        waitingForTitle = false
-                        player.sendMessage(TextUtility.convertToComponent("&aEnter the description for your advert:"))
-                    } else {
-                        advert.description = message
-                        unregisterListener(player)
-                        SneakyJobBoard.getAdvertManager().list(advert)
-                        player.sendMessage(TextUtility.convertToComponent("&aAdvert listed successfully!"))
-                    }
-                }
-
-                @EventHandler
-                fun onQuit(event: PlayerQuitEvent) {
-                    if (event.player == player) {
-                        unregisterListener(player)
-                    }
-                }
-            }
-
-            registerListener(player, chatListener)
-            player.sendMessage(TextUtility.convertToComponent("&aEnter the title for your advert:"))
+            TextInputDialogs.createAdvert(player, advert)
         }
     }
 
@@ -136,6 +82,7 @@ class CommandListAdvert : CommandBase("listadvert") {
             foundCategory
         } else null
 */
+        TextInputDialogs.cancel(player)
         // Open the icon selector with the selected category (or null)
         AdvertIconSelector.open(player, null)
         return true

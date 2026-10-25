@@ -45,6 +45,7 @@ dependencies {
 	compileOnly("io.github.team-sneakymouse:sneakypocketbase-api:2026.10.09-0233c4a041d5")
 	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.10.18-657d452bd6f4")
 
+	testImplementation("io.github.team-sneakymouse:sneakyutils:2026.10.18-657d452bd6f4")
 	testImplementation("org.junit.jupiter:junit-jupiter:5.14.1")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.mockito:mockito-core:5.23.0")

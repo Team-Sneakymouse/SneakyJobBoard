@@ -1,8 +1,6 @@
 package net.sneakyjobboard.commands
 
-import io.papermc.paper.event.player.AsyncChatEvent
-import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.minimessage.MiniMessage
+import net.sneakyjobboard.dialog.TextInputDialogs
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobCategory
@@ -10,36 +8,13 @@ import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.HandlerList
-import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.Location
 
 /**
  * Command for listing jobs to the job board.
- * Handles both direct command listing and interactive job creation through chat.
+ * Handles both direct command listing and interactive job creation through a dialog.
  */
 class CommandListJob : CommandBase("listjob") {
-
-    companion object {
-        private val playerListeners = mutableMapOf<Player, Listener>()
-
-        /** Unregisters any active chat listener for a player. */
-        fun unregisterListener(player: Player) {
-            playerListeners[player]?.let {
-                HandlerList.unregisterAll(it)
-                playerListeners.remove(player)
-            }
-        }
-
-        /** Registers a new chat listener for a player, removing any existing one. */
-        fun registerListener(player: Player, listener: Listener) {
-            unregisterListener(player)
-            playerListeners[player] = listener
-            Bukkit.getPluginManager().registerEvents(listener, SneakyJobBoard.getInstance())
-        }
-    }
 
     init {
         this.usageMessage =
@@ -179,6 +154,8 @@ class CommandListJob : CommandBase("listjob") {
                 job.name = nameAndDesc[0].substring(1)
                 job.description = nameAndDesc[1].substring(0, nameAndDesc[1].length - 1)
 
+                player?.let { TextInputDialogs.cancel(it) }
+
                 // List the job without additional input
                 SneakyJobBoard.getJobManager().list(job)
 
@@ -189,10 +166,7 @@ class CommandListJob : CommandBase("listjob") {
                 return false
             }
         } else if (player != null) {
-            // If the name and description are not passed, prompt for them
-            player.sendMessage(TextUtility.convertToComponent("&ePlease type the name of the job."))
-
-            registerListener(player, JobNameInputListener(player, job))
+            TextInputDialogs.job(player, job)
         }
 
         return true
@@ -233,112 +207,6 @@ class CommandListJob : CommandBase("listjob") {
 
             else -> emptyList()
         }
-    }
-}
-
-/**
- * Listener for receiving job name input from a player.
- * Handles chat events during the job creation process.
- *
- * @property sender The player creating the job
- * @property job The job being created
- */
-class JobNameInputListener(private val sender: Player, private val job: Job) : Listener {
-
-    /**
-     * Handles chat events for the job name input.
-     *
-     * @param event The chat event triggered when a player sends a message.
-     */
-    @EventHandler
-    fun onPlayerChat(event: AsyncChatEvent) {
-        if (event.player == sender) {
-            val name = MiniMessage.miniMessage().escapeTags(
-                TextUtility.replaceFormatCodes((event.message() as TextComponent).content().replace("|", ""))
-            )
-
-            job.name = name
-            event.isCancelled = true
-            sender.sendMessage(
-                TextUtility.convertToComponent(
-                    "&eJob name set to: &3'$name'\n&eNow please type the description of the job."
-                )
-            )
-
-            CommandListJob.registerListener(sender, JobDescriptionInputListener(sender, job))
-        }
-    }
-
-    /**
-     * Handles player quit events to unregister the listener.
-     *
-     * @param event The event triggered when a player quits.
-     */
-    @EventHandler
-    fun onPlayerQuit(event: PlayerQuitEvent) {
-        if (event.player == sender) {
-            unregisterListener()
-        }
-    }
-
-    /** Unregisters this listener */
-    private fun unregisterListener() {
-        CommandListJob.unregisterListener(sender)
-    }
-}
-
-/**
- * Listener for receiving job description input from a player.
- * Handles chat events during the job creation process.
- *
- * @property sender The player creating the job
- * @property job The job being created
- */
-class JobDescriptionInputListener(private val sender: Player, private val job: Job) : Listener {
-
-    /**
-     * Handles chat events for the job description input.
-     *
-     * @param event The chat event triggered when a player sends a message.
-     */
-    @EventHandler
-    fun onPlayerChat(event: AsyncChatEvent) {
-        if (event.player == sender) {
-            val description = MiniMessage.miniMessage()
-                .escapeTags(TextUtility.replaceFormatCodes((event.message() as TextComponent).content()))
-
-            job.description = description
-            event.isCancelled = true
-
-            Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
-                SneakyJobBoard.getJobManager().list(job)
-
-                sender.sendMessage(
-                    TextUtility.convertToComponent(
-                        "&eJob listed. description set to: &3'$description'&e."
-                    )
-                )
-            })
-
-            unregisterListener()
-        }
-    }
-
-    /**
-     * Handles player quit events to unregister the listener.
-     *
-     * @param event The event triggered when a player quits.
-     */
-    @EventHandler
-    fun onPlayerQuit(event: PlayerQuitEvent) {
-        if (event.player == sender) {
-            unregisterListener()
-        }
-    }
-
-    /** Unregisters this listener */
-    private fun unregisterListener() {
-        CommandListJob.unregisterListener(sender)
     }
 }
 

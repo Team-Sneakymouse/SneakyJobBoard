@@ -1,5 +1,6 @@
 package net.sneakyjobboard.commands
 
+import net.sneakyjobboard.dialog.TextInputDialogs
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
 import com.sneakyutils.util.TextUtility
@@ -56,7 +57,7 @@ class CommandUnlistJob : CommandBase("unlistjob") {
             job = SneakyJobBoard.getJobManager().getJobByName(name)
         } else {
             job = SneakyJobBoard.getJobManager().getLastListedJob(sender)
-            CommandListJob.unregisterListener(sender)
+            TextInputDialogs.cancel(sender)
         }
 
         if (job == null) {

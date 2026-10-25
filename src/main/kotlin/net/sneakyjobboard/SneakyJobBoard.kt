@@ -1,5 +1,6 @@
 package net.sneakyjobboard
 
+import net.sneakyjobboard.dialog.TextInputDialogs
 import net.sneakyjobboard.commands.*
 import net.sneakyjobboard.job.JobCategoryManager
 import net.sneakyjobboard.job.JobHistoryInventoryListener
@@ -84,6 +85,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.pluginManager.registerEvents(advertManager, this)
         server.pluginManager.registerEvents(AdvertManagementListener(), this)
         server.pluginManager.registerEvents(AdvertEditListener(), this)
+        server.pluginManager.registerEvents(TextInputDialogs, this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.admin"))

@@ -1,7 +1,6 @@
 package net.sneakyjobboard.advert
 
-import io.papermc.paper.event.player.AsyncChatEvent
-import net.kyori.adventure.text.TextComponent
+import net.sneakyjobboard.dialog.TextInputDialogs
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.util.ItemModelUtility
 import com.sneakyutils.util.TextUtility
@@ -9,11 +8,9 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
-import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryDragEvent
-import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
@@ -108,8 +105,6 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
     }
 
     companion object {
-        private val editListeners = mutableMapOf<Player, Listener>()
-
         /**
          * Opens the edit interface for a player.
          * @param player The player editing the advertisement
@@ -118,34 +113,12 @@ class AdvertEditInterface(private val player: Player, val advert: Advert) : Inve
         fun open(player: Player, advert: Advert) {
             player.openInventory(AdvertEditInterface(player, advert).inventory)
         }
-
-        /**
-         * Unregisters any active chat listeners for a player.
-         * @param player The player whose listeners to unregister
-         */
-        fun unregisterListener(player: Player) {
-            editListeners[player]?.let {
-                HandlerList.unregisterAll(it)
-                editListeners.remove(player)
-            }
-        }
-
-        /**
-         * Registers a new chat listener for a player.
-         * @param player The player to register the listener for
-         * @param listener The listener to register
-         */
-        fun registerListener(player: Player, listener: Listener) {
-            unregisterListener(player)
-            editListeners[player] = listener
-            Bukkit.getPluginManager().registerEvents(listener, SneakyJobBoard.getInstance())
-        }
     }
 }
 
 /**
  * Handles inventory interaction events for the advertisement edit interface.
- * Processes edit option selection and manages chat input for text changes.
+ * Processes edit option selection and opens a dialog for text changes.
  */
 class AdvertEditListener : Listener {
 
@@ -157,63 +130,7 @@ class AdvertEditListener : Listener {
         val player = event.whoClicked as? Player ?: return
         val advert = holder.advert
 
-        when (event.slot) {
-            2 -> {
-                // Category change
-                player.closeInventory()
-                val chatListener = object : Listener {
-                    @EventHandler
-                    fun onChat(event: AsyncChatEvent) {
-                        if (event.player != player) return
-                        event.isCancelled = true
-
-                        val categoryId = (event.message() as TextComponent).content()
-                        val category = if (categoryId.equals("none", ignoreCase = true)) {
-                            null
-                        } else {
-                            SneakyJobBoard.getAdvertCategoryManager().getCategory(categoryId)
-                        }
-
-                        if (category == null && !categoryId.equals("none", ignoreCase = true)) {
-                            player.sendMessage(TextUtility.convertToComponent("&cInvalid category ID!"))
-                            val categories = listOf("none") + SneakyJobBoard.getAdvertCategoryManager()
-                                .getAdvertCategories().values.map { it.id }
-                            player.sendMessage(
-                                TextUtility.convertToComponent(
-                                    "&eAvailable categories: &b${
-                                        categories.joinToString(
-                                            ", "
-                                        )
-                                    }"
-                                )
-                            )
-                            return
-                        }
-
-                        advert.category = category
-                        SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
-                        player.sendMessage(TextUtility.convertToComponent("&aCategory updated!"))
-                        AdvertEditInterface.unregisterListener(player)
-                        Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
-                            AdvertEditInterface.open(player, advert)
-                        })
-                    }
-
-                    @EventHandler
-                    fun onQuit(event: PlayerQuitEvent) {
-                        if (event.player == player) {
-                            AdvertEditInterface.unregisterListener(player)
-                        }
-                    }
-                }
-
-                AdvertEditInterface.registerListener(player, chatListener)
-                player.sendMessage(TextUtility.convertToComponent("&aEnter the new category ID:"))
-                val categories = listOf("none") + SneakyJobBoard.getAdvertCategoryManager()
-                    .getAdvertCategories().values.map { it.id }
-                player.sendMessage(TextUtility.convertToComponent("&eAvailable categories: &b${categories.joinToString(", ")}"))
-            }
-
+        when (event.rawSlot) {
             4 -> {
                 // Icon change
                 player.closeInventory()
@@ -230,53 +147,8 @@ class AdvertEditListener : Listener {
             }
 
             6 -> {
-                // Text change
                 player.closeInventory()
-                val chatListener = object : Listener {
-                    var waitingForTitle = true
-
-                    @EventHandler
-                    fun onChat(event: AsyncChatEvent) {
-                        if (event.player != player) return
-                        event.isCancelled = true
-
-                        val message = (event.message() as TextComponent).content()
-
-                        if (waitingForTitle) {
-                            advert.name = message
-                            waitingForTitle = false
-                            player.sendMessage(TextUtility.convertToComponent("&aEnter the new description:"))
-                            player.sendMessage(
-                                TextUtility.convertToComponent("&7Current: &e[Click to use old description]")
-                                    .clickEvent(
-                                        net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.description)
-                                    )
-                            )
-                        } else {
-                            advert.description = message
-                            SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
-                            AdvertEditInterface.unregisterListener(player)
-                            Bukkit.getScheduler().runTask(SneakyJobBoard.getInstance(), Runnable {
-                                AdvertEditInterface.open(player, advert)
-                            })
-                        }
-                    }
-
-                    @EventHandler
-                    fun onQuit(event: PlayerQuitEvent) {
-                        if (event.player == player) {
-                            AdvertEditInterface.unregisterListener(player)
-                        }
-                    }
-                }
-
-                AdvertEditInterface.registerListener(player, chatListener)
-                player.sendMessage(TextUtility.convertToComponent("&aEnter the new title:"))
-                player.sendMessage(
-                    TextUtility.convertToComponent("&7Current: &e[Click to use old title]").clickEvent(
-                        net.kyori.adventure.text.event.ClickEvent.suggestCommand(advert.name)
-                    )
-                )
+                TextInputDialogs.editAdvert(player, advert)
             }
 
             8 -> {
