@@ -166,7 +166,7 @@ class CommandListJob : CommandBase("listjob") {
                 return false
             }
         } else if (player != null) {
-            TextInputDialogs.job(player, job)
+            TextInputDialogs.jobFromCommand(player, job)
         }
 
         return true
