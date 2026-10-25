@@ -11,19 +11,19 @@
 - Player identity, current draft token, online/enabled state and single consumption protect submissions. All mutation runs in a Bukkit server task. Quit and plugin-disable events invalidate pending drafts, including already queued submissions. New dialogs, a new advert command, explicit job listing and `/unlistjob` cancel replaced drafts.
 - Advert submission rechecks ownership, deleted/existing state, and the eight-advert limit for creation. Editing requires the exact advert to remain registered. The category edit button remains disabled; its obsolete chat handler was removed too.
 
-No database schema or icon-selector implementation changes.
+No database schema changes. The two inventory-to-dialog transitions defer both inventory close and dialog opening to the next server tick, rechecking the original view, online/enabled state and current flow token. Icon editing and selector navigation are otherwise unchanged.
 
 ## Automated verification
 
 Pinned project toolchain: Paper `26.2.build.121-stable`, Java 25, Kotlin `2.4.10`.
 
 ```sh
-./gradlew clean build --max-workers=1 \
+./gradlew --no-daemon --rerun-tasks --no-build-cache build --max-workers=1 \
   -Dorg.gradle.jvmargs='-Xmx512m -XX:ActiveProcessorCount=2' \
   -Pkotlin.compiler.execution.strategy=in-process
 ```
 
-Actual final result: `BUILD SUCCESSFUL`; JUnit XML contains **56 tests, 0 failures, 0 errors, 0 skipped** (34 dialog tests, 2 history tests, 20 PocketBase tests).
+Actual final result: `BUILD SUCCESSFUL`; JUnit XML contains **69 tests, 0 failures, 0 errors, 0 skipped** (47 dialog tests, 2 history tests, 20 PocketBase tests).
 
 Observed RED → GREEN checkpoints included:
 
@@ -41,9 +41,9 @@ Observed RED → GREEN checkpoints included:
 | Foreign-player prefill disclosure guard | 32 tests, 1 failure | 32 passed |
 | Advert command retains selector and replaces old draft | 33 tests, 1 failure | 33 passed |
 
-A final console target-player/location characterization test brings dialog coverage to 34 tests. Test-fixture setup failures were fixed separately from behavioral RED evidence.
+The console target-player/location characterization test originally brought dialog coverage to 34 tests. Lifecycle regressions now bring it to 47: the actual edit and icon-selection listeners prove no inventory close or dialog display inside the click event, and positive display after the queued task. Both flows reject changed views, offline players, disabled plugins, replaced drafts, quit and disable lifecycle events. Observed RED checkpoints: edit transition 1/1 failed, creation transition 1/1 failed, and stale lifecycle 12/12 failed; all subsequently passed. Test-fixture setup failures were fixed separately from behavioral RED evidence.
 
-Tests exercise real commands, the real edit listener, real `Dialog.create` and public input/action factories, registered submission/cancel callbacks, and queued server tasks. Paper registry/provider implementations, Bukkit infrastructure, inventory construction and persistence managers are mocked at their boundaries; this does not verify native server serialization, client rendering or live PocketBase persistence.
+Tests exercise real commands, the real edit and icon-selector listeners, real `Dialog.create` and public input/action factories, registered submission/cancel callbacks, and queued server tasks. Paper registry/provider implementations, Bukkit infrastructure, inventory construction and persistence managers are mocked at their boundaries; this does not verify native server serialization, client rendering or live PocketBase persistence.
 
 The clean build retains existing custom-model-data/cast warnings, Gradle deprecation notices and Mockito/JVM instrumentation notices. Independent review is deferred to the parent reviewer before push/PR, as requested; no `[verified]` commit prefix is used.
 

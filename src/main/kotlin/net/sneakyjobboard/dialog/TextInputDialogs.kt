@@ -37,6 +37,20 @@ object TextInputDialogs : Listener {
 
     fun cancel(player: Player) { pending.remove(player.uniqueId) }
 
+    /** Leave the click event before changing views; superseded flows must not reopen UI. */
+    fun fromInventory(player: Player, view: org.bukkit.inventory.InventoryView, open: () -> Unit) {
+        val plugin = SneakyJobBoard.getInstance()
+        val token = Any()
+        pending[player.uniqueId] = token
+        Bukkit.getScheduler().runTask(plugin, Runnable {
+            if (pending[player.uniqueId] !== token) return@Runnable
+            pending.remove(player.uniqueId)
+            if (!plugin.isEnabled || !player.isOnline || player.openInventory !== view) return@Runnable
+            player.closeInventory()
+            open()
+        })
+    }
+
     fun job(player: Player, job: Job) {
         open(player, "List Job", "Name", "", "", "Submit", true) { title, description ->
             job.name = escape(title.replace("|", ""))

@@ -147,8 +147,9 @@ class AdvertEditListener : Listener {
             }
 
             6 -> {
-                player.closeInventory()
-                TextInputDialogs.editAdvert(player, advert)
+                TextInputDialogs.fromInventory(player, event.view) {
+                    TextInputDialogs.editAdvert(player, advert)
+                }
             }
 
             8 -> {

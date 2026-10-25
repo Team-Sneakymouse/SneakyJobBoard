@@ -64,7 +64,7 @@ class DialogInputTest {
         bukkit = mockStatic(Bukkit::class.java).also { resources.add(it) }
         bukkit.`when`<PluginManager> { Bukkit.getPluginManager() }.thenReturn(mock(PluginManager::class.java))
         val scheduler = mock(BukkitScheduler::class.java)
-        `when`(scheduler.runTask(eq(plugin), any(Runnable::class.java))).thenAnswer { tasks.add(it.getArgument(1)); null }
+        `when`(scheduler.runTask(eq(plugin), any(Runnable::class.java))).thenAnswer { tasks.add(it.getArgument(1)); mock(org.bukkit.scheduler.BukkitTask::class.java) }
         bukkit.`when`<BukkitScheduler> { Bukkit.getScheduler() }.thenReturn(scheduler)
         bukkit.`when`<Boolean> { Bukkit.isPrimaryThread() }.thenReturn(true)
         val access = mockStatic(RegistryAccess::class.java).also { resources.add(it) }
@@ -205,7 +205,11 @@ class DialogInputTest {
         `when`(event.whoClicked).thenReturn(player)
         `when`(event.slot).thenReturn(slot)
         `when`(event.rawSlot).thenReturn(rawSlot)
+        val view = mock(org.bukkit.inventory.InventoryView::class.java)
+        `when`(event.view).thenReturn(view)
+        `when`(player.openInventory).thenReturn(view)
         net.sneakyjobboard.advert.AdvertEditListener().onInventoryClick(event)
+        verify(event).setCancelled(true)
     }
 
     @Test
@@ -217,6 +221,11 @@ class DialogInputTest {
         val pocketbase = mock(PocketbaseManager::class.java)
         setManager("pocketBaseManager", pocketbase)
         clickEdit(advert)
+        verify(player, never()).closeInventory()
+        verify(player, never()).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
+        assertEquals(1, tasks.size)
+        tasks.removeAt(0).run()
+        verify(player).closeInventory()
         verify(player).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
         verify(provider.textBuilder("title", net.kyori.adventure.text.Component.text("Title"))).initial("Old")
         verify(provider.textBuilder("description", net.kyori.adventure.text.Component.text("Description"))).initial("Old description")
@@ -229,6 +238,58 @@ class DialogInputTest {
         assertEquals("New", advert.name)
         assertEquals("New description", advert.description)
         verify(pocketbase).updateAdvert(advert)
+    }
+
+    private fun clickCreationIcon() {
+        val adverts = mock(net.sneakyjobboard.advert.AdvertManager::class.java)
+        setManager("advertManager", adverts)
+        val key = org.bukkit.NamespacedKey("test", "icon")
+        `when`(adverts.IDKEY).thenReturn(key)
+        val holder = mock(net.sneakyjobboard.advert.AdvertIconSelector::class.java)
+        val inventory = mock(org.bukkit.inventory.Inventory::class.java)
+        `when`(inventory.holder).thenReturn(holder)
+        val view = mock(org.bukkit.inventory.InventoryView::class.java)
+        `when`(player.openInventory).thenReturn(view)
+        val item = mock(org.bukkit.inventory.ItemStack::class.java, RETURNS_DEEP_STUBS)
+        `when`(item.itemMeta.persistentDataContainer.get(key, org.bukkit.persistence.PersistentDataType.STRING)).thenReturn("DIAMOND,42")
+        val event = mock(org.bukkit.event.inventory.InventoryClickEvent::class.java)
+        `when`(event.inventory).thenReturn(inventory)
+        `when`(event.view).thenReturn(view)
+        `when`(event.whoClicked).thenReturn(player)
+        `when`(event.currentItem).thenReturn(item)
+        net.sneakyjobboard.advert.AdvertIconSelectorListener().onInventoryClick(event)
+        verify(event).setCancelled(true)
+    }
+
+    @Test
+    fun `creation icon click defers close and dialog until next tick`() {
+        clickCreationIcon()
+        verify(player, never()).closeInventory()
+        verify(player, never()).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
+        assertEquals(1, tasks.size)
+        tasks.removeAt(0).run()
+        verify(player).closeInventory()
+        verify(player).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource(
+        "edit,view", "edit,offline", "edit,disabled", "edit,replaced", "edit,quit", "edit,disable",
+        "create,view", "create,offline", "create,disabled", "create,replaced", "create,quit", "create,disable"
+    )
+    fun `queued inventory transition rejects stale lifecycle`(flow: String, reason: String) {
+        if (flow == "edit") clickEdit(net.sneakyjobboard.advert.Advert(null, player)) else clickCreationIcon()
+        when (reason) {
+            "view" -> `when`(player.openInventory).thenReturn(mock(org.bukkit.inventory.InventoryView::class.java))
+            "offline" -> `when`(player.isOnline).thenReturn(false)
+            "disabled" -> `when`(plugin.isEnabled).thenReturn(false)
+            "replaced" -> { openJob(); clearInvocations(player) }
+            "quit" -> TextInputDialogs.onQuit(mock(org.bukkit.event.player.PlayerQuitEvent::class.java).also { `when`(it.player).thenReturn(player) })
+            "disable" -> TextInputDialogs.onDisable(org.bukkit.event.server.PluginDisableEvent(plugin))
+        }
+        tasks.toList().forEach { it.run() }
+        verify(player, never()).closeInventory()
+        verify(player, never()).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
     }
 
     @Test
