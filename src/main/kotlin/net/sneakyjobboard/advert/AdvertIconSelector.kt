@@ -198,8 +198,9 @@ class AdvertIconSelectorListener : Listener {
                     holder.callback.invoke(material, customModelData)
                 } else {
                     // Start the advert creation process with the selected icon and category
-                    player.closeInventory()
-                    CommandListAdvert.startAdvertCreation(player, material, customModelData, holder.category)
+                    net.sneakyjobboard.dialog.TextInputDialogs.fromInventory(player, event.view) {
+                        CommandListAdvert.startAdvertCreation(player, material, customModelData, holder.category)
+                    }
                 }
             }
         }
