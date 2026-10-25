@@ -13,6 +13,16 @@
 
 No database schema changes. The two inventory-to-dialog transitions defer both inventory close and dialog opening to the next server tick, rechecking the original view, online/enabled state and current flow token. Icon editing and selector navigation are otherwise unchanged.
 
+## Command timing follow-up
+
+The command entry point still called `showDialog` synchronously, unlike the advert inventory listeners. Both player and console-target-player interactive `/listjob` now reserve a flow token immediately, then close inventory and open the dialog in one next-tick task. This invalidates prior submitted callbacks before the task runs. Location and command options remain captured at command execution; explicit full-text commands remain immediate. Interactive success is exactly yellow `Job listed.` without echoing either field; other feedback is unchanged.
+
+The queued command accepts the originating view or the ordinary closed-player CRAFTING view, rather than requiring the original inventory to remain open. A different non-CRAFTING inventory cancels the opening. Assumption: a changed CRAFTING view represents a normal close; navigation away and back to the player inventory within the same tick cannot be distinguished. Advert listener transitions retain their stricter original-view checks and gain no extra delay.
+
+Observed follow-up RED → GREEN: both player/console timing cases failed because `showDialog` ran inline (2/2), then both passed after command-boundary deferral. The yellow-success test failed on the uncoloured component (1/1), then passed. Additional regressions cover queued request replacement, explicit listing, unlist, offline, quit/disable, inventory navigation and stale already-queued submissions. The fixture drains a snapshot per explicit queue turn; callbacks added during that turn do not run in that same turn. API-only InventoryType setup required stubbing the MENU registry `getOrThrow(Key)` before enum initialization; setup failures are not counted as behavioral RED evidence.
+
+This proves command-boundary ordering against a simulated caller that closes inventory after command return, not the unknown live inventory provider. No server changes or live reproduction were performed.
+
 ## Automated verification
 
 Pinned project toolchain: Paper `26.2.build.121-stable`, Java 25, Kotlin `2.4.10`.
@@ -23,7 +33,7 @@ Pinned project toolchain: Paper `26.2.build.121-stable`, Java 25, Kotlin `2.4.10
   -Pkotlin.compiler.execution.strategy=in-process
 ```
 
-Actual final result: `BUILD SUCCESSFUL`; JUnit XML contains **69 tests, 0 failures, 0 errors, 0 skipped** (47 dialog tests, 2 history tests, 20 PocketBase tests).
+Actual follow-up result: `BUILD SUCCESSFUL` with `--rerun-tasks --no-build-cache`; JUnit XML contains **89 tests, 0 failures, 0 errors, 0 skipped** (67 dialog tests, 2 history tests, 20 PocketBase tests).
 
 Observed RED → GREEN checkpoints included:
 
@@ -49,7 +59,7 @@ The clean build retains existing custom-model-data/cast warnings, Gradle depreca
 
 ## In-game checklist — not yet verified
 
-1. Run `/listjob <category> <duration>`; verify one screen, Name, multiline Description, Submit and Cancel. Submit formatting tags, ampersand codes, a pipe in each field and actual description line breaks; check the board and persisted record.
+1. Run `/listjob <category> <duration>` from chat and the actual inventory button, both as the player and via a console command targeting that player. Confirm the menu can close after dispatch and the dialog survives the next tick; inspect the provider configuration/source if it schedules a later close. Verify yellow `Job listed.` only on Submit, and verify one screen, Name, multiline Description, Submit and Cancel. Submit formatting tags, ampersand codes, a pipe in each field and actual description line breaks; check the board and persisted record.
 2. Repeat Cancel and Escape for job creation, advert creation and prefilled advert editing. Confirm no listing, text mutation or persistence write; normal chat must remain unaffected.
 3. Run `/listadvert`; verify original icon navigation and selection, then both text fields together. Submit and confirm selected material/model data and text on the advert board.
 4. Open Change Text; confirm both old fields are prefilled, Save applies both together, and the edit menu reopens. Confirm the category control is still absent/disabled and player-inventory slots cannot activate menu actions.

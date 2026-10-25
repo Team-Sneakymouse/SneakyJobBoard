@@ -51,12 +51,30 @@ object TextInputDialogs : Listener {
         })
     }
 
+    /** Commands may run inside foreign inventory clicks. Allow their normal close, but not navigation. */
+    fun jobFromCommand(player: Player, job: Job) {
+        val plugin = SneakyJobBoard.getInstance()
+        val view: org.bukkit.inventory.InventoryView? = player.openInventory
+        val token = Any()
+        pending[player.uniqueId] = token // Invalidate old callbacks at request time, not next tick.
+        Bukkit.getScheduler().runTask(plugin, Runnable {
+            if (pending[player.uniqueId] !== token) return@Runnable
+            pending.remove(player.uniqueId)
+            if (!plugin.isEnabled || !player.isOnline) return@Runnable
+            val current: org.bukkit.inventory.InventoryView? = player.openInventory
+            if (current !== view && current != null &&
+                current.topInventory.type != org.bukkit.event.inventory.InventoryType.CRAFTING) return@Runnable
+            player.closeInventory()
+            job(player, job)
+        })
+    }
+
     fun job(player: Player, job: Job) {
         open(player, "List Job", "Name", "", "", "Submit", true) { title, description ->
             job.name = escape(title.replace("|", ""))
             job.description = escape(description)
             SneakyJobBoard.getJobManager().list(job)
-            player.sendMessage(Component.text("Job listed."))
+            player.sendMessage(Component.text("Job listed.", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
         }
     }
 

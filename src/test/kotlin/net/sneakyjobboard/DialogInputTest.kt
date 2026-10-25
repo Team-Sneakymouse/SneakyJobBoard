@@ -73,6 +73,7 @@ class DialogInputTest {
         @Suppress("UNCHECKED_CAST")
         val registry = mock(Registry::class.java) as Registry<Dialog>
         `when`(registryAccess.getRegistry(RegistryKey.DIALOG)).thenReturn(registry)
+        doReturn(null).`when`(Registry.MENU).getOrThrow(any(net.kyori.adventure.key.Key::class.java))
         provider = mock(DialogInstancesProvider::class.java, RETURNS_DEEP_STUBS)
         val providers = mockStatic(DialogInstancesProvider::class.java).also { resources.add(it) }
         providers.`when`<DialogInstancesProvider> { DialogInstancesProvider.instance() }.thenReturn(provider)
@@ -109,7 +110,47 @@ class DialogInputTest {
         return response
     }
 
-    private fun openJob() = CommandListJob().execute(player, "listjob", arrayOf("work", "1000"))
+    private fun tick() {
+        val turn = tasks.toList()
+        tasks.clear()
+        turn.forEach { it.run() }
+    }
+
+    private fun requestJob(console: Boolean = false): Boolean {
+        bukkit.`when`<Player> { Bukkit.getPlayer("Poster") }.thenReturn(player)
+        return CommandListJob().execute(
+            if (console) mock(org.bukkit.command.ConsoleCommandSender::class.java) else player,
+            "listjob", if (console) arrayOf("Poster", "work", "1000") else arrayOf("work", "1000")
+        )
+    }
+
+    private fun openJob(): Boolean {
+        val result = requestJob()
+        tick()
+        return result
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = [false, true])
+    fun `interactive command leaves caller inventory close before next tick dialog`(console: Boolean) {
+        val view = mock(org.bukkit.inventory.InventoryView::class.java)
+        `when`(player.openInventory).thenReturn(view)
+        assertTrue(requestJob(console))
+        verify(player, never()).closeInventory()
+        verify(player, never()).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
+        // An external menu may close its own inventory after command execution returns.
+        player.closeInventory()
+        val closed = mock(org.bukkit.inventory.InventoryView::class.java, RETURNS_DEEP_STUBS)
+        `when`(closed.topInventory.type).thenReturn(org.bukkit.event.inventory.InventoryType.CRAFTING)
+        `when`(player.openInventory).thenReturn(closed)
+        tick()
+        verify(player).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
+        assertTrue(tasks.isEmpty(), "Opening takes one turn, not an arbitrary extra delay")
+        callbacks.first().accept(response(), player)
+        tick()
+        val job = mockingDetails(jobs).invocations.single { it.method.name == "list" }.arguments[0] as Job
+        assertEquals(Location(null, 1.0, 2.0, 3.0), job.location)
+    }
 
     @Test
     fun `interactive job command constructs two inputs and shows a dialog`() {
@@ -119,6 +160,59 @@ class DialogInputTest {
         verify(provider).textBuilder(eq("description"), any())
         verify(provider).multilineOptions(null, 100)
         verifyNoInteractions(jobs)
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource(
+        "false,offline", "true,offline", "false,disabled", "true,disabled",
+        "false,quit", "true,quit", "false,disable", "true,disable",
+        "false,unlist", "true,unlist", "false,explicit", "true,explicit",
+        "false,navigate", "true,navigate", "false,new", "true,new"
+    )
+    fun `queued command opening respects replacement and lifecycle`(console: Boolean, reason: String) {
+        requestJob(console)
+        when (reason) {
+            "offline" -> `when`(player.isOnline).thenReturn(false)
+            "disabled" -> `when`(plugin.isEnabled).thenReturn(false)
+            "quit" -> TextInputDialogs.onQuit(mock(org.bukkit.event.player.PlayerQuitEvent::class.java).also { `when`(it.player).thenReturn(player) })
+            "disable" -> TextInputDialogs.onDisable(org.bukkit.event.server.PluginDisableEvent(plugin))
+            "unlist" -> net.sneakyjobboard.commands.CommandUnlistJob().execute(player, "unlistjob", arrayOf("expire"))
+            "explicit" -> CommandListJob().execute(player, "listjob", arrayOf("work", "1000", "\"Explicit\"", "\"Description\""))
+            "navigate" -> {
+                val view = mock(org.bukkit.inventory.InventoryView::class.java, RETURNS_DEEP_STUBS)
+                `when`(view.topInventory.type).thenReturn(org.bukkit.event.inventory.InventoryType.CHEST)
+                `when`(player.openInventory).thenReturn(view)
+            }
+            "new" -> requestJob(console)
+        }
+        tasks.removeAt(0).run()
+        verify(player, never()).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
+        verify(player, never()).closeInventory()
+        if (reason == "new") {
+            tick()
+            verify(player).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
+        }
+    }
+
+    @Test
+    fun `new command invalidates previously queued submit immediately`() {
+        openJob()
+        callbacks.first().accept(response(), player)
+        requestJob()
+        tasks.removeAt(0).run()
+        verifyNoInteractions(jobs)
+        tick()
+        callbacks[2].accept(response("New"), player)
+        tick()
+        assertEquals(1, mockingDetails(jobs).invocations.count { it.method.name == "list" })
+    }
+
+    @Test
+    fun `interactive success is exactly yellow Job listed`() {
+        openJob()
+        callbacks.first().accept(response(), player)
+        tick()
+        verify(player).sendMessage(net.kyori.adventure.text.Component.text("Job listed.", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
     }
 
     @Test
@@ -283,11 +377,11 @@ class DialogInputTest {
             "view" -> `when`(player.openInventory).thenReturn(mock(org.bukkit.inventory.InventoryView::class.java))
             "offline" -> `when`(player.isOnline).thenReturn(false)
             "disabled" -> `when`(plugin.isEnabled).thenReturn(false)
-            "replaced" -> { openJob(); clearInvocations(player) }
+            "replaced" -> requestJob()
             "quit" -> TextInputDialogs.onQuit(mock(org.bukkit.event.player.PlayerQuitEvent::class.java).also { `when`(it.player).thenReturn(player) })
             "disable" -> TextInputDialogs.onDisable(org.bukkit.event.server.PluginDisableEvent(plugin))
         }
-        tasks.toList().forEach { it.run() }
+        tasks.removeAt(0).run()
         verify(player, never()).closeInventory()
         verify(player, never()).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
     }
