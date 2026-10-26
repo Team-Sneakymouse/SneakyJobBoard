@@ -32,7 +32,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
     private lateinit var jobCategoryManager: JobCategoryManager
     private lateinit var jobBoardManager: JobBoardManager
     private lateinit var jobManager: JobManager
-    private lateinit var pocketBaseManager: PocketbaseManager
+    private lateinit var databaseManager: DatabaseManager
     private lateinit var advertCategoryManager: AdvertCategoryManager
     private lateinit var advertManager: AdvertManager
     var papiActive = false
@@ -62,7 +62,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         jobCategoryManager = JobCategoryManager()
         jobBoardManager = JobBoardManager()
         jobManager = JobManager()
-        pocketBaseManager = PocketbaseManager()
+        databaseManager = DatabaseManager()
         advertCategoryManager = AdvertCategoryManager()
         advertManager = AdvertManager()
 
@@ -152,8 +152,8 @@ class SneakyJobBoard : JavaPlugin(), Listener {
             return instance.jobManager
         }
 
-        fun getPocketbaseManager(): PocketbaseManager {
-            return instance.pocketBaseManager
+        fun getDatabaseManager(): DatabaseManager {
+            return instance.databaseManager
         }
 
         fun getAdvertCategoryManager(): AdvertCategoryManager {
@@ -187,6 +187,7 @@ class PluginListener(private val instance: SneakyJobBoard) : Listener {
     @EventHandler
     fun onPluginDisable(event: PluginDisableEvent) {
         if (event.plugin == instance) {
+            SneakyJobBoard.getDatabaseManager().close()
             SneakyJobBoard.getJobManager().cleanup()
         }
     }

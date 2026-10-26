@@ -38,13 +38,13 @@ class JobManager : Listener {
      * Also integrates with Dynmap if available.
      *
      * @param job The job to be listed
-     * @param sendToPocketbase Whether to create a new PocketBase record (false when restoring)
+     * @param sendToDatabase Whether to create a new PostgreSQL record (false when restoring)
      */
-    fun list(job: Job, sendToPocketbase: Boolean = true) {
-        if (sendToPocketbase) {
+    fun list(job: Job, sendToDatabase: Boolean = true) {
+        if (sendToDatabase) {
             job.category.durationOverrideMillis?.let { job.durationMillis = it }
             job.startTime = System.currentTimeMillis()
-            if (job.player != null) SneakyJobBoard.getPocketbaseManager().listJob(job)
+            if (job.player != null) SneakyJobBoard.getDatabaseManager().listJob(job)
         }
         jobs[job.uuid] = job
 
@@ -84,10 +84,10 @@ class JobManager : Listener {
             }
         }
 
-        // Play toast on all players (skip when restoring from PocketBase)
-		if (sendToPocketbase && job.player != null) {
+        // Play toast on all players (skip when restoring from PostgreSQL)
+		if (sendToDatabase && job.player != null) {
 			var displayStringLocation =
-				(SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
+				(SneakyJobBoard.getInstance().getConfig().getString("database-location") ?: "[x],[y],[z]").replace(
 					"[x]", job.location.blockX.toString()
 				).replace("[y]", job.location.blockY.toString()).replace("[z]", job.location.blockZ.toString())
 
@@ -163,13 +163,13 @@ class JobManager : Listener {
     /**
      * Cleans up all listed jobs and their associated entities.
      * Called during plugin shutdown or reload.
-     * PocketBase reconciliation handles old records on the next server boot;
+     * PostgreSQL reconciliation handles old records on the next server boot;
      * shutdown/reload cleanup must not send API requests.
      */
     fun cleanup() {
         val jobIdsToRemove = jobs.values.toList()
         jobIdsToRemove.forEach { job ->
-            job.unlist("restart", syncToPocketbase = false)
+            job.unlist("restart", syncToDatabase = false)
         }
 
         // Clean up dynmap markers
@@ -306,12 +306,12 @@ data class Job(
     /**
      * Unlists this job from all platforms and cleans up associated entities.
      * @param endReason The reason for unlisting ("expired", "unlisted", "deleted", or "restart")
-     * @param syncToPocketbase Whether to patch the PocketBase record with an end time
+     * @param syncToDatabase Whether to patch the PostgreSQL record with an end time
      */
-    fun unlist(endReason: String, syncToPocketbase: Boolean = true) {
+    fun unlist(endReason: String, syncToDatabase: Boolean = true) {
         if (!SneakyJobBoard.getJobManager().jobs.values.contains(this)) return
 
-        if (syncToPocketbase) SneakyJobBoard.getPocketbaseManager().unlistJob(this, endReason)
+        if (syncToDatabase) SneakyJobBoard.getDatabaseManager().unlistJob(this, endReason)
         itemDisplays.values.forEach { entity -> entity.remove() }
         textDisplays.values.forEach { entity -> entity.remove() }
         SneakyJobBoard.getJobManager().jobs.remove(uuid)

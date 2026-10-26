@@ -101,7 +101,7 @@ object TextInputDialogs : Listener {
             }
             advert.name = title
             advert.description = description
-            SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
+            SneakyJobBoard.getDatabaseManager().updateAdvert(advert)
             AdvertEditInterface.open(player, advert)
         }
     }
