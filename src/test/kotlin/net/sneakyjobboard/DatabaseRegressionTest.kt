@@ -188,6 +188,29 @@ class DatabaseRegressionTest {
         assertNotNull(f.adverts.getAdvert("other"), "Unrelated adverts must still restore")
     }
 
+    @Test fun `decimal and scientific millisecond values restore without destructive fallback`() = fixture { f ->
+        val boot = ManagementFactory.getRuntimeMXBean().startTime
+        val decimal = persistent("decimal", boot, 25565).toMutableMap().apply { put("startTime", "$boot.0"); put("durationMillis", "86400000.0") }
+        val scientific = persistent("scientific", boot, 25565).toMutableMap().apply { put("startTime", java.math.BigDecimal(boot).toEngineeringString()); put("durationMillis", "8.64E+7") }
+        val invalid = persistent("invalid", boot, 25565).toMutableMap().apply { put("durationMillis", "not-a-number") }
+        val fractional = persistent("fractional", boot, 25565).toMutableMap().apply { put("durationMillis", "2.5") }
+        val missingStart = persistent("missing-start", boot, 25565).toMutableMap().apply { remove("startTime") }
+        `when`(f.store.reconcile(anyLong())).thenReturn(CompletableFuture.completedFuture(listOf(decimal, scientific, invalid, fractional, missingStart)))
+        f.database.reconcileOpenJobs(); f.drain()
+        assertEquals(setOf("decimal", "scientific"), f.jobs.jobs.values.map { it.recordID }.toSet())
+        verify(f.store, never()).update(anyString(), anyString(), anyMap<String, Any>())
+    }
+
+    @Test fun `history stops converting rows after nine unique entries`() = fixture { f ->
+        val rows = (1..9).map { mapOf<String, Any?>("serverPort" to 25565, "category" to "category", "name" to "job$it", "description" to "desc", "tracking" to false) } +
+            object : AbstractMap<String, Any?>() { override val entries: Set<Map.Entry<String, Any?>> get() = error("Old history must not be converted on the game thread") }
+        `when`(f.store.history("Poster")).thenReturn(CompletableFuture.completedFuture(rows))
+        mockConstruction(JobHistoryInventoryHolder::class.java) { holder, _ -> `when`(holder.inventory).thenReturn(mock(Inventory::class.java)) }.use {
+            f.database.getJobHistory(f.player, 1L); f.drain()
+            verify(f.player).openInventory(any(Inventory::class.java))
+        }
+    }
+
     @Test fun `shutdown cleanup remains local for ephemeral and persistent jobs`() = fixture { f ->
         val ephemeral = mock(Job::class.java); val persistent = mock(Job::class.java)
         `when`(persistent.persist).thenReturn(true)

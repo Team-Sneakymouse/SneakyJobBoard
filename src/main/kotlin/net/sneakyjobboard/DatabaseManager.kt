@@ -60,6 +60,8 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
     private fun json(rows: List<Map<String, Any?>>) = rows.map { gson.toJsonTree(it).asJsonObject }
     private fun value(row: JsonObject, key: String): String? = row.get(key)?.takeUnless { it.isJsonNull }?.asString
     private fun bool(row: JsonObject, key: String) = value(row, key)?.toBooleanStrictOrNull() ?: false
+    private fun millis(row: JsonObject, key: String): Long? =
+        value(row, key)?.toBigDecimalOrNull()?.let { runCatching { it.longValueExact() }.getOrNull() }
 
     fun listJob(job: Job) {
         if (closed) return
@@ -91,11 +93,12 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
                         val id = value(item, "id") ?: continue
                         if (id in locallyEndedJobs) continue
                         val persistent = bool(item, "persist")
-                        val start = value(item, "startTime")?.toLongOrNull() ?: 0L
+                        val start = millis(item, "startTime") ?: continue
                         if (start >= boot && !persistent) continue
-                        val duration = value(item, "durationMillis")?.toLongOrNull() ?: 0L
+                        if (!persistent) { endJobRecord(id, "restart"); continue }
+                        val duration = millis(item, "durationMillis") ?: continue
                         val expired = duration <= 0 || start <= System.currentTimeMillis() - duration
-                        if (!persistent || expired) { endJobRecord(id, if (persistent && expired) "expired" else "restart"); continue }
+                        if (expired) { endJobRecord(id, "expired"); continue }
                         val category = SneakyJobBoard.getJobCategoryManager().getJobCategories().values.find { it.name == value(item, "category") }
                         val location = value(item, "location")?.let { parseStoredLocation(it) }
                         if (category == null || location == null) {
@@ -128,9 +131,10 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
                 if (!player.isOnline || Bukkit.getPlayer(player.uniqueId) !== player || historyRequests[player.uniqueId] != request) return@main
                 val jobs = mutableListOf<Job>()
                 val seen = mutableSetOf<List<String>>()
-                for (row in json(rows)) {
-                    if (!owns(row)) continue
+                for (raw in rows) {
                     if (jobs.size >= 9) break
+                    val row = gson.toJsonTree(raw).asJsonObject
+                    if (!owns(row)) continue
                     val categoryName = value(row, "category") ?: continue
                     val nameValue = value(row, "name") ?: continue
                     val description = value(row, "description") ?: continue
