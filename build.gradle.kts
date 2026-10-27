@@ -42,7 +42,7 @@ dependencies {
 	compileOnly("me.clip:placeholderapi:2.11.6")
 	compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.4")
-	compileOnly("io.github.team-sneakymouse:sneakypocketbase-api:2026.10.09-0233c4a041d5")
+	compileOnly("io.github.team-sneakymouse:sneakydb-api:2026.10.26-fd4e29e90ad0")
 	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.10.18-657d452bd6f4")
 
 	testImplementation("io.github.team-sneakymouse:sneakyutils:2026.10.18-657d452bd6f4")
@@ -55,7 +55,7 @@ dependencies {
 	testImplementation("us.dynmap:DynmapCoreAPI:3.4")
 	testImplementation("me.clip:placeholderapi:2.11.6")
 	testImplementation("io.papermc.paper:paper-api:26.2.build.121-stable")
-	testImplementation("io.github.team-sneakymouse:sneakypocketbase-api:2026.10.09-0233c4a041d5")
+	testImplementation("io.github.team-sneakymouse:sneakydb-api:2026.10.26-fd4e29e90ad0")
 }
 
 tasks.test {

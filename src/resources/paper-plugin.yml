@@ -12,7 +12,7 @@ dependencies:
       load: BEFORE
       required: true
       join-classpath: true
-    SneakyPocketbase:
+    SneakyDB:
       load: BEFORE
       required: true
       join-classpath: true

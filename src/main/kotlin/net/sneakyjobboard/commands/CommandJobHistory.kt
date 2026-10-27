@@ -8,7 +8,7 @@ import org.bukkit.entity.Player
 
 /**
  * Command for viewing a player's job history.
- * Retrieves and displays jobs from a specified time period through PocketBase integration.
+ * Retrieves and displays jobs from a specified time period through PostgreSQL integration.
  */
 class CommandJobHistory : CommandBase("jobhistory") {
 
@@ -28,18 +28,6 @@ class CommandJobHistory : CommandBase("jobhistory") {
     override fun execute(
         sender: CommandSender, commandLabel: String, args: Array<out String>
     ): Boolean {
-        val pocketbaseCollection =
-            SneakyJobBoard.getInstance().getConfig().getString("pocketbase-jobs-collection")
-
-        if (pocketbaseCollection.isNullOrEmpty()) {
-            sender.sendMessage(
-                TextUtility.convertToComponent(
-                    "&4Job history cannot be viewed if Pocketbase is not set up."
-                )
-            )
-            return false
-        }
-
         val player: Player? = if (sender is Player) sender
         else if (args.isNotEmpty()) Bukkit.getPlayer(args[0]) else null
         val remainingArgs: Array<out String> = if (sender is Player) args else args.drop(1).toTypedArray()
@@ -67,7 +55,7 @@ class CommandJobHistory : CommandBase("jobhistory") {
             return false
         }
 
-        SneakyJobBoard.getPocketbaseManager().getJobHistory(player, durationMillis)
+        SneakyJobBoard.getDatabaseManager().getJobHistory(player, durationMillis)
 
         return true
     }

@@ -33,11 +33,11 @@ class AdvertManager : Listener {
     /**
      * Lists a new advertisement in the system.
      * @param advert The advertisement to be listed
-     * @param sendToPocketbase Whether to persist the advertisement to PocketBase storage
+     * @param sendToDatabase Whether to persist the advertisement to PostgreSQL storage
      */
-    fun list(advert: Advert, sendToPocketbase: Boolean = true) {
+    fun list(advert: Advert, sendToDatabase: Boolean = true) {
         adverts[advert.uuid] = advert
-        if (sendToPocketbase) SneakyJobBoard.getPocketbaseManager().listAdvert(advert)
+        if (sendToDatabase) SneakyJobBoard.getDatabaseManager().listAdvert(advert)
     }
 
     /**
@@ -46,7 +46,7 @@ class AdvertManager : Listener {
      */
     fun unlist(advert: Advert) {
         advert.deleted = true
-        SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
+        SneakyJobBoard.getDatabaseManager().updateAdvert(advert)
         adverts.remove(advert.uuid)
     }
 
@@ -132,8 +132,8 @@ class AdvertManager : Listener {
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        // Load player's advertisement history from PocketBase
-        SneakyJobBoard.getPocketbaseManager().getAdvertHistory(event.player.uniqueId.toString())
+        // Load player's advertisement history from PostgreSQL
+        SneakyJobBoard.getDatabaseManager().getAdvertHistory(event.player.uniqueId.toString())
     }
 
     @EventHandler
@@ -184,7 +184,7 @@ data class Invitation(
     ).replace("[playerName]", inviter.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
         ?: "&eFrom: &b[playerName]").replace("[playerName]", inviter.name)
     private var displayStringLocation =
-        (SneakyJobBoard.getInstance().getConfig().getString("pocketbase-location") ?: "[x],[y],[z]").replace(
+        (SneakyJobBoard.getInstance().getConfig().getString("database-location") ?: "[x],[y],[z]").replace(
             "[x]", location.blockX.toString()
         ).replace("[y]", location.blockY.toString()).replace("[z]", location.blockZ.toString())
 
@@ -242,7 +242,10 @@ class Advert(
     ).replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
         ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
     var iconMaterial: Material? = null
+    // Preserve imported numeric metadata until the UI explicitly selects another integer icon.
+    internal var storedIconCustomModelData: java.math.BigDecimal? = null
     var iconCustomModelData: Int? = null
+        set(value) { field = value; storedIconCustomModelData = null }
     var enabled: Boolean = true
     var deleted: Boolean = false
 

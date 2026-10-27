@@ -153,7 +153,7 @@ class AdvertManagementListener : Listener {
             ClickType.LEFT -> {
                 // Toggle enabled state
                 advert.enabled = !advert.enabled
-                SneakyJobBoard.getPocketbaseManager().updateAdvert(advert)
+                SneakyJobBoard.getDatabaseManager().updateAdvert(advert)
                 player.closeInventory()
                 AdvertManagementInterface.open(player)
             }

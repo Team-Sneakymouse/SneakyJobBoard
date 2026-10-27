@@ -1,56 +1,28 @@
-A Minecraft Paper plugin designed for managing the job board on the LoM2 server
+# SneakyJobBoard
 
-## Startup reconciliation ownership
+A Paper plugin for the LoM2 job board, persistent jobs, job history, adverts and invitations.
 
-Startup reconciliation only fetches and processes job records whose `serverPort`
-exactly matches the backend's Bukkit listening port. This applies to both ending
-old ephemeral jobs and restoring or ending persistent jobs. The JVM boot boundary
-still determines which ephemeral jobs are eligible for restart cleanup.
+## PostgreSQL persistence
 
-Legacy records with a missing or zero `serverPort` are treated as unowned: startup
-reconciliation neither ends nor restores them. Assign their verified backend port
-explicitly before expecting automatic reconciliation; no ownership is inferred from
-categories, locations, or shared plugin configuration. Backends sharing a PocketBase
-jobs collection must use distinct listening ports for this ownership scheme.
+Requires the **SneakyDB** Paper runtime and published API `2026.10.26-fd4e29e90ad0`. Connection credentials stay in SneakyDB. The consumer JAR does not bundle its API, PostgreSQL driver or connection pool.
 
-## Job history ownership
+See [the PostgreSQL migration/runbook](docs/postgresql-migration.md) before cutover, including operator-owned DDL/imports, trigger-based Discord/phone delivery, configuration migration, failure behavior and the in-game checklist. This repository does not execute a live migration or deploy services.
 
-Job history uses the same exact listening-port ownership rule: the query retains
-its player-name predicate and `-created` ordering, and only matching `serverPort`
-rows can contribute to the nine most recent unique listings. A defensive numeric
-comparison runs before parsing listing fields, deduplication, or slot allocation;
-fractional values are not truncated into a match. Zero, missing, and null ports
-are excluded, not treated as backwards-compatible history.
+```text
+DatabaseManager (Paper-thread snapshots / fenced UI callbacks)
+  JobBoardRepository (readiness + read-only preflight + ordered parameterized SQL)
+    SneakyDB -> lom.lom2_listed_jobs / lom.lom2_adverts
+      operator-installed database triggers -> hooks durable delivery
+```
 
-Existing jobs must be assigned their verified backend port before they appear in
-history or participate in reconciliation. The database migration is an operator
-responsibility; this plugin change does not execute a migration.
+All reads and updates use the **exact nonzero Paper backend listening port**, not the proxy port. A defensive numeric ownership check precedes job restoration, history deduplication/limits and advert loading. Zero/NULL/missing-port legacy records remain unowned. Legacy adverts require explicit operator backend assignment before becoming visible. Shared backends must have distinct listening ports.
 
-## Persistence / PocketBase path audit
+Pre-boot ephemeral jobs and expired persistent jobs are ended during startup reconciliation; valid persistent jobs can restore on the current JVM boot as well. Shutdown removes local state without database end writes. History keeps the nine newest unique owned listings as fresh relisting templates. Adverts preserve categories, icons, edit/enable/soft-delete, invitations and dispatch, with the same ownership fencing as jobs.
 
-All PocketBase operations in main source are in `PocketbaseManager`:
+## Build and tests
 
-| Path | Ownership / targeting |
-| --- | --- |
-| `listJob` / `createJobDataMap` | Creates a new job with numeric `Bukkit.getPort()` ownership. |
-| `reconcileOpenJobs` | Port-scoped query plus exact defensive guard before any ending or persistent restoration. Legacy unowned rows are skipped. |
-| `getJobHistory` | Player plus exact port query and defensive guard; builds fresh relisting templates, not live restored records. |
-| `unlistJob` / `endJobRecord` | Updates the exact PocketBase record ID; no broad update query needs a port predicate. Reconciliation chooses IDs only after checking ownership. |
-| `listAdvert` | Creates an advert without a `serverPort` field. |
-| `getAdvertHistory` | Queries only `posteruuid` and `deleted=false`; loads results into `AdvertManager` on player join. **Not backend-scoped.** |
-| `updateAdvert` | Updates the exact record ID (including edits, toggles, and soft deletion), not a broad query. This does not prevent a foreign advert from first being loaded by `getAdvertHistory`. |
+```sh
+./gradlew build --max-workers=1 -Dorg.gradle.jvmargs='-Xmx512m -XX:ActiveProcessorCount=2' -Pkotlin.compiler.execution.strategy=in-process
+```
 
-Persistent jobs have no separate disk or shared-memory loader: plugin enable
-creates a fresh `JobManager` with a local `jobs` map. After API readiness,
-`reconcileOpenJobs` is the only persistent restoration path and calls
-`JobManager.list(..., sendToPocketbase = false)`. Player joins only rebind already
-loaded jobs to their poster. Shutdown removes local jobs without API requests.
-Item persistent-data tags contain lookup UUIDs for local maps, not serialized job
-records. Local file reads load configuration/categories/board definitions, not
-persisted listings. The separate direct image download retrieves player skins;
-it does not read or update jobs or adverts.
-
-Advert ownership remains a separate gap if backends share the adverts collection:
-player joins can load another backend's adverts, and subsequent exact-ID edits
-can modify those loaded records. No advert schema or behavior is changed here;
-port fields, legacy policy, and any migration require a separate decision.
+Automated tests mock SneakyDB and Bukkit boundaries and exercise real repository SQL and manager/UI logic. They do not establish live database permissions, Paper loading or Discord/phone delivery.
