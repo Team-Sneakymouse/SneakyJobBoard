@@ -298,7 +298,7 @@ class AdvertBoardListener : Listener {
 
         when {
             command != null -> {
-                // Handle console command buttons
+                // Console command buttons. Runs as console: only config.yml buttons may carry command_console.
                 if (command.isEmpty()) return
                 player.closeInventory()
                 Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
