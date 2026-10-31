@@ -81,6 +81,7 @@ class JobInventoryHolder(isJobBoardInteract: Boolean, player: Player) : Inventor
             player.closeInventory()
             SneakyJobBoard.getJobManager().dispatch(uuid, player)
         } else if (!commandConsole.isNullOrEmpty()) {
+            // Runs as console: only config.yml buttons may carry command_console, never player input or DB rows.
             player.closeInventory()
             Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
                 Bukkit.getServer().dispatchCommand(

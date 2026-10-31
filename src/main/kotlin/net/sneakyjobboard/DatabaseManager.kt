@@ -55,6 +55,7 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
     private fun observe(future: CompletableFuture<*>, operation: String) {
         future.whenComplete { _, error -> if (error != null) report(operation) }
     }
+    // Every read/write of jobs/adverts is fenced to this server's port (exact, nonzero); check owns() before restoring.
     private fun owns(row: JsonObject): Boolean = row.get("serverPort")?.takeUnless { it.isJsonNull }?.asString
         ?.toBigDecimalOrNull()?.let { it.signum() != 0 && it.compareTo(store.port.toBigDecimal()) == 0 } == true
     private fun json(rows: List<Map<String, Any?>>) = rows.map { gson.toJsonTree(it).asJsonObject }
