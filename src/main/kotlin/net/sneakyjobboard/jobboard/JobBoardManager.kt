@@ -572,7 +572,26 @@ data class JobBoard(
 
         displayLocation.add(xOffset, yOffset, zOffset)
 
+        // Nudge each job's displays a tiny, stable distance away from the board so overlapping icons don't z-fight
+        val outward = attachedFace?.oppositeFace ?: BlockFace.UP
+        val depth = getDepthOffset(job.uuid)
+        displayLocation.add(outward.modX * depth, outward.modY * depth, outward.modZ * depth)
+
         return displayLocation
+    }
+
+    companion object {
+        /** Maximum distance in blocks a job's displays are pushed away from the board surface. */
+        const val MAX_DEPTH_OFFSET = 0.01
+
+        /**
+         * Returns a small pseudo-random offset in `[0, MAX_DEPTH_OFFSET)` derived from the job UUID.
+         * Stable per job, so tracking teleports and respawns don't make icons jitter.
+         */
+        fun getDepthOffset(jobUuid: String): Double {
+            val hash = jobUuid.hashCode().toLong() and 0xFFFFL
+            return hash / 65536.0 * MAX_DEPTH_OFFSET
+        }
     }
 }
 
