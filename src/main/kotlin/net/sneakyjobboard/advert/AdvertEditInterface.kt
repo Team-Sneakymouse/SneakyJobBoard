@@ -11,8 +11,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryDragEvent
+import com.sneakyutils.util.DisplayOnlyInventoryHolder
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
 /**
@@ -22,7 +22,7 @@ import org.bukkit.inventory.ItemStack
  * @property player The player editing the advertisement
  * @property advert The advertisement being edited
  */
-class AdvertEditInterface(private val player: Player, val advert: Advert) : InventoryHolder {
+class AdvertEditInterface(private val player: Player, val advert: Advert) : DisplayOnlyInventoryHolder {
     private val inventory: Inventory = createInventory()
 
     init {

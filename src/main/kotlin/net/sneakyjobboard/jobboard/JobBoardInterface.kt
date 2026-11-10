@@ -14,8 +14,8 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryInteractEvent
+import com.sneakyutils.util.DisplayOnlyInventoryHolder
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
@@ -25,7 +25,7 @@ import org.bukkit.persistence.PersistentDataType
  *
  * @param isJobBoardInteract Whether this interface was opened by interacting with a physical job board
  */
-class JobInventoryHolder(isJobBoardInteract: Boolean, player: Player) : InventoryHolder {
+class JobInventoryHolder(isJobBoardInteract: Boolean, player: Player) : DisplayOnlyInventoryHolder {
     private var inventory: Inventory
 
     /**

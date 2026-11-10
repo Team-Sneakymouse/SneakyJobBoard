@@ -43,9 +43,9 @@ dependencies {
 	compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.4")
 	compileOnly("io.github.team-sneakymouse:sneakydb-api:2026.10.26-fd4e29e90ad0")
-	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.10.18-657d452bd6f4")
+	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.11.10-7e1262ebd376")
 
-	testImplementation("io.github.team-sneakymouse:sneakyutils:2026.10.18-657d452bd6f4")
+	testImplementation("io.github.team-sneakymouse:sneakyutils:2026.11.10-7e1262ebd376")
 	testImplementation("org.junit.jupiter:junit-jupiter:5.14.1")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.mockito:mockito-core:5.23.0")

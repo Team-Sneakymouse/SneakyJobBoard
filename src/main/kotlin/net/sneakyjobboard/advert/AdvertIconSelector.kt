@@ -10,8 +10,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
+import com.sneakyutils.util.DisplayOnlyInventoryHolder
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
@@ -25,7 +25,7 @@ import org.bukkit.persistence.PersistentDataType
  */
 class AdvertIconSelector(
     val category: AdvertCategory?, val page: Int = 0, val callback: ((Material, Int) -> Unit)? = null
-) : InventoryHolder {
+) : DisplayOnlyInventoryHolder {
     private val inventory: Inventory = Bukkit.createInventory(this, 54, TextUtility.convertToComponent("&6Select Icon"))
     private val icons = mutableListOf<IconData>()
 

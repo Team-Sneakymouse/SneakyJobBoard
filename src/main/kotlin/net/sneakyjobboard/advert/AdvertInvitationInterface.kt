@@ -8,8 +8,8 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
+import com.sneakyutils.util.DisplayOnlyInventoryHolder
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.Material
@@ -20,7 +20,7 @@ import org.bukkit.Material
  *
  * @property player The player viewing their invitations
  */
-class AdvertInvitationInterface(private val player: Player) : InventoryHolder {
+class AdvertInvitationInterface(private val player: Player) : DisplayOnlyInventoryHolder {
     private val invitations = SneakyJobBoard.getAdvertManager().getActiveInvitationsForPlayer(player)
     private val inventory: Inventory = createInventory()
 

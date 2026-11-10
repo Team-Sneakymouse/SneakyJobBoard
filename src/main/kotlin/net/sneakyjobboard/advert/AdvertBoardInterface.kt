@@ -10,8 +10,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
+import com.sneakyutils.util.DisplayOnlyInventoryHolder
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.configuration.file.YamlConfiguration
@@ -26,7 +26,7 @@ import org.bukkit.NamespacedKey
  */
 class AdvertBoardInterface private constructor(
     val category: AdvertCategory? = null, val page: Int = 0, player: Player
-) : InventoryHolder {
+) : DisplayOnlyInventoryHolder {
     private val inventory: Inventory = Bukkit.createInventory(this,
         54,
         TextUtility.convertToComponent(category?.name?.let { "&6Adverts - $it" } ?: "&6Adverts"))

@@ -9,8 +9,8 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryInteractEvent
+import com.sneakyutils.util.DisplayOnlyInventoryHolder
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
@@ -18,7 +18,7 @@ import org.bukkit.persistence.PersistentDataType
  * Manages the interface for viewing and re-listing jobs from a player's history.
  * @property jobHistory The list of historical jobs to display
  */
-class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : InventoryHolder {
+class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : DisplayOnlyInventoryHolder {
 
     private var inventory: Inventory = Bukkit.createInventory(
         this, 9, TextUtility.convertToComponent("&eJob History. Click to re-list.")
