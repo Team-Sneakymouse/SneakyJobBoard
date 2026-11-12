@@ -18,7 +18,7 @@ database-schema: "lom"
 ## The poster display string that is stored in PostgreSQL. Supports placeholders. "[playerName]" will also work, even without PAPI installed.
 database-poster: "From: %sneakycharacters_character_name_noformat%"
 ## The location display string that is stored in PostgreSQL. Supports placeholders. "[x]", "[y]", "[z]" will also work, even without PAPI installed.
-database-location: "%dipp_district_name%"
+database-location: "%sneakyplots_district_name%"
 
 ## The block coordinates of the central point on the map itemframe. Used to determine itemsdisplay positions
 ## The scale, rotation and facing of the map itemframe are determined automatically
