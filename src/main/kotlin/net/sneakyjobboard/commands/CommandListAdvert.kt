@@ -8,6 +8,7 @@ import net.sneakyjobboard.advert.AdvertIconSelector
 import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -24,18 +25,18 @@ class CommandListAdvert : CommandBase("listadvert") {
          *
          * @param player The player creating the advertisement
          * @param iconMaterial The selected icon material
-         * @param iconCustomModelData The selected icon model data
+         * @param iconItemModel The selected icon item model
          * @param category Optional category for the advertisement
          */
         fun startAdvertCreation(
             player: Player,
             iconMaterial: Material,
-            iconCustomModelData: Int,
+            iconItemModel: NamespacedKey,
             category: AdvertCategory?
         ) {
             val advert = Advert(category, player)
             advert.iconMaterial = iconMaterial
-            advert.iconCustomModelData = iconCustomModelData
+            advert.iconItemModel = iconItemModel
 
             TextInputDialogs.createAdvert(player, advert)
         }

@@ -2,9 +2,13 @@ package net.sneakyjobboard.advert
 
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.commands.CommandListAdvert
+import net.sneakyjobboard.util.ItemModelUtility
+import net.sneakyjobboard.util.LegacyItemModels
 import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -24,7 +28,7 @@ import org.bukkit.persistence.PersistentDataType
  * @property callback Optional callback to handle icon selection
  */
 class AdvertIconSelector(
-    val category: AdvertCategory?, val page: Int = 0, val callback: ((Material, Int) -> Unit)? = null
+    val category: AdvertCategory?, val page: Int = 0, val callback: ((Material, NamespacedKey) -> Unit)? = null
 ) : DisplayOnlyInventoryHolder {
     private val inventory: Inventory = Bukkit.createInventory(this, 54, TextUtility.convertToComponent("&6Select Icon"))
     private val icons = mutableListOf<IconData>()
@@ -36,34 +40,9 @@ class AdvertIconSelector(
 
     override fun getInventory(): Inventory = inventory
 
-    /**
-     * Loads available icons from the plugin configuration.
-     * Supports both individual model data values and ranges.
-     */
     private fun loadIcons() {
-        val config = SneakyJobBoard.getInstance().config
-        val iconsSection = config.getConfigurationSection("advert-icons") ?: return
-
-        for (materialKey in iconsSection.getKeys(false)) {
-            val material = Material.matchMaterial(materialKey) ?: continue
-            val modelDataList = iconsSection.getStringList(materialKey)
-
-            for (modelDataEntry in modelDataList) {
-                if (modelDataEntry.contains("-")) {
-                    // Handle range
-                    val parts = modelDataEntry.split("-")
-                    val start = parts[0].toIntOrNull() ?: continue
-                    val end = parts[1].toIntOrNull() ?: continue
-                    for (modelData in start..end) {
-                        icons.add(IconData(material, modelData))
-                    }
-                } else {
-                    // Handle single value
-                    val modelData = modelDataEntry.toIntOrNull() ?: continue
-                    icons.add(IconData(material, modelData))
-                }
-            }
-        }
+        val iconsSection = SneakyJobBoard.getInstance().config.getConfigurationSection("advert-icons") ?: return
+        icons.addAll(readIcons(iconsSection))
     }
 
     /**
@@ -117,7 +96,7 @@ class AdvertIconSelector(
         val itemStack = ItemStack(icon.material)
         val meta = itemStack.itemMeta
 
-        meta.setCustomModelData(icon.modelData)
+        meta.setItemModel(icon.itemModel)
         meta.isHideTooltip = true
 
         // Store icon data in persistent data container
@@ -125,7 +104,7 @@ class AdvertIconSelector(
         container.set(
             SneakyJobBoard.getAdvertManager().IDKEY,
             PersistentDataType.STRING,
-            "${icon.material.name},${icon.modelData}"
+            "${icon.material.name},${icon.itemModel}"
         )
 
         itemStack.itemMeta = meta
@@ -133,6 +112,38 @@ class AdvertIconSelector(
     }
 
     companion object {
+        /** `5` or `2001-2024`: the integer forms `advert-icons` used before item models. */
+        private val LEGACY_INTEGER_ENTRY = Regex("\\d{1,9}(-\\d{1,9})?")
+
+        /**
+         * Reads the `advert-icons` section: each key is a carrier material and its list holds item-model ids.
+         * Legacy integer entries (`5`, `"2001-2024"`) are still accepted and converted to the item model that
+         * replaced them on that carrier.
+         */
+        internal fun readIcons(
+            iconsSection: ConfigurationSection,
+            legacy: LegacyItemModels = LegacyItemModels.bundled
+        ): List<IconData> {
+            val icons = mutableListOf<IconData>()
+            for (materialKey in iconsSection.getKeys(false)) {
+                val material = Material.matchMaterial(materialKey) ?: continue
+                val source = "advert-icons.$materialKey"
+
+                for (entry in iconsSection.getStringList(materialKey)) {
+                    val models = if (LEGACY_INTEGER_ENTRY.matches(entry)) {
+                        val bounds = entry.split("-").map(String::toInt)
+                        legacy.resolveRange(material, bounds.first(), bounds.last()).also {
+                            if (it.isEmpty()) SneakyJobBoard.log("Legacy integer icon '$entry' at $source has no item model")
+                        }
+                    } else {
+                        listOfNotNull(ItemModelUtility.parseItemModel(entry, source))
+                    }
+                    models.mapTo(icons) { IconData(material, it) }
+                }
+            }
+            return icons
+        }
+
         /**
          * Opens the icon selector interface for a player.
          * @param player The player to show the interface to
@@ -144,7 +155,7 @@ class AdvertIconSelector(
             player: Player,
             category: AdvertCategory?,
             page: Int = 0,
-            callback: ((Material, Int) -> Unit)? = null
+            callback: ((Material, NamespacedKey) -> Unit)? = null
         ) {
             val ui = AdvertIconSelector(category, page, callback)
             player.openInventory(ui.inventory)
@@ -152,9 +163,9 @@ class AdvertIconSelector(
     }
 
     /**
-     * Represents an icon option with its material and model data.
+     * Represents an icon option: the carrier material and the item model shown on it.
      */
-    data class IconData(val material: Material, val modelData: Int)
+    data class IconData(val material: Material, val itemModel: NamespacedKey)
 }
 
 /**
@@ -189,17 +200,17 @@ class AdvertIconSelectorListener : Listener {
             }
 
             else -> {
-                // Parse icon data
-                val (materialName, modelData) = id.split(",")
+                // Parse icon data: "<MATERIAL>,<namespace:item_model>"
+                val (materialName, modelId) = id.split(",", limit = 2)
                 val material = Material.valueOf(materialName)
-                val customModelData = modelData.toInt()
+                val itemModel = NamespacedKey.fromString(modelId) ?: return
 
                 if (holder.callback != null) {
-                    holder.callback.invoke(material, customModelData)
+                    holder.callback.invoke(material, itemModel)
                 } else {
                     // Start the advert creation process with the selected icon and category
                     net.sneakyjobboard.dialog.TextInputDialogs.fromInventory(player, event.view) {
-                        CommandListAdvert.startAdvertCreation(player, material, customModelData, holder.category)
+                        CommandListAdvert.startAdvertCreation(player, material, itemModel, holder.category)
                     }
                 }
             }

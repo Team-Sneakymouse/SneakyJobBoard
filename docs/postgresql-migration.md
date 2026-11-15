@@ -24,6 +24,7 @@ The source is the `metadata/collections-20261025T095957Z.json` snapshot in `Team
 - IDs are consumer-generated 15-character lowercase alphanumeric text; imports retain their IDs. INSERT uses `RETURNING id`. Job/advert UUIDs remain text with no new uniqueness assumption.
 - Jobs retain `serverPort`, UUID/category/poster/display/icon/location fields, epoch-millisecond `startTime`/`durationMillis`, tracking/persist, name/description, Discord icon/message ID and end time/reason. `created`/`updated` are database-managed timestamps. `endTime` remains numeric, not an integer-only schema conversion.
 - Adverts retain UUID, category, `posteruuid`, poster display, name/description, material/model data, enabled/deleted and timestamps. `serverPort integer default 0` is the deliberate ownership extension. The integer Minecraft UI projection of imported numeric model data does not overwrite its original fractional value on unrelated edits; explicitly changing the model selects an integer value.
+- Advert icons are stored as an **item-model id** in the additive `"iconItemModel" text NOT NULL DEFAULT ''` column (see below). The numeric `iconCustomModelData` column is now legacy read-only data: the plugin never writes it.
 - The plugin never updates `discordMessageId`. Hooks owns the atomic message-ID-only acknowledgement. Ending jobs updates only end fields and requires both ID and backend port.
 
 ## Operator sequence — do not run as part of a plugin build
@@ -37,6 +38,31 @@ The source is the `metadata/collections-20261025T095957Z.json` snapshot in `Team
 7. Validate read-only preflight and startup reconciliation; then explicitly verify in-game and end-to-end delivery below. Do not retire PocketBase until soak and rollback approval.
 
 No step above has been performed by this change. No remote database writes, import, deployment, merge or restart is part of verification.
+
+## Advert icon item models (additive column + lazy conversion)
+
+Adverts used to store an integer `iconCustomModelData`; the integer cannot be applied any more (`setCustomModelData(int)` is gone, see the Paper items policy). The new `"iconItemModel"` column holds a namespaced item-model id such as `lom:icons/jobboard/bluefist`, shown on `iconMaterial` (the carrier).
+
+**Operator step (DDL — the plugin never runs it).** Before or after deploying the plugin, in the same maintenance process as the rest of the schema:
+
+```sql
+ALTER TABLE lom.lom2_adverts ADD COLUMN IF NOT EXISTS "iconItemModel" text NOT NULL DEFAULT '';
+```
+
+The plugin's existing UPDATE/INSERT grants on `lom2_adverts` are enough. The matching statement belongs in `psql-hooks/sql/jobboard.sql` (companion change in that repository; it also lists the canonical advert columns for its type check). Nothing else about delivery/outbox changes: adverts have no triggers.
+
+**Startup.** The read-only preflight additionally probes `SELECT "iconItemModel" ... WHERE false`. If the column is missing the plugin still starts and works, but it cannot persist a newly chosen advert icon (the column is dropped from advert INSERT/UPDATE; the integer column is *not* used as a substitute) and logs one startup warning. Add the column and restart to persist icons.
+
+**Conversion of existing rows.** There is no bulk startup rewrite and no DDL/DML outside this server's own rows. Instead, when an owned advert row is loaded (player join, re-enable) the plugin resolves its icon:
+
+1. non-blank `iconItemModel` wins;
+2. otherwise a positive legacy `iconCustomModelData` (fractional values truncate to the integer, as before) is converted with the stored `iconMaterial` as carrier, using the bundled `legacy-item-models.json` (generated from craftengine-resources' `legacy-item-models.json` by `tools/generate-legacy-item-models.py`; an open-ended last route covers every higher integer, as the pack does);
+3. if the column exists the converted id is written back with one owned-row UPDATE (`iconItemModel` only), ordered after the record's other writes and fenced by `serverPort` like every update, so the conversion is idempotent and each row converts once;
+4. an integer with no mapping logs a warning (record ID only) and the advert shows its category icon.
+
+Rows of offline players, deleted rows and rows owned by other ports are converted when (and only when) their owner backend loads them; until then they keep resolving through step 2, so the stored integer stays the source of truth for them. The integer column is never cleared, so rolling back to the previous plugin build shows (at worst) the old integer icons for unconverted rows and the plain material for rows created after the upgrade.
+
+MagicSpells toast spells (`jobboard-invitation-received`, `advert-dispatch-other`) still receive `<material> <custom model data>` with the legacy slot fixed at `0`, followed by the item-model id as an extra trailing argument, so argument positions do not shift. Updating those spells to use the id is a separate `MagicSpells_Scripting` change.
 
 ## Readiness, ordering and failure behavior
 
@@ -52,5 +78,5 @@ Automated tests use the actual repository SQL builder and manager/UI paths with 
 - List a job then immediately unlist/expire; inspect canonical create/end order and Discord/phone work. Preserve names/descriptions, player face icon, district placeholders and tracking updates.
 - Restart and same-JVM re-enable with owned persistent/ephemeral, expired and invalid-category/location jobs; confirm no foreign/legacy backend modifications.
 - Open/relist the nine unique newest owned history entries; log out or issue a newer request before completion and ensure no stale inventory opens.
-- Create/edit/enable/disable/delete adverts immediately, then reconnect/re-enable; check icons, categories, invitation delivery and dispatch. Confirm zero/NULL legacy adverts stay hidden before explicit operator assignment and foreign adverts never load.
+- Create/edit/enable/disable/delete adverts immediately, then reconnect/re-enable; check icons (item models, incl. rows that only had `iconCustomModelData` converting once), categories, invitation delivery and dispatch. Confirm zero/NULL legacy adverts stay hidden before explicit operator assignment and foreign adverts never load.
 - Test DB outage/failed create and inspect uncertain state manually before retrying. Exercise imported existing Discord IDs, create/end notification order and hooks' phone retry policy separately.
