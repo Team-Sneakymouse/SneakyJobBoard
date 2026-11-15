@@ -290,7 +290,7 @@ class Advert(
         else category?.iconModel?.let { ItemModelUtility.applyModel(meta, it, player) }
     }
 
-    /** Arguments for MagicSpells toast spells: `<material> [<item model>]`, resolved like [getIconItem]. */
+    /** Arguments for MagicSpells toast spells: quoted material + item model, resolved like [getIconItem]. */
     internal fun spellIconArguments(): String = ItemModelUtility.toastIconArguments(
         iconMaterial ?: category?.iconMaterial ?: Material.BARRIER,
         iconItemModel ?: category?.iconModel?.itemModel

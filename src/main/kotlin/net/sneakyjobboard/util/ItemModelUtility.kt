@@ -120,11 +120,12 @@ object ItemModelUtility {
     }
 
     /**
-     * Icon arguments for MagicSpells toast spells: `<material> <item model>`, or just `<material>` when there is no
-     * model (the spell then sees an empty item-model argument).
+     * Icon arguments for MagicSpells toast spells: quoted `"<material>" "<item model>"`. The item-model slot is always
+     * present (`""` when unset) so an empty value does not shift later spell arguments (same pattern as SneakyDispatch
+     * [iconItemModelArg]).
      */
     fun toastIconArguments(material: Material, itemModel: NamespacedKey?): String =
-        if (itemModel == null) material.name else "${material.name} $itemModel"
+        "\"${material.name}\" \"${itemModel?.toString() ?: ""}\""
 
     /** Parses a namespaced item-model id, logging (with [source]) and returning null when it is invalid. */
     fun parseItemModel(configuredItemModel: String, source: String): NamespacedKey? {

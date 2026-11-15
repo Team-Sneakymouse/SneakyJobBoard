@@ -67,13 +67,13 @@ class LegacyItemModelsTest {
     }
 
     @Test fun `toast icon arguments pass the item model and drop the legacy integer`() {
-        assertEquals("JIGSAW lom:icons/grayscale/1111", ItemModelUtility.toastIconArguments(Material.JIGSAW, key("lom:icons/grayscale/1111")))
-        assertEquals("JIGSAW", ItemModelUtility.toastIconArguments(Material.JIGSAW, null))
+        assertEquals("\"JIGSAW\" \"lom:icons/grayscale/1111\"", ItemModelUtility.toastIconArguments(Material.JIGSAW, key("lom:icons/grayscale/1111")))
+        assertEquals("\"JIGSAW\" \"\"", ItemModelUtility.toastIconArguments(Material.JIGSAW, null))
         fun category(model: ItemModelDefinition) = JobCategory("n", "d", Material.JIGSAW, model, Display.Brightness(0, 0),
             Transformation(Vector3f(), Quaternionf(), Vector3f(1f), Quaternionf()), "", "")
-        assertEquals("JIGSAW lom:x", category(ItemModelDefinition(key("lom:x"), emptyList())).spellIconArguments)
-        assertEquals("JIGSAW lom:icons/grayscale/1111", category(ItemModelDefinition(null, listOf(ConfiguredCustomModelData.Number(1f)))).spellIconArguments)
-        assertEquals("JIGSAW", category(ItemModelDefinition(null, emptyList())).spellIconArguments)
+        assertEquals("\"JIGSAW\" \"lom:x\"", category(ItemModelDefinition(key("lom:x"), emptyList())).spellIconArguments)
+        assertEquals("\"JIGSAW\" \"lom:icons/grayscale/1111\"", category(ItemModelDefinition(null, listOf(ConfiguredCustomModelData.Number(1f)))).spellIconArguments)
+        assertEquals("\"JIGSAW\" \"\"", category(ItemModelDefinition(null, emptyList())).spellIconArguments)
     }
 
     @Test fun `advert-icons reads item-model lists and still converts legacy integer ranges`() {
