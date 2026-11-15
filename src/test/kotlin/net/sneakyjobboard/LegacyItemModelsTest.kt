@@ -1,6 +1,7 @@
 package net.sneakyjobboard
 
 import net.sneakyjobboard.advert.AdvertIconSelector
+import net.sneakyjobboard.job.JobCategory
 import net.sneakyjobboard.util.ConfiguredCustomModelData
 import net.sneakyjobboard.util.ItemModelDefinition
 import net.sneakyjobboard.util.ItemModelUtility
@@ -8,6 +9,10 @@ import net.sneakyjobboard.util.LegacyItemModels
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.Display
+import org.bukkit.util.Transformation
+import org.joml.Quaternionf
+import org.joml.Vector3f
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -59,6 +64,16 @@ class LegacyItemModelsTest {
         assertSame(unmapped, ItemModelUtility.migrateLegacyInteger(unmapped, Material.STONE))
         val empty = ItemModelDefinition(null, emptyList())
         assertSame(empty, ItemModelUtility.migrateLegacyInteger(empty, Material.JIGSAW))
+    }
+
+    @Test fun `toast icon arguments pass the item model and drop the legacy integer`() {
+        assertEquals("\"JIGSAW\" \"lom:icons/grayscale/1111\"", ItemModelUtility.toastIconArguments(Material.JIGSAW, key("lom:icons/grayscale/1111")))
+        assertEquals("\"JIGSAW\" \"\"", ItemModelUtility.toastIconArguments(Material.JIGSAW, null))
+        fun category(model: ItemModelDefinition) = JobCategory("n", "d", Material.JIGSAW, model, Display.Brightness(0, 0),
+            Transformation(Vector3f(), Quaternionf(), Vector3f(1f), Quaternionf()), "", "")
+        assertEquals("\"JIGSAW\" \"lom:x\"", category(ItemModelDefinition(key("lom:x"), emptyList())).spellIconArguments)
+        assertEquals("\"JIGSAW\" \"lom:icons/grayscale/1111\"", category(ItemModelDefinition(null, listOf(ConfiguredCustomModelData.Number(1f)))).spellIconArguments)
+        assertEquals("\"JIGSAW\" \"\"", category(ItemModelDefinition(null, emptyList())).spellIconArguments)
     }
 
     @Test fun `advert-icons reads item-model lists and still converts legacy integer ranges`() {

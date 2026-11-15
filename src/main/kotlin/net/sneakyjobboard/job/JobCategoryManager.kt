@@ -162,6 +162,13 @@ data class JobCategory(
     val discordEmbedIcon: String,
     val durationOverrideMillis: Long? = null
 ) {
-    val iconCustomModelData: Int
-        get() = iconModel.legacyCustomModelData
+    /**
+     * Arguments for MagicSpells toast spells: `<material> [<item model>]`. A category configured with only a legacy
+     * integer resolves it through the bundled legacy mapping so its toast still shows an icon.
+     */
+    val spellIconArguments: String
+        get() = ItemModelUtility.toastIconArguments(
+            iconMaterial,
+            ItemModelUtility.migrateLegacyInteger(iconModel, iconMaterial).itemModel
+        )
 }
