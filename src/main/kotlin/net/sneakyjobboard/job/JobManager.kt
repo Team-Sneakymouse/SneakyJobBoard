@@ -99,7 +99,7 @@ class JobManager : Listener {
 			for (player in job.location.world.players) {
 				Bukkit.getServer().dispatchCommand(
 					Bukkit.getServer().consoleSender,
-						"cast forcecast ${player.name} jobboard-listed \"${job.category.name}\" \"${displayStringLocation}\" ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
+						"cast forcecast ${player.name} jobboard-listed \"${job.category.name}\" \"${displayStringLocation}\" ${job.category.spellIconArguments}"
 					)
             }
         }
@@ -219,7 +219,7 @@ class JobManager : Listener {
 
 			Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${poster.name} jobboard-dispatch-other ${player.name} ${job.category.iconMaterial} ${job.category.iconCustomModelData}"
+                "cast forcecast ${poster.name} jobboard-dispatch-other ${player.name} ${job.category.spellIconArguments}"
             )
 		} else {
 			Bukkit.getServer().dispatchCommand(

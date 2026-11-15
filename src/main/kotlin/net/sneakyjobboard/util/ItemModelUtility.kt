@@ -11,10 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta
 data class ItemModelDefinition(
     val itemModel: NamespacedKey?,
     val customModelData: List<ConfiguredCustomModelData>
-) {
-    val legacyCustomModelData: Int
-        get() = customModelData.filterIsInstance<ConfiguredCustomModelData.Number>().firstOrNull()?.value?.toInt() ?: 0
-}
+)
 
 sealed interface ConfiguredCustomModelData {
     data class Number(val value: Float) : ConfiguredCustomModelData
@@ -121,6 +118,13 @@ object ItemModelUtility {
         val model = legacy.resolve(carrier, integer.value) ?: return definition
         return ItemModelDefinition(model, definition.customModelData.filter { it !== integer })
     }
+
+    /**
+     * Icon arguments for MagicSpells toast spells: `<material> <item model>`, or just `<material>` when there is no
+     * model (the spell then sees an empty item-model argument).
+     */
+    fun toastIconArguments(material: Material, itemModel: NamespacedKey?): String =
+        if (itemModel == null) material.name else "${material.name} $itemModel"
 
     /** Parses a namespaced item-model id, logging (with [source]) and returning null when it is invalid. */
     fun parseItemModel(configuredItemModel: String, source: String): NamespacedKey? {

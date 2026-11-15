@@ -290,12 +290,9 @@ class Advert(
         else category?.iconModel?.let { ItemModelUtility.applyModel(meta, it, player) }
     }
 
-    /**
-     * Arguments for MagicSpells toast spells: `<material> <legacy custom model data> [<item model>]`. The legacy slot
-     * is kept (always 0) so existing spell argument positions do not shift; the item model id follows it.
-     */
-    internal fun spellIconArguments(): String {
-        val model = iconItemModel ?: category?.iconModel?.itemModel
-        return "$iconMaterial 0" + (model?.let { " $it" } ?: "")
-    }
+    /** Arguments for MagicSpells toast spells: `<material> [<item model>]`, resolved like [getIconItem]. */
+    internal fun spellIconArguments(): String = ItemModelUtility.toastIconArguments(
+        iconMaterial ?: category?.iconMaterial ?: Material.BARRIER,
+        iconItemModel ?: category?.iconModel?.itemModel
+    )
 }
