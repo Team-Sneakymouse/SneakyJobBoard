@@ -117,4 +117,42 @@ class JobBoardRepositoryTest {
         assertThrows(IllegalArgumentException::class.java) { store.update("lom2_listed_jobs", "abc123abc123abc", mapOf("discordMessageId" to "no")) }
         assertThrows(IllegalArgumentException::class.java) { store.insert("outbox", "abc123abc123abc", mapOf("name" to "x")) }
     }
+
+    private val probe = "SELECT \"iconItemModel\" FROM \"lom\".\"lom2_adverts\" WHERE false"
+    private val advertId = "abc123abc123abc"
+
+    @Test fun `startup read-only preflight probes the additive advert item-model column`() {
+        val api = api(); val store = JobBoardRepository(api, "lom", 50001)
+        store.whenReady().join()
+        verify(api).query(equal(probe), equal(emptyList<Any>()))
+        assertTrue(store.hasAdvertItemModelColumn())
+    }
+
+    @Test fun `a schema without the item-model column stays ready and drops that column from advert writes`() {
+        val api = api()
+        `when`(api.query(equal(probe), anyList<Any>())).thenReturn(CompletableFuture.failedFuture(IllegalStateException("column does not exist")))
+        val store = JobBoardRepository(api, "lom", 50001)
+        store.whenReady().join()
+        assertFalse(store.hasAdvertItemModelColumn())
+        store.insert(JobBoardRepository.ADVERTS, advertId, mapOf("name" to "ad", "iconItemModel" to "lom:icons/a")).join()
+        verify(api).query(equal("INSERT INTO \"lom\".\"lom2_adverts\" (\"id\", \"serverPort\", \"name\") VALUES (?, ?, ?) RETURNING id"), equal(listOf(advertId, 50001, "ad")))
+        store.update(JobBoardRepository.ADVERTS, advertId, mapOf("name" to "ad", "iconItemModel" to "lom:icons/a")).join()
+        verify(api).execute(equal("UPDATE \"lom\".\"lom2_adverts\" SET \"name\" = ? WHERE id = ? AND \"serverPort\" = ?"), equal(listOf("ad", advertId, 50001)))
+        // An update that only carries the missing column is a no-op rather than a failure or an invalid UPDATE.
+        assertEquals(1, store.update(JobBoardRepository.ADVERTS, advertId, mapOf("iconItemModel" to "lom:icons/a")).join())
+        verify(api, times(1)).execute(anyString(), anyList<Any>())
+    }
+
+    @Test fun `with the item-model column adverts write the model id and the integer column stays unwritable by omission`() {
+        val api = api(); val store = JobBoardRepository(api, "lom", 50001)
+        store.insert(JobBoardRepository.ADVERTS, advertId, linkedMapOf("name" to "ad", "iconItemModel" to "lom:icons/a")).join()
+        verify(api).query(equal("INSERT INTO \"lom\".\"lom2_adverts\" (\"id\", \"serverPort\", \"name\", \"iconItemModel\") VALUES (?, ?, ?, ?) RETURNING id"), equal(listOf(advertId, 50001, "ad", "lom:icons/a")))
+        store.update(JobBoardRepository.ADVERTS, advertId, mapOf("iconItemModel" to "lom:icons/b")).join()
+        verify(api).execute(equal("UPDATE \"lom\".\"lom2_adverts\" SET \"iconItemModel\" = ? WHERE id = ? AND \"serverPort\" = ?"), equal(listOf("lom:icons/b", advertId, 50001)))
+    }
+
+    @Test fun `the item-model column is advert-only`() {
+        val store = JobBoardRepository(api(), "lom", 50001)
+        assertThrows(IllegalArgumentException::class.java) { store.update(JobBoardRepository.JOBS, advertId, mapOf("iconItemModel" to "x")) }
+    }
 }

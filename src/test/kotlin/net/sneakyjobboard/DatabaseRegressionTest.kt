@@ -143,16 +143,65 @@ class DatabaseRegressionTest {
     @ParameterizedTest @ValueSource(ints = [25565, 25642])
     fun `adverts retain ownership enabled icon and soft deletion features`(port: Int) = fixture(port) { f ->
         val uuid = f.player.uniqueId.toString()
-        fun row(id: String, owner: Number, deleted: Boolean = false) = mapOf<String, Any?>("id" to id, "uuid" to id, "serverPort" to owner, "posteruuid" to uuid, "name" to id, "category" to "", "description" to "description", "posterDisplayString" to "poster", "iconMaterial" to "PAPER", "iconCustomModelData" to java.math.BigDecimal("3.5"), "enabled" to true, "deleted" to deleted)
+        fun row(id: String, owner: Number, deleted: Boolean = false) = mapOf<String, Any?>("id" to id, "uuid" to id, "serverPort" to owner, "posteruuid" to uuid, "name" to id, "category" to "", "description" to "description", "posterDisplayString" to "poster", "iconMaterial" to "PAPER", "iconItemModel" to "lom:icons/stored", "iconCustomModelData" to java.math.BigDecimal("3.5"), "enabled" to true, "deleted" to deleted)
         val rows = listOf(mapOf<String, Any?>("serverPort" to 0), emptyMap(), row("foreign", 1), row("fractional", port + 0.5), row("deleted", port, true), row("owned", port))
         `when`(f.store.adverts(uuid)).thenReturn(CompletableFuture.completedFuture(rows))
         f.database.getAdvertHistory(uuid)
         assertNull(f.adverts.getAdvert("owned")); f.drain()
         val advert = requireNotNull(f.adverts.getAdvert("owned"))
         assertNull(f.adverts.getAdvert("foreign")); assertNull(f.adverts.getAdvert("deleted"))
-        assertEquals(Material.PAPER, advert.iconMaterial); assertEquals(3, advert.iconCustomModelData); assertTrue(advert.enabled)
+        assertEquals(Material.PAPER, advert.iconMaterial); assertEquals(NamespacedKey("lom", "icons/stored"), advert.iconItemModel); assertTrue(advert.enabled)
+        // A stored item model needs no migration write.
+        verify(f.store, never()).update(anyString(), anyString(), anyMap<String, Any>())
         advert.deleted = true; advert.enabled = false; f.database.updateAdvert(advert)
-        verify(f.store).update(equal(JobBoardRepository.ADVERTS), equal("owned"), argThat<Map<String, Any>> { it["deleted"] == true && it["enabled"] == false && it["posteruuid"] == uuid && it["iconCustomModelData"] == java.math.BigDecimal("3.5") } ?: emptyMap())
+        verify(f.store).update(equal(JobBoardRepository.ADVERTS), equal("owned"), argThat<Map<String, Any>> {
+            it["deleted"] == true && it["enabled"] == false && it["posteruuid"] == uuid &&
+                it["iconItemModel"] == "lom:icons/stored" && !it.containsKey("iconCustomModelData")
+        } ?: emptyMap())
+    }
+
+    private fun legacyAdvertRow(id: String, uuid: String, port: Int, material: String, legacy: Any?, model: String? = null) = mapOf<String, Any?>(
+        "id" to id, "uuid" to id, "serverPort" to port, "posteruuid" to uuid, "name" to id, "category" to "", "description" to id,
+        "posterDisplayString" to "poster", "iconMaterial" to material, "iconCustomModelData" to legacy, "iconItemModel" to model, "enabled" to true, "deleted" to false)
+
+    @Test fun `legacy integer advert icons are converted with the stored carrier and written back once`() = fixture { f ->
+        val uuid = f.player.uniqueId.toString()
+        `when`(f.store.hasAdvertItemModelColumn()).thenReturn(true)
+        val rows = listOf(
+            legacyAdvertRow("glass", uuid, 25565, "RED_STAINED_GLASS_PANE", java.math.BigDecimal("2002")),
+            legacyAdvertRow("fraction", uuid, 25565, "JIGSAW", java.math.BigDecimal("1.5")),
+            legacyAdvertRow("empty-model", uuid, 25565, "JIGSAW", 3, ""),
+            legacyAdvertRow("none", uuid, 25565, "JIGSAW", 0),
+            legacyAdvertRow("unmapped", uuid, 25565, "STONE", 99999),
+            legacyAdvertRow("stored", uuid, 25565, "JIGSAW", 3, "lom:icons/stored"))
+        `when`(f.store.adverts(uuid)).thenReturn(CompletableFuture.completedFuture(rows))
+        f.database.getAdvertHistory(uuid); f.drain()
+        fun model(id: String) = f.adverts.getAdvert(id)?.iconItemModel
+        assertEquals(NamespacedKey("lom", "icons/jobboard/blueharp"), model("glass"))
+        assertEquals(NamespacedKey("lom", "icons/grayscale/1111"), model("fraction"))
+        assertEquals(NamespacedKey("lom", "icons/grayscale/agilecowpoke"), model("empty-model"))
+        assertNull(model("none")); assertNull(model("unmapped"))
+        assertEquals(NamespacedKey("lom", "icons/stored"), model("stored"))
+        for ((id, converted) in listOf("glass" to "lom:icons/jobboard/blueharp", "fraction" to "lom:icons/grayscale/1111", "empty-model" to "lom:icons/grayscale/agilecowpoke"))
+            verify(f.store).update(equal(JobBoardRepository.ADVERTS), equal(id), equal(mapOf<String, Any>("iconItemModel" to converted)))
+        verify(f.store, times(3)).update(anyString(), anyString(), anyMap<String, Any>())
+    }
+
+    @Test fun `legacy advert icons still display but are not written back before the operator adds the column`() = fixture { f ->
+        val uuid = f.player.uniqueId.toString()
+        `when`(f.store.hasAdvertItemModelColumn()).thenReturn(false)
+        `when`(f.store.adverts(uuid)).thenReturn(CompletableFuture.completedFuture(listOf(legacyAdvertRow("glass", uuid, 25565, "RED_STAINED_GLASS_PANE", 2002))))
+        f.database.getAdvertHistory(uuid); f.drain()
+        assertEquals(NamespacedKey("lom", "icons/jobboard/blueharp"), f.adverts.getAdvert("glass")?.iconItemModel)
+        verify(f.store, never()).update(anyString(), anyString(), anyMap<String, Any>())
+    }
+
+    @Test fun `new advert persists its item model id and never the integer column`() = fixture { f ->
+        val advert = Advert(null, f.player).apply { iconMaterial = Material.RED_STAINED_GLASS_PANE; iconItemModel = NamespacedKey("lom", "icons/jobboard/bluefist") }
+        f.database.listAdvert(advert)
+        verify(f.store).insert(equal(JobBoardRepository.ADVERTS), equal(advert.recordID), argThat<Map<String, Any>> {
+            it["iconItemModel"] == "lom:icons/jobboard/bluefist" && it["iconMaterial"] == "RED_STAINED_GLASS_PANE" && !it.containsKey("iconCustomModelData")
+        } ?: emptyMap(), nullable(CompletableFuture::class.java) as CompletableFuture<String>?)
     }
 
     @Test fun `new job ID is assigned before persistence and end captures same ID`() = fixture { f ->

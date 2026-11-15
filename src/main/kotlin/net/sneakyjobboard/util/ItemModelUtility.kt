@@ -2,6 +2,7 @@ package net.sneakyjobboard.util
 
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
+import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.entity.Player
@@ -104,7 +105,25 @@ object ItemModelUtility {
         }
     }
 
-    private fun parseItemModel(configuredItemModel: String, source: String): NamespacedKey? {
+    /**
+     * For a definition that only carries a legacy integer (`icon-custom-model-data: 5`), swaps the integer for the item
+     * model that replaced it on [carrier]. Definitions that already name an item model, or whose integer has no
+     * mapping, are returned unchanged.
+     */
+    fun migrateLegacyInteger(
+        definition: ItemModelDefinition,
+        carrier: Material,
+        legacy: LegacyItemModels = LegacyItemModels.bundled
+    ): ItemModelDefinition {
+        if (definition.itemModel != null) return definition
+        val integer = definition.customModelData.filterIsInstance<ConfiguredCustomModelData.Number>().firstOrNull()
+            ?: return definition
+        val model = legacy.resolve(carrier, integer.value) ?: return definition
+        return ItemModelDefinition(model, definition.customModelData.filter { it !== integer })
+    }
+
+    /** Parses a namespaced item-model id, logging (with [source]) and returning null when it is invalid. */
+    fun parseItemModel(configuredItemModel: String, source: String): NamespacedKey? {
         val itemModel = runCatching { NamespacedKey.fromString(configuredItemModel) }.getOrNull()
         if (itemModel == null) {
             SneakyJobBoard.log("Invalid icon-item-model '$configuredItemModel' at $source")

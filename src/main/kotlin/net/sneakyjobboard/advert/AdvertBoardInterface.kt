@@ -124,7 +124,7 @@ class AdvertBoardInterface private constructor(
         val meta = itemStack.itemMeta
 
         meta.displayName(TextUtility.convertToComponent("&6${category.name}"))
-        meta.setCustomModelData(category.iconCustomModelData)
+        ItemModelUtility.applyModel(meta, category.iconModel, null)
 
         val lore = mutableListOf<String>()
         lore.add("&7${category.description}")

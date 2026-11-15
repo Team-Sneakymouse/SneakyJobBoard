@@ -2,6 +2,7 @@ package net.sneakyjobboard.advert
 
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelUtility
 import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -13,6 +14,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import java.util.*
 import kotlin.math.floor
@@ -88,7 +90,7 @@ class AdvertManager : Listener {
 
         Bukkit.getServer().dispatchCommand(
             Bukkit.getServer().consoleSender,
-            "cast forcecast ${advert.player.name} jobboard-invitation-received ${advert.iconMaterial} ${advert.iconCustomModelData}"
+            "cast forcecast ${advert.player.name} jobboard-invitation-received ${advert.spellIconArguments()}"
         )
 
         return invitation
@@ -157,7 +159,7 @@ class AdvertManager : Listener {
             )
             Bukkit.getServer().dispatchCommand(
                 Bukkit.getServer().consoleSender,
-                "cast forcecast ${invitation.inviter.name} advert-dispatch-other ${invitation.advert.player.name} ${invitation.advert.iconMaterial} ${invitation.advert.iconCustomModelData}"
+                "cast forcecast ${invitation.inviter.name} advert-dispatch-other ${invitation.advert.player.name} ${invitation.advert.spellIconArguments()}"
             )
         } else {
             Bukkit.getServer().dispatchCommand(
@@ -196,9 +198,7 @@ data class Invitation(
         val itemStack = ItemStack(advert.iconMaterial ?: advert.category?.iconMaterial ?: Material.PAPER)
         val meta = itemStack.itemMeta
 
-        // Set custom model data if available
-        advert.iconCustomModelData?.let { meta.setCustomModelData(it) }
-            ?: advert.category?.iconCustomModelData?.let { meta.setCustomModelData(it) }
+        advert.applyIconModel(meta)
 
         meta.displayName(TextUtility.convertToComponent("&a${advert.name}"))
 
@@ -242,10 +242,8 @@ class Advert(
     ).replace("[playerName]", player.name) else (SneakyJobBoard.getInstance().getConfig().getString("poster-string")
         ?: "&eFrom: &b[playerName]").replace("[playerName]", player.name)
     var iconMaterial: Material? = null
-    // Preserve imported numeric metadata until the UI explicitly selects another integer icon.
-    internal var storedIconCustomModelData: java.math.BigDecimal? = null
-    var iconCustomModelData: Int? = null
-        set(value) { field = value; storedIconCustomModelData = null }
+    /** Item model shown on [iconMaterial]; null falls back to the category's icon model. */
+    var iconItemModel: NamespacedKey? = null
     var enabled: Boolean = true
     var deleted: Boolean = false
 
@@ -257,9 +255,8 @@ class Advert(
         val itemStack = ItemStack(iconMaterial ?: category?.iconMaterial ?: Material.BARRIER)
         val meta = itemStack.itemMeta ?: return itemStack
 
-        // Set custom model data, display name, and lore.
-        iconCustomModelData?.let { meta.setCustomModelData(it) }
-            ?: category?.iconCustomModelData?.let { meta.setCustomModelData(it) }
+        // Set item model, display name, and lore.
+        applyIconModel(meta)
 
         meta.displayName(TextUtility.convertToComponent("&a${name}"))
 
@@ -285,4 +282,20 @@ class Advert(
         itemStack.itemMeta = meta
         return itemStack
     }
-} 
+
+    /** Applies the advert's own item model, or the category icon model when none was chosen. */
+    internal fun applyIconModel(meta: ItemMeta) {
+        val own = iconItemModel
+        if (own != null) meta.setItemModel(own)
+        else category?.iconModel?.let { ItemModelUtility.applyModel(meta, it, player) }
+    }
+
+    /**
+     * Arguments for MagicSpells toast spells: `<material> <legacy custom model data> [<item model>]`. The legacy slot
+     * is kept (always 0) so existing spell argument positions do not shift; the item model id follows it.
+     */
+    internal fun spellIconArguments(): String {
+        val model = iconItemModel ?: category?.iconModel?.itemModel
+        return "$iconMaterial 0" + (model?.let { " $it" } ?: "")
+    }
+}

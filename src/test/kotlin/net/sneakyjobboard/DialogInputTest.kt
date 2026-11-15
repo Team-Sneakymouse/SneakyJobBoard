@@ -266,7 +266,7 @@ class DialogInputTest {
         val adverts = mock(net.sneakyjobboard.advert.AdvertManager::class.java)
         setManager("advertManager", adverts)
         `when`(adverts.getAdvertsForPlayer(player)).thenReturn(mutableListOf())
-        net.sneakyjobboard.commands.CommandListAdvert.startAdvertCreation(player, org.bukkit.Material.DIAMOND, 42, null)
+        net.sneakyjobboard.commands.CommandListAdvert.startAdvertCreation(player, org.bukkit.Material.DIAMOND, org.bukkit.NamespacedKey("lom", "icons/test"), null)
         verify(player).showDialog(any(net.kyori.adventure.dialog.DialogLike::class.java))
         callbacks.first().accept(response("&a<red>|Title", "&b<blue>|Description\nMore"), player)
         assertTrue(mockingDetails(adverts).invocations.none { it.method.name == "list" })
@@ -275,7 +275,7 @@ class DialogInputTest {
         assertEquals("&a<red>|Title", advert.name)
         assertEquals("&b<blue>|Description\nMore", advert.description)
         assertEquals(org.bukkit.Material.DIAMOND, advert.iconMaterial)
-        assertEquals(42, advert.iconCustomModelData)
+        assertEquals(org.bukkit.NamespacedKey("lom", "icons/test"), advert.iconItemModel)
     }
 
     @Test
@@ -283,7 +283,7 @@ class DialogInputTest {
         val adverts = mock(net.sneakyjobboard.advert.AdvertManager::class.java)
         setManager("advertManager", adverts)
         `when`(adverts.getAdvertsForPlayer(player)).thenReturn(MutableList(8) { mock(net.sneakyjobboard.advert.Advert::class.java) })
-        net.sneakyjobboard.commands.CommandListAdvert.startAdvertCreation(player, org.bukkit.Material.PAPER, 0, null)
+        net.sneakyjobboard.commands.CommandListAdvert.startAdvertCreation(player, org.bukkit.Material.PAPER, org.bukkit.NamespacedKey("lom", "icons/test"), null)
         callbacks.first().accept(response(), player)
         tasks.toList().forEach { it.run() }
         assertTrue(mockingDetails(adverts).invocations.none { it.method.name == "list" })

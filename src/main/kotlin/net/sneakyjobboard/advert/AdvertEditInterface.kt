@@ -135,9 +135,9 @@ class AdvertEditListener : Listener {
                 // Icon change
                 player.closeInventory()
 				Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
-					AdvertIconSelector.open(player, advert.category) { material, modelData ->
+					AdvertIconSelector.open(player, advert.category) { material, itemModel ->
 						advert.iconMaterial = material
-						advert.iconCustomModelData = modelData
+						advert.iconItemModel = itemModel
 						SneakyJobBoard.getDatabaseManager().updateAdvert(advert)
 						Bukkit.getScheduler().runTaskLater(SneakyJobBoard.getInstance(), Runnable {
 							AdvertEditInterface.open(player, advert)

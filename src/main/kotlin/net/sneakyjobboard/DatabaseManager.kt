@@ -9,8 +9,11 @@ import com.sneakyutils.util.TextUtility
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobHistoryInventoryHolder
 import net.sneakyjobboard.advert.Advert
+import net.sneakyjobboard.util.ItemModelUtility
+import net.sneakyjobboard.util.LegacyItemModels
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import java.awt.Graphics2D
 import java.awt.Image
@@ -39,7 +42,10 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
     init {
         store.whenReady().whenComplete { _, error ->
             if (error != null) report("initialization/preflight")
-            else if (!closed) reconcileOpenJobs()
+            else if (!closed) {
+                if (!store.hasAdvertItemModelColumn()) plugin.logger.warning("Operator schema has no lom2_adverts \"iconItemModel\" column; advert icons will not be saved until it is added (see docs/postgresql-migration.md).")
+                reconcileOpenJobs()
+            }
         }
     }
     private fun report(operation: String) {
@@ -153,7 +159,9 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
     private fun advertData(advert: Advert): Map<String, Any> = linkedMapOf(
         "uuid" to advert.uuid, "category" to (advert.category?.name ?: ""), "posteruuid" to advert.player.uniqueId.toString(),
         "posterDisplayString" to advert.posterString, "name" to advert.name, "description" to advert.description,
-        "iconMaterial" to (advert.iconMaterial?.name ?: ""), "iconCustomModelData" to (advert.storedIconCustomModelData ?: advert.iconCustomModelData ?: 0),
+        "iconMaterial" to (advert.iconMaterial?.name ?: ""),
+        // The numeric iconCustomModelData column is read-only legacy data: never written, so unmigrated values and rollback survive.
+        JobBoardRepository.ADVERT_ITEM_MODEL to (advert.iconItemModel?.toString() ?: ""),
         "enabled" to advert.enabled, "deleted" to advert.deleted
     )
     fun listAdvert(advert: Advert) {
@@ -190,19 +198,43 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
                         val advertUuid = value(row, "uuid") ?: continue
                         val adverts = SneakyJobBoard.getAdvertManager()
                         if (adverts.getAdvert(advertUuid) != null) continue
+                        val material = Material.matchMaterial(value(row, "iconMaterial") ?: "")
+                        val icon = storedAdvertIcon(row, id, material)
                         val advert = Advert(SneakyJobBoard.getAdvertCategoryManager().getCategory(category), player).apply {
                             this.uuid = advertUuid; recordID = id; this.name = name; this.description = description
                             posterString = value(row, "posterDisplayString") ?: ""
-                            iconMaterial = Material.matchMaterial(value(row, "iconMaterial") ?: "")
-                            iconCustomModelData = value(row, "iconCustomModelData")?.toBigDecimalOrNull()?.toInt() ?: 0
-                            storedIconCustomModelData = value(row, "iconCustomModelData")?.toBigDecimalOrNull()
+                            iconMaterial = material
+                            iconItemModel = icon.model
                             enabled = bool(row, "enabled")
                         }
                         adverts.list(advert, false)
+                        // Write the converted id back so later reads no longer depend on the legacy integer.
+                        icon.model?.takeIf { icon.migrate }?.let { model ->
+                            observe(store.update(JobBoardRepository.ADVERTS, id, mapOf(JobBoardRepository.ADVERT_ITEM_MODEL to model.toString())), "advert icon migration")
+                        }
                     } catch (_: Exception) { report("advert row") }
                 }
             }
         }
+    }
+    private class StoredIcon(val model: NamespacedKey?, val migrate: Boolean)
+
+    /**
+     * Resolves an advert row's icon model. The item-model column wins; rows that only have the legacy numeric
+     * `iconCustomModelData` are converted with the carrier material, and flagged for write-back when the operator
+     * schema has the new column. Anything unconvertible falls back to the category icon (model = null).
+     */
+    private fun storedAdvertIcon(row: JsonObject, id: String, material: Material?): StoredIcon {
+        value(row, JobBoardRepository.ADVERT_ITEM_MODEL)?.takeIf { it.isNotBlank() }?.let { stored ->
+            ItemModelUtility.parseItemModel(stored, "advert $id")?.let { return StoredIcon(it, false) }
+        }
+        val legacy = value(row, "iconCustomModelData")?.toBigDecimalOrNull()?.takeIf { it.signum() > 0 } ?: return StoredIcon(null, false)
+        val model = material?.let { LegacyItemModels.bundled.resolve(it, legacy) }
+        if (model == null) {
+            plugin.logger.warning("Advert $id has legacy icon ${material?.name}#${legacy.toBigInteger()} with no item model mapping; using the category icon.")
+            return StoredIcon(null, false)
+        }
+        return StoredIcon(model, store.hasAdvertItemModelColumn())
     }
     override fun close() { closed = true; store.close(); historyRequests.clear(); advertRequests.clear(); locallyEndedJobs.clear(); locallyDeletedAdverts.clear() }
     private fun parseStoredLocation(text: String): org.bukkit.Location? {

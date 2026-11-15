@@ -1,6 +1,8 @@
 package net.sneakyjobboard.advert
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.util.ItemModelDefinition
+import net.sneakyjobboard.util.ItemModelUtility
 import org.bukkit.Material
 import org.bukkit.configuration.file.YamlConfiguration
 
@@ -35,16 +37,20 @@ class AdvertCategoryManager {
                 val name = advertCategoriesSection.getString("$key.name") ?: key
                 val description = advertCategoriesSection.getString("$key.description") ?: key
                 val iconMaterialString = advertCategoriesSection.getString("$key.icon-material") ?: ""
-                val iconCustomModelData = advertCategoriesSection.getInt("$key.icon-custom-model-data")
 
                 val iconMaterial = Material.matchMaterial(iconMaterialString) ?: Material.MUSIC_DISC_CAT
+                // icon-item-model is the supported key; a legacy integer icon-custom-model-data is converted to the
+                // item model that replaced it for this carrier material instead of being applied as an integer.
+                val iconModel = ItemModelUtility.migrateLegacyInteger(
+                    ItemModelUtility.readConfiguredModel(advertCategoriesSection, key), iconMaterial
+                )
 
                 advertCategories[key] = AdvertCategory(
                     id = key,
                     name,
                     description,
                     iconMaterial,
-                    iconCustomModelData
+                    iconModel
                 )
             }
         } catch (e: IllegalStateException) {
@@ -72,12 +78,12 @@ class AdvertCategoryManager {
  * @property name The display name of the advert category.
  * @property description A brief description of the advert category.
  * @property iconMaterial The material used for the icon representation.
- * @property iconCustomModelData Custom model data for the icon.
+ * @property iconModel Item model (and optional custom-model-data floats/strings) for the icon.
  */
 data class AdvertCategory(
     val id: String,
     val name: String,
     val description: String,
     val iconMaterial: Material,
-    val iconCustomModelData: Int
+    val iconModel: ItemModelDefinition
 ) 

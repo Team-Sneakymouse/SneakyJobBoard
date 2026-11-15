@@ -48,7 +48,7 @@ job-board-extra-buttons:
         name: "&aPost New Advert"
         description: "&ePost a new service advert."
         icon-material: "jigsaw"
-        icon-custom-model-data: 2
+        icon-item-model: "lom:icons/grayscale/aerialdodge"
         show-on-board-interact: false
         command-console: "listadvert [playerName]"
     list-1800000:
@@ -56,7 +56,7 @@ job-board-extra-buttons:
         name: "&aPost New Job"
         description: "&ePost a 30 minute job listing."
         icon-material: "jigsaw"
-        icon-custom-model-data: 1
+        icon-item-model: "lom:icons/grayscale/1111"
         show-on-board-interact: false
         command-console: "listjob [playerName]"
 
@@ -78,21 +78,21 @@ advert-board-extra-buttons:
         name: "&aManage Adverts"
         description: "&eManage your service adverts."
         icon-material: "jigsaw"
-        icon-custom-model-data: 3
+        icon-item-model: "lom:icons/grayscale/agilecowpoke"
         command-console: "manageadverts [playerName]"
     invitations:
         slot: 7
         name: "&aInvitations"
         description: "&eView your received invitations."
         icon-material: "jigsaw"
-        icon-custom-model-data: 4
+        icon-item-model: "lom:icons/grayscale/agilityfocus"
         command-console: "invitations [playerName]"
     list-advert:
         slot: 8
         name: "&aPost New Advert"
         description: "&ePost a new service advert."
         icon-material: "jigsaw"
-        icon-custom-model-data: 2
+        icon-item-model: "lom:icons/grayscale/aerialdodge"
         command-console: "listadvert [playerName]"
 
 ## Different categories that a job can have. This is used to set icons for various displays.
@@ -104,7 +104,7 @@ job-categories:
         name: "Aid Request"
         description: "A fellow citizens requires assistance."
         icon-material: "jigsaw"
-        icon-custom-model-data: 1
+        icon-item-model: "lom:icons/grayscale/1111"
         dynmap-map-icon: "building"
         discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
@@ -119,7 +119,7 @@ job-categories:
         name: "Service Industry"
         description: "An establishment is currently open in this area."
         icon-material: "jigsaw"
-        icon-custom-model-data: 2
+        icon-item-model: "lom:icons/grayscale/aerialdodge"
         dynmap-map-icon: "building"
         discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
@@ -134,7 +134,7 @@ job-categories:
         name: "Special Event"
         description: "A special event is being hosted!"
         icon-material: "jigsaw"
-        icon-custom-model-data: 3
+        icon-item-model: "lom:icons/grayscale/agilecowpoke"
         dynmap-map-icon: "building"
         discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
@@ -149,7 +149,7 @@ job-categories:
         name: "Delivery Request"
         description: "A fellow citizen is looking for something specific."
         icon-material: "jigsaw"
-        icon-custom-model-data: 4
+        icon-item-model: "lom:icons/grayscale/agilityfocus"
         dynmap-map-icon: "building"
         discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         item-display-brightness:
@@ -164,7 +164,7 @@ job-categories:
         name: "Store"
         description: "A store is currently open in this area."
         icon-material: "jigsaw"
-        icon-custom-model-data: 5
+        icon-item-model: "lom:icons/grayscale/airtime"
         dynmap-map-icon: "building"
         discord-embed-icon: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e6/Site-logo.png"
         duration-override: 999999999999999999
@@ -177,14 +177,40 @@ job-categories:
             translation: 0.0,0.0,0.0
             scale: 0.10,0.10,0.10
 
+## Advert categories. icon-item-model sets the icon's item model on icon-material.
+## (A legacy integer icon-custom-model-data is still read and converted to the item model it maps to.)
 advert-categories:
     medical:
         name: "Medical"
         description: "Physical and mental health services."
         icon-material: "jigsaw"
-        icon-custom-model-data: 1
+        icon-item-model: "lom:icons/grayscale/1111"
 
+## Icons players can pick for an advert: carrier material -> list of item-model ids.
+## (Legacy integer entries such as 5 or "2001-2024" are still read and converted for that carrier material.)
 advert-icons:
-    jigsaw:
-        - 1
-        - "5-7"
+    red_stained_glass_pane:
+        - "lom:icons/jobboard/bluefist"
+        - "lom:icons/jobboard/blueharp"
+        - "lom:icons/jobboard/bluemagic"
+        - "lom:icons/jobboard/bluestaff"
+        - "lom:icons/jobboard/blueswords"
+        - "lom:icons/jobboard/goldswords"
+        - "lom:icons/jobboard/grayaxe"
+        - "lom:icons/jobboard/graygear"
+        - "lom:icons/jobboard/greenarchery"
+        - "lom:icons/jobboard/greendemon"
+        - "lom:icons/jobboard/greenharp"
+        - "lom:icons/jobboard/greenheal"
+        - "lom:icons/jobboard/greenstaff"
+        - "lom:icons/jobboard/pinkflower"
+        - "lom:icons/jobboard/purplefist"
+        - "lom:icons/jobboard/purplemagic"
+        - "lom:icons/jobboard/redaxe"
+        - "lom:icons/jobboard/reddemon"
+        - "lom:icons/jobboard/redflower"
+        - "lom:icons/jobboard/redgear"
+        - "lom:icons/jobboard/wingedhelmet"
+        - "lom:icons/jobboard/yellowarchery"
+        - "lom:icons/jobboard/yellowheal"
+        - "lom:icons/jobboard/yellowswords"
