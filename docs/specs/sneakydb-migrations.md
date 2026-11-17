@@ -17,7 +17,12 @@ Adopt [team database migrations](https://github.com/Team-Sneakymouse/team-develo
 
 | Script | Purpose |
 |--------|---------|
-| `V001__jobboard.sql` | Canonical DDL ported from former `psql-hooks/sql/jobboard.sql`: jobs, adverts (incl. `iconItemModel` and `serverPort`), outbox, deliveries, phone receipts, touch/capture functions and triggers. No transaction control, no `CREATE SCHEMA`, plain `CREATE` for clean init. Omits the operator-only fail-closed `information_schema` type guard (Live adoption does not re-run this script). |
+| `V001__jobboard.sql` | **Live baseline (2026-11-17):** `lom2_listed_jobs` / `lom2_adverts` as on `team_sneakymouse`, plus Live indexes and `lom.touch_updated` triggers. No outbox. |
+| `V002__jobboard_outbox_and_align.sql` | Align column types/nullability/checks with the plugin contract; add outbox, deliveries, phone receipts, and `capture_job_event`. **Breaking** retypes. |
+
+## Evidence (V001 vs Live)
+
+Compared on 2026-11-17 against Live (`team_sneakymouse`) with `pg_dump --schema-only` and `information_schema`. Live had no `job_outbox` / `job_deliveries` / `job_phone_receipts`, used `bigint` for jobs.`serverPort` and `endTime`, `bigint` nullable `iconCustomModelData`, and `lom.touch_updated` triggers named `lom2_*_touch_updated`. The former repo `jobboard.sql` (and the first merged V001) did not match that.
 
 ## Runtime
 
@@ -25,11 +30,11 @@ On enable, `SneakyJobBoard` registers `SneakyDBProvider.getApi().migrate(IDENTIF
 
 ## Tests
 
-`JobBoardMigrationTest` (tag `postgres`) applies `V001__jobboard.sql` to an empty `lom` schema, then exercises `JobBoardRepository` inserts/updates. Run with `./gradlew postgresTest`.
+`JobBoardMigrationTest` (tag `postgres`) applies every `db/migrations` script to an empty `lom` schema, then exercises `JobBoardRepository` inserts/updates. Run with `./gradlew postgresTest`.
 
-## Operator adoption (Live)
+## Operator adoption
 
-1. Ensure schema `lom` exists and SneakyDB's role has `USAGE` and `CREATE` on it (see [SneakyDB migrations](https://github.com/Team-Sneakymouse/SneakyDB#migrations)).
-2. If Live already matches the former `jobboard.sql` DDL (applied by operator), record `sneakyjobboard` version `1` in `sneakydb.schema_migrations` with the jar's V001 checksum **before** the first server starts with a build that calls `migrate` (SneakyDB **Existing tables**).
-3. New databases: create `lom`, deploy SneakyDB with `migrations.mode: apply` on one server; V001 runs at first restart.
-4. `psql-hooks` no longer ships duplicate CREATE DDL; hooks tests bootstrap from this plugin's `V001__jobboard.sql`.
+1. Ensure schema `lom` exists and SneakyDB's role has `USAGE` and `CREATE` on it.
+2. **Live / Staging** (tables match V001 today): record `sneakyjobboard` version `1` with a **null** checksum, then let `apply` fill it and run V002. Do **not** record V002 as applied.
+3. **Dev** (already recorded the wrong V001 checksum and was altered toward that script): before deploying this jar, reset the job-board objects to the Live baseline (or restore from Live), `DELETE FROM sneakydb.schema_migrations WHERE plugin = 'sneakyjobboard'`, then record version `1` with null checksum as on Live. V002 then applies.
+4. New empty databases: create `lom`, one server in `migrations.mode: apply`; V001 then V002 run at first restart.

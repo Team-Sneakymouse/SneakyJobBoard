@@ -70,13 +70,15 @@ class JobBoardMigrationTest {
                 .sorted(Comparator.comparingInt { path -> migrationVersion(path.fileName.toString()) })
                 .toList()
         }
-        check(scripts.single().fileName.toString() == "V001__jobboard.sql")
+        check(scripts.map { it.fileName.toString() } == listOf("V001__jobboard.sql", "V002__jobboard_outbox_and_align.sql"))
         DriverManager.getConnection(url, user, password).use { c ->
             c.autoCommit = false
             c.createStatement().use { it.execute("CREATE SCHEMA lom AUTHORIZATION $user") }
             c.commit()
-            c.createStatement().use { it.execute(Files.readString(scripts.single())) }
-            c.commit()
+            for (script in scripts) {
+                c.createStatement().use { it.execute(Files.readString(script)) }
+                c.commit()
+            }
         }
     }
 
