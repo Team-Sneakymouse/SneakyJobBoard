@@ -26,9 +26,17 @@ import java.util.concurrent.CompletableFuture
 import javax.imageio.ImageIO
 
 /** Captures Bukkit state on the server thread; only immutable SQL values and images leave it. */
-class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository(
-    SneakyDBProvider.getApi(), SneakyJobBoard.getInstance().config.getString("database-schema", "lom")!!, Bukkit.getPort()
-)) : AutoCloseable {
+class DatabaseManager(
+    migration: java.util.concurrent.CompletableFuture<Int>,
+    private val store: JobBoardRepository = JobBoardRepository(
+        SneakyDBProvider.getApi(),
+        SneakyJobBoard.getInstance().config.getString("database-schema", "lom")!!,
+        Bukkit.getPort(),
+        migration,
+    ),
+) : AutoCloseable {
+    /** Test and injection entry point when migrations are not registered. */
+    constructor(store: JobBoardRepository) : this(CompletableFuture.completedFuture(1), store)
     private val plugin = SneakyJobBoard.getInstance()
     private val gson = Gson()
     private val boot = ManagementFactory.getRuntimeMXBean().startTime
@@ -43,7 +51,7 @@ class DatabaseManager(private val store: JobBoardRepository = JobBoardRepository
         store.whenReady().whenComplete { _, error ->
             if (error != null) report("initialization/preflight")
             else if (!closed) {
-                if (!store.hasAdvertItemModelColumn()) plugin.logger.warning("Operator schema has no lom2_adverts \"iconItemModel\" column; advert icons will not be saved until it is added (see docs/postgresql-migration.md).")
+                if (!store.hasAdvertItemModelColumn()) plugin.logger.warning("Schema has no lom2_adverts \"iconItemModel\" column; advert icons cannot be saved until migrations apply (see docs/specs/sneakydb-migrations.md).")
                 reconcileOpenJobs()
             }
         }

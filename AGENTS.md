@@ -10,4 +10,4 @@ Before implementing, read `<policy-root>/README.md`. It is the policy index and 
 Build commands, architecture facts and recorded local exceptions in this file are authoritative for this repository. Where this file and the policy require incompatible actions, say so before expanding the work. Running checks and writing tests are separate decisions: a source edit does not by itself require a new test.
 <!-- END TEAM-POLICY MANAGED BOOTSTRAP -->
 
-When changing the database schema or triggers, read `docs/postgresql-migration.md` (schema is operator-owned; the plugin never runs DDL).
+When changing the database schema or triggers, read `docs/postgresql-migration.md` and `docs/specs/sneakydb-migrations.md`; DDL lives only in `src/resources/db/migrations/`.

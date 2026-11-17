@@ -13,6 +13,7 @@ import net.sneakyjobboard.advert.AdvertInvitationListener
 import net.sneakyjobboard.advert.AdvertManagementListener
 import net.sneakyjobboard.advert.AdvertEditListener
 import net.sneakyjobboard.jobboard.*
+import com.sneakydb.SneakyDBProvider
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -62,7 +63,20 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         jobCategoryManager = JobCategoryManager()
         jobBoardManager = JobBoardManager()
         jobManager = JobManager()
-        databaseManager = DatabaseManager()
+        val migration = try {
+            SneakyDBProvider.getApi().migrate(IDENTIFIER, SneakyJobBoard::class.java)
+        } catch (e: RuntimeException) {
+            java.util.concurrent.CompletableFuture.failedFuture(e)
+        }
+        migration.whenComplete { _: Int?, failure: Throwable? ->
+            if (failure != null) {
+                val cause = failure.cause ?: failure
+                logger.warning(
+                    "SneakyJobBoard migrations failed (${cause.message ?: cause}); persistence and delivery are unavailable until fixed.",
+                )
+            }
+        }
+        databaseManager = DatabaseManager(migration)
         advertCategoryManager = AdvertCategoryManager()
         advertManager = AdvertManager()
 

@@ -4,8 +4,13 @@ import com.sneakydb.SneakyDBApi
 import java.security.SecureRandom
 import java.util.concurrent.CompletableFuture
 
-/** SQL-only canonical persistence. SneakyDB owns connections; operators own DDL and delivery triggers. */
-class JobBoardRepository(private val api: SneakyDBApi, schema: String, val port: Int) : AutoCloseable {
+/** SQL-only canonical persistence. SneakyDB owns connections; schema is applied via plugin migrations. */
+class JobBoardRepository(
+    private val api: SneakyDBApi,
+    schema: String,
+    val port: Int,
+    migration: java.util.concurrent.CompletableFuture<Int> = java.util.concurrent.CompletableFuture.completedFuture(1),
+) : AutoCloseable {
     private val schemaName = schema.also { require(it.matches(Regex("[a-z_][a-z0-9_]{0,62}"))) { "Invalid database-schema" } }
     @Volatile private var closed = false
     private val tails = mutableMapOf<String, CompletableFuture<*>>()
@@ -21,7 +26,9 @@ class JobBoardRepository(private val api: SneakyDBApi, schema: String, val port:
 
     init {
         require(port in 1..65535) { "A positive backend listening port is required" }
-        readiness = api.whenReady().thenCompose {
+        readiness = migration.thenCompose { _ ->
+            api.whenReady()
+        }.thenCompose {
             checkOpen()
             api.query("SELECT " + (listOf("id", "serverPort", "discordMessageId", "created", "updated") + jobColumns).joinToString(", ") { quote(it) } + " FROM ${table(JOBS)} WHERE false", emptyList<Any>())
         }.thenCompose {
