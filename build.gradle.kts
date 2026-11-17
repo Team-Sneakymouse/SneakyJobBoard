@@ -42,7 +42,7 @@ dependencies {
 	compileOnly("me.clip:placeholderapi:2.11.6")
 	compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.4")
-	compileOnly("io.github.team-sneakymouse:sneakydb-api:2026.10.26-fd4e29e90ad0")
+	compileOnly("io.github.team-sneakymouse:sneakydb-api:2026.11.17-452c61d0f480")
 	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.11.10-7e1262ebd376")
 
 	testImplementation("io.github.team-sneakymouse:sneakyutils:2026.11.10-7e1262ebd376")
@@ -55,11 +55,26 @@ dependencies {
 	testImplementation("us.dynmap:DynmapCoreAPI:3.4")
 	testImplementation("me.clip:placeholderapi:2.11.6")
 	testImplementation("io.papermc.paper:paper-api:26.2.build.121-stable")
-	testImplementation("io.github.team-sneakymouse:sneakydb-api:2026.10.26-fd4e29e90ad0")
+	testImplementation("io.github.team-sneakymouse:sneakydb-api:2026.11.17-452c61d0f480")
+	testImplementation("org.testcontainers:postgresql:1.21.3")
+	testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+	testRuntimeOnly("org.postgresql:postgresql:42.7.8")
 }
 
 tasks.test {
-	useJUnitPlatform()
+	useJUnitPlatform {
+		excludeTags("postgres")
+	}
+}
+
+tasks.register<Test>("postgresTest") {
+	group = "verification"
+	description = "Apply job board migrations against PostgreSQL in Docker (Testcontainers)."
+	testClassesDirs = sourceSets["test"].output.classesDirs
+	classpath = sourceSets["test"].runtimeClasspath
+	useJUnitPlatform {
+		includeTags("postgres")
+	}
 }
 
 tasks.processResources {
