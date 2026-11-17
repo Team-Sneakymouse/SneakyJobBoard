@@ -19,7 +19,7 @@ The plugin applies its own schema through SneakyDB migrations (`src/resources/db
 
 ## Frozen schema authority
 
-Canonical DDL is **`V001__jobboard.sql`** in this repository (ported from the former `psql-hooks/sql/jobboard.sql`). Field semantics still trace to the `metadata/collections-20261025T095957Z.json` snapshot in `Team-Sneakymouse/pocketbase` and the reviewed cross-service contract. This is **snapshot verification, not live metadata/DB verification**. Migration notes previously described a jobs table as ready; this plugin does not assume it already exists.
+Canonical DDL is **`V001__jobboard.sql`** (Live baseline) plus **`V002__jobboard_outbox_and_align.sql`** (outbox/capture and column alignment). See `docs/specs/sneakydb-migrations.md`. Field semantics still trace to the `metadata/collections-20261025T095957Z.json` snapshot in `Team-Sneakymouse/pocketbase` and the reviewed cross-service contract.
 
 - IDs are consumer-generated 15-character lowercase alphanumeric text; imports retain their IDs. INSERT uses `RETURNING id`. Job/advert UUIDs remain text with no new uniqueness assumption.
 - Jobs retain `serverPort`, UUID/category/poster/display/icon/location fields, epoch-millisecond `startTime`/`durationMillis`, tracking/persist, name/description, Discord icon/message ID and end time/reason. `created`/`updated` are database-managed timestamps. `endTime` remains numeric, not an integer-only schema conversion.
@@ -30,7 +30,7 @@ Canonical DDL is **`V001__jobboard.sql`** in this repository (ported from the fo
 ## Operator sequence — do not run as part of a plugin build
 
 1. Coordinate a maintenance window and stop the old PocketBase writer and realtime Discord consumer. Back up both stores and freeze writes before the final copy. Do not run both writer generations.
-2. Ensure schema `lom` exists. On **new** databases, SneakyDB applies `V001__jobboard.sql` at startup (`migrations.mode: apply` on one server). On **Live** that already ran the former `psql-hooks` DDL, record V001 as applied before the first jar that calls `migrate` (see `docs/specs/sneakydb-migrations.md`). Grant the runtime role schema `USAGE`, table SELECT/INSERT/UPDATE on jobs/adverts, and the reviewed outbox trigger permissions (`sql/jobboard-plugin-grants.sql` in psql-hooks, after replacing the role name).
+2. Ensure schema `lom` exists. On **new** databases, SneakyDB applies V001 then V002 at startup (`migrations.mode: apply` on one server). On **Live** matching V001, record version 1 with a null checksum so apply fills it and runs V002 (see `docs/specs/sneakydb-migrations.md`). Grant the runtime role schema `USAGE`, table SELECT/INSERT/UPDATE on jobs/adverts, and the reviewed outbox trigger permissions (`sql/jobboard-plugin-grants.sql` in psql-hooks, after replacing the role name).
 3. Import **all historical jobs and adverts**, preserving IDs, UUIDs, timestamps, end fields, numeric model data and Discord message IDs. Suppress/install delivery triggers after copy: historical creates must not generate notifications automatically. An explicit operator seed is required if active imported missing-message jobs should be announced.
 4. **Explicitly assign legacy adverts to a verified backend port.** Previous adverts had no ownership field; imported `serverPort = 0`/NULL rows remain invisible and uneditable by all backends until an operator establishes ownership. Do not assign them automatically to the first server to boot. Existing jobs with missing/zero port likewise remain unowned. This is an intentional policy change, not data deletion.
 5. Rename presentation settings without changing their values: `pocketbase-poster` -> `database-poster`, `pocketbase-location` -> `database-location`. Remove old collection/records-URL settings and set `database-schema: lom`. Presentation settings also supply invitation/job dispatch locations. Old keys are not silently used as connection configuration; manually copying them preserves customization.
@@ -43,7 +43,7 @@ No step above has been performed by this change. No remote database writes, impo
 
 Adverts used to store an integer `iconCustomModelData`; the integer cannot be applied any more (`setCustomModelData(int)` is gone, see the Paper items policy). The new `"iconItemModel"` column holds a namespaced item-model id such as `lom:icons/jobboard/bluefist`, shown on `iconMaterial` (the carrier).
 
-**Schema.** V001 creates `"iconItemModel" text NOT NULL DEFAULT ''` on `lom2_adverts`. Nothing else about delivery/outbox changes: adverts have no triggers.
+**Schema.** Live / V001 already includes `"iconItemModel" text NOT NULL DEFAULT ''` on `lom2_adverts`. Outbox/capture arrive in V002. Adverts have no capture triggers.
 
 **Startup.** The read-only preflight probes `SELECT "iconItemModel" ... WHERE false`. If migrations have not run and the column is missing, the plugin still starts for local UI work, but cannot persist a newly chosen advert icon until migrations apply.
 
