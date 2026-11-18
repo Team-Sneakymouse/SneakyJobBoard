@@ -33,7 +33,7 @@ repositories {
 	}
 	mavenCentral()
 	maven("https://repo.papermc.io/repository/maven-public/")
-	maven("https://maven.sneakyrp.com/releases")
+	maven("https://maven.sneakyrp.com/sneakymouse")
 }
 
 dependencies {
@@ -43,9 +43,9 @@ dependencies {
 	compileOnly("us.dynmap:dynmap-api:3.4-beta-3")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.4")
 	compileOnly("io.github.team-sneakymouse:sneakydb-api:2026.11.17-452c61d0f480")
-	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.11.10-7e1262ebd376")
+	compileOnly("io.github.team-sneakymouse:sneakyutils:2026.11.18-e359806ed982")
 
-	testImplementation("io.github.team-sneakymouse:sneakyutils:2026.11.10-7e1262ebd376")
+	testImplementation("io.github.team-sneakymouse:sneakyutils:2026.11.18-e359806ed982")
 	testImplementation("org.junit.jupiter:junit-jupiter:5.14.1")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.mockito:mockito-core:5.23.0")
@@ -134,7 +134,7 @@ publishing {
 	repositories {
 		maven {
 			name = "sneakyrp"
-			url = uri("https://maven.sneakyrp.com/releases")
+			url = uri("https://maven.sneakyrp.com/sneakymouse")
 			credentials(PasswordCredentials::class)
 			authentication {
 				create<org.gradle.authentication.http.BasicAuthentication>("basic")

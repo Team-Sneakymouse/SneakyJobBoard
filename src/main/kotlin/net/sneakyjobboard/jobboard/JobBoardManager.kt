@@ -13,11 +13,27 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.EventPriority
 import org.bukkit.event.world.ChunkLoadEvent
+import org.bukkit.event.world.WorldLoadEvent
+import org.bukkit.event.world.WorldUnloadEvent
 import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapView
+import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitRunnable
+import com.sneakyutils.SneakyUtils
+import com.sneakyutils.triggers.Area
+import com.sneakyutils.triggers.AreaHandler
+import com.sneakyutils.triggers.AreaOptions
+import com.sneakyutils.triggers.PlayerTick
+import com.sneakyutils.triggers.PlayerTimer
+import com.sneakyutils.triggers.PlayerTimerOptions
+import com.sneakyutils.triggers.RiderPolicy
+import com.sneakyutils.triggers.Subscription
+import java.util.IdentityHashMap
+import java.util.UUID
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.sin
 
 /**
@@ -694,55 +710,189 @@ class JobBoardListener : Listener {
     }
 }
 
-/** Periodically updates job board icons based on player proximity. */
-class JobBoardUpdater : BukkitRunnable() {
+/**
+ * Shows each player near a job board the text of the icon they are looking at.
+ *
+ * Each board has a SneakyUtils area covering every block that reaches within [NEAR_RADIUS] of its map location.
+ * Entering adds the player to a per-player timer that runs the look-at check; leaving the last board removes them
+ * and hides their icons, so players away from boards cost nothing per tick.
+ */
+class JobBoardUpdater : Listener {
     val shownIcons = mutableMapOf<Player, TextDisplay>()
 
     /**
-     * Runs the update cycle for job board icons.
+     * Boards each player is inside the area of, by player UUID, kept in board-config order (the old loop's order, so
+     * the same board wins where areas overlap). Boards compare by identity: JobBoard is a data class.
      */
-    override fun run() {
-        val players = mutableMapOf<JobBoard, MutableList<Player>>()
+    private val members = HashMap<UUID, MutableList<JobBoard>>()
 
-        // Build a map of players who are nearby a JobBoard
-        for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
-            val nearbyPlayers = jobBoard.mapLocation.world?.players?.filter {
-                it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
-            } ?: emptyList()
+    /** Each board's position in the config, by identity. */
+    private val boardOrder = IdentityHashMap<JobBoard, Int>()
 
-            players[jobBoard] = nearbyPlayers.toMutableList()
+    /** Each board's map world and world-location world, by name, so they can be rebound when the world loads again. */
+    private val boardWorlds = IdentityHashMap<JobBoard, Pair<String, String>>()
+
+    /** Area subscriptions by the name of the world the board's map is in. SneakyUtils closes them on world unload. */
+    private val subscriptions = HashMap<String, MutableList<Subscription>>()
+    private var timer: PlayerTimer? = null
+    private var plugin: Plugin? = null
+
+    /**
+     * Subscribes the board areas and the look-at timer. Call on the server thread from onEnable, and register this
+     * as a listener so board areas follow their world unloading and loading again.
+     *
+     * Interval 1 keeps the old every-tick responsiveness: right clicks dispatch the icon in [shownIcons], so a slower
+     * timer could dispatch the icon looked at a tick earlier. Only players inside a board's area are in the timer.
+     */
+    fun start(plugin: Plugin, jobBoards: List<JobBoard>) {
+        stop()
+        this.plugin = plugin
+        timer = SneakyUtils.getTriggers().everyForPlayers(
+            plugin, 1, PlayerTick { tick(it) },
+            PlayerTimerOptions.builder().label("sneakyjobboard:board-look").build()
+        )
+        jobBoards.forEachIndexed { index, jobBoard ->
+            boardOrder[jobBoard] = index
+            // parseConfig only builds boards in loaded worlds, so both worlds are readable here.
+            boardWorlds[jobBoard] = jobBoard.mapLocation.world.name to jobBoard.worldLocation.world.name
+            subscribe(jobBoard)
+        }
+    }
+
+    /** Closes the subscriptions and forgets per-player state. */
+    fun stop() {
+        subscriptions.values.forEach { list -> list.forEach { it.close() } }
+        subscriptions.clear()
+        timer?.close()
+        timer = null
+        plugin = null
+        members.clear()
+        shownIcons.clear()
+        boardOrder.clear()
+        boardWorlds.clear()
+    }
+
+    private fun subscribe(jobBoard: JobBoard) {
+        val owner = plugin ?: return
+        val world = jobBoard.mapLocation.world
+        val handler = AreaHandler.of(
+            { player, _, _ -> enter(player, jobBoard) },
+            { player, _, _ -> exit(player, jobBoard) }
+        )
+        val area = nearArea(world, jobBoard.mapLocation)
+        subscriptions.getOrPut(world.name) { mutableListOf() } +=
+            SneakyUtils.getTriggers().area(owner, area, handler, areaOptions())
+    }
+
+    /** SneakyUtils closes a world's areas when it unloads; drop ours and their memberships with them. */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    fun onWorldUnload(event: WorldUnloadEvent) {
+        val closed = subscriptions.remove(event.world.name) ?: return
+        closed.forEach { it.close() }
+        val gone = boardWorlds.entries.filter { it.value.first == event.world.name }.map { it.key }
+        members.values.forEach { boards -> boards.removeIf { board -> gone.any { it === board } } }
+    }
+
+    /** A board world loaded again: rebind the boards to the new World and subscribe their areas again. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onWorldLoad(event: WorldLoadEvent) {
+        if (plugin == null) return
+        val world = event.world
+        for ((jobBoard, names) in boardWorlds) {
+            if (names.second == world.name) jobBoard.worldLocation.world = world
+            if (names.first == world.name) jobBoard.mapLocation.world = world
+        }
+        if (subscriptions.containsKey(world.name)) return
+        boardOrder.entries.sortedBy { it.value }.forEach { (jobBoard, _) ->
+            if (boardWorlds[jobBoard]?.first == world.name) subscribe(jobBoard)
+        }
+    }
+
+    private fun enter(player: Player, jobBoard: JobBoard) {
+        val boards = members.getOrPut(player.uniqueId) { ArrayList(2) }
+        insertInOrder(boards, jobBoard) { boardOrder[it] ?: Int.MAX_VALUE }
+        timer?.add(player)
+    }
+
+    private fun exit(player: Player, jobBoard: JobBoard) {
+        val boards = members[player.uniqueId] ?: return
+        boards.removeIf { it === jobBoard }
+        if (boards.isNotEmpty()) return
+        members.remove(player.uniqueId)
+        timer?.remove(player)
+        // Only the tracked icon can be visible: job texts are hidden from everyone at spawn and from each player at join.
+        hide(player)
+    }
+
+    /** The old per-tick update, for one player inside at least one board area. */
+    private fun tick(player: Player) {
+        val boards = members[player.uniqueId]
+        if (boards == null) {
+            hide(player)
+            return
+        }
+        val location = player.location
+        var icon: TextDisplay? = null
+        // The player's boards in config order, as the old loop visited them; the first with a looked-at icon wins.
+        for (jobBoard in boards) {
+            if (location.world != jobBoard.mapLocation.world) continue
+            if (location.distanceSquared(jobBoard.mapLocation) > NEAR_RADIUS * NEAR_RADIUS) continue
+            icon = getLookedAtIcon(jobBoard, player)
+            if (icon != null) break
+        }
+        if (icon == null) hide(player) else show(player, icon)
+    }
+
+    companion object {
+        /** Players within this many blocks of a board's map location see the text of the icon they look at. */
+        const val NEAR_RADIUS = 10.0
+
+        private fun areaOptions(): AreaOptions = AreaOptions.builder()
+            .riders(RiderPolicy.ALLOW)
+            .includeSpectators(true)
+            .fireOnRegister(true)
+            .label("sneakyjobboard:board-near")
+            .build()
+
+        /** Adds [item] (by identity, once) to [list], which is kept sorted by [order]; equal orders keep arrival order. */
+        fun <T> insertInOrder(list: MutableList<T>, item: T, order: (T) -> Int) {
+            if (list.any { it === item }) return
+            val rank = order(item)
+            var at = list.size
+            while (at > 0 && order(list[at - 1]) > rank) at--
+            list.add(at, item)
         }
 
-        // Hide icons for players who are no longer nearby
-        for (player in shownIcons.keys) {
-            val isInProximity = players.any { it.value.contains(player) }
-            if (!isInProximity) {
-                hide(player)
-            }
+        /** The board's area: every block that reaches within [NEAR_RADIUS] of [center]. */
+        fun nearArea(world: World, center: Location): Area {
+            val cx = center.x
+            val cy = center.y
+            val cz = center.z
+            return Area.custom(
+                world,
+                floor(cx - NEAR_RADIUS).toInt(), floor(cy - NEAR_RADIUS).toInt(), floor(cz - NEAR_RADIUS).toInt(),
+                floor(cx + NEAR_RADIUS).toInt(), floor(cy + NEAR_RADIUS).toInt(), floor(cz + NEAR_RADIUS).toInt(),
+            ) { x, y, z -> blockReaches(x, y, z, cx, cy, cz) }
         }
 
-        val lookedAtIcons = mutableMapOf<Player, TextDisplay?>()
-
-        // Find the icon that each of these players is looking at, or null
-        for ((jobBoard, playerList) in players) {
-            for (player in playerList) {
-                if (lookedAtIcons[player] != null) continue
-
-                val entity = getLookedAtIcon(jobBoard, player)
-
-                if (entity != null || !lookedAtIcons.keys.contains(player)) {
-                    lookedAtIcons[player] = entity
-                }
-            }
+        /**
+         * Whether the block holding position ([x], [y], [z]) has a point within [NEAR_RADIUS] of the centre.
+         *
+         * The area tests players only when their block changes, so its shape is decided per block: a superset of the
+         * exact sphere. The timer then applies the exact distance, as the old code did every tick.
+         */
+        fun blockReaches(x: Double, y: Double, z: Double, cx: Double, cy: Double, cz: Double): Boolean {
+            val dx = axisGap(floor(x), cx)
+            val dy = axisGap(floor(y), cy)
+            val dz = axisGap(floor(z), cz)
+            return dx * dx + dy * dy + dz * dz <= NEAR_RADIUS * NEAR_RADIUS
         }
 
-        // Show the looked at icon to the player if it exists
-        for ((player, icon) in lookedAtIcons) {
-            if (icon == null) {
-                hide(player)
-            } else {
-                show(player, icon)
-            }
+        /** Distance from [c] to the block span [[b], [b] + 1] on one axis (0 inside it). */
+        private fun axisGap(b: Double, c: Double): Double = when {
+            c < b -> b - c
+            c > b + 1 -> c - (b + 1)
+            else -> 0.0
         }
     }
 
@@ -842,25 +992,6 @@ class JobBoardMaintenance : BukkitRunnable() {
         }
 
         displays.forEach(Entity::remove)
-
-        // Build a list of players who aren't near a JobBoard
-        val players = Bukkit.getServer().onlinePlayers.toMutableSet()
-
-        for (jobBoard in SneakyJobBoard.getJobBoardManager().jobBoards) {
-            val nearbyPlayers = jobBoard.mapLocation.world?.players?.filter {
-                it.location.distanceSquared(jobBoard.mapLocation) <= 100.0
-            } ?: emptyList()
-
-            players.removeAll(nearbyPlayers.toSet())
-        }
-
-        // Ensure that TextDisplay icons are hidden to them
-        val textDisplays = SneakyJobBoard.getJobManager().getJobs().flatMap { it.textDisplays.values }
-        players.forEach { player ->
-            textDisplays.forEach { textDisplay ->
-                player.hideEntity(SneakyJobBoard.getInstance(), textDisplay)
-            }
-        }
 
         // Update duration-based scaling
         if (SneakyJobBoard.getInstance().getConfig().getLong("duration-scale-base-duration") > 0) {
