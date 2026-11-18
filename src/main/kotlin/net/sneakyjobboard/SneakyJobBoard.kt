@@ -58,6 +58,12 @@ class SneakyJobBoard : JavaPlugin(), Listener {
      * - Integrates with PlaceholderAPI and Dynmap if available
      */
     override fun onEnable() {
+        TriggersCompatibility.problem()?.let { problem ->
+            logger.severe("$problem. Disabling SneakyJobBoard.")
+            server.pluginManager.disablePlugin(this)
+            return
+        }
+
         saveDefaultConfig()
 
         jobCategoryManager = JobCategoryManager()
@@ -100,12 +106,13 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.pluginManager.registerEvents(AdvertManagementListener(), this)
         server.pluginManager.registerEvents(AdvertEditListener(), this)
         server.pluginManager.registerEvents(TextInputDialogs, this)
+        server.pluginManager.registerEvents(jobBoardUpdater, this)
 
         server.pluginManager.addPermission(Permission("$IDENTIFIER.*"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.admin"))
         server.pluginManager.addPermission(Permission("$IDENTIFIER.command.*"))
 
-        jobBoardUpdater.runTaskTimer(this, 0L, 1L)
+        jobBoardUpdater.start(this, jobBoardManager.jobBoards)
         jobBoardMaintenance.runTaskTimer(this, 0L, 100L)
         trackingJobsUpdater.runTaskTimer(
             this, 0L, getConfig().getLong("tracking-jobs-update-interval")
