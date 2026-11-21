@@ -17,4 +17,12 @@ class JobCategoryPickerTest {
     @Test fun `out-of-range slots are treated as unconfigured`() {
         assertEquals(mapOf(0 to "a"), JobCategoryPicker.layout(listOf("a"), mapOf("a" to 54), emptySet()))
     }
+
+    @Test fun `durations read as words`() {
+        assertEquals("1 hour 30 minutes", JobCategoryPicker.humanDuration(5_400_000))
+        assertEquals("24 hours", JobCategoryPicker.humanDuration(86_400_000))
+        assertEquals("1 minute 5 seconds", JobCategoryPicker.humanDuration(65_000))
+        assertEquals("2 hours", JobCategoryPicker.humanDuration(7_230_000))
+        assertEquals("0 minutes", JobCategoryPicker.humanDuration(0))
+    }
 }

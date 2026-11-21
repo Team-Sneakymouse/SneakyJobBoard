@@ -228,6 +228,10 @@ job-category-picker:
     title: "        &aChoose a Category"
     duration-millis: 5400000
     already-listed-message: "&4You already have a job listed. Use /unlistjob to remove that listing."
+    # Added to the lore of categories with a duration-override: duration-lore up to 24 hours (%duration% reads like
+    # "1 hour 30 minutes"), restart-lore above that.
+    duration-lore: "&7Lasts %duration%"
+    restart-lore: "&7Until server restart"
     categories:
         quest_request:
             slot: 0
