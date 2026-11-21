@@ -218,6 +218,39 @@ advert-icons:
 ## Title of the job board start screen (/jobboard, or right-clicking a board). The lom:jobboard picture fills the screen.
 menu-title: ""
 
+## The "Choose a Category" screen players post a job from: /listjob without a category (as the "Post New Job" button
+## runs it). Clicking a category opens the name/description dialog for a job at the player's location.
+## categories: job category id -> slot (0-53) and optional icon-item-model (defaults to the category's icon). Categories
+## not listed here fill the free slots in config order. history: the button that opens the player's job history; the
+## re-listed job lasts history.duration-millis. Players who already have a job listed get already-listed-message instead.
+job-category-picker:
+    title: "        &aChoose a Category"
+    duration-millis: 5400000
+    already-listed-message: "&4You already have a job listed. Use /unlistjob to remove that listing."
+    categories:
+        quest_request: {slot: 0, icon-item-model: "lom:icons/map/map-quest"}
+        tavern: {slot: 1, icon-item-model: "lom:icons/map/map-beer"}
+        fishing_spot: {slot: 2, icon-item-model: "lom:icons/map/map-fishing"}
+        blacksmith: {slot: 3, icon-item-model: "lom:icons/map/hammer_icon"}
+        store: {slot: 4, icon-item-model: "lom:icons/map/chest_icon"}
+        rare_merchant: {slot: 5, icon-item-model: "lom:icons/map/jewels_icon"}
+        holy_event: {slot: 6, icon-item-model: "lom:icons/map/map-holy"}
+        demon_gathering: {slot: 7, icon-item-model: "lom:icons/map/map-demon"}
+        combat: {slot: 8, icon-item-model: "lom:icons/map/map-combat"}
+        light_event: {slot: 9, icon-item-model: "lom:icons/map/light_icon"}
+        dark_event: {slot: 10, icon-item-model: "lom:icons/map/dark_icon"}
+        fire_event: {slot: 11, icon-item-model: "lom:icons/map/fire_icon"}
+        water_event: {slot: 12, icon-item-model: "lom:icons/map/water_icon"}
+        arcane_event: {slot: 13, icon-item-model: "lom:icons/map/arcane_icon"}
+        earth_event: {slot: 14, icon-item-model: "lom:icons/map/earth_icon"}
+        mining: {slot: 16, icon-item-model: "lom:icons/map/pickaxe_icon"}
+        birthday: {slot: 17, icon-item-model: "lom:icons/map/map-birthday"}
+    history:
+        slot: 26
+        icon-material: jigsaw
+        icon-item-model: "lom:icons/grayscale/giftoftime"
+        duration-millis: 1800000
+
 ## What players see and hear at each step. Each step can have a chat "message", a "toast" (shows the job or advert
 ## icon), "sounds" only that player hears, and a "waypoint" path style that points them at the job (SneakyUtils
 ## Waypoints, which runs its waypoints.commands). Leave a key out to skip it. Every step gets %player% (who it plays to).
