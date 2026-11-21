@@ -221,7 +221,7 @@ menu-title: ""
 ## The "Choose a Category" screen players post a job from: /listjob without a category (as the "Post New Job" button
 ## runs it). Clicking a category opens the name/description dialog for a job at the player's location.
 ## categories: job category id -> slot (0-53), and optionally icon-item-model (defaults to the category's icon), name
-## and lore (default to the category's name and description). Categories not listed here fill the free slots in config
+## and lore (default to the category's name and description; lore: [] shows none). Categories not listed here fill the free slots in config
 ## order. The material's own tooltip lines (attributes etc.) are hidden; name and lore show. history: the button that opens the player's job history; the
 ## re-listed job lasts history.duration-millis. Players who already have a job listed get already-listed-message instead.
 job-category-picker:
@@ -232,123 +232,88 @@ job-category-picker:
         quest_request:
             slot: 0
             icon-item-model: "lom:icons/map/map-quest"
-            name: "&bIcon:&6 Quest"
-            lore:
-                - "&7This indicates you have a quest for"
-                - "&7someone and your willing to pay!"
+            name: "&6Quest"
+            lore: []
         tavern:
             slot: 1
             icon-item-model: "lom:icons/map/map-beer"
-            name: "&bIcon:&6 Tavern"
-            lore:
-                - "&7This indicates are opening up"
-                - "&7bar to sell food or drink!"
+            name: "&6Tavern"
+            lore: []
         fishing_spot:
             slot: 2
             icon-item-model: "lom:icons/map/map-fishing"
-            name: "&bIcon:&6 Fishing Spot"
-            lore:
-                - "&7This indicates that this area"
-                - "&7currently great for fishing!"
+            name: "&6Fishing Spot"
+            lore: []
         blacksmith:
             slot: 3
             icon-item-model: "lom:icons/map/hammer_icon"
-            name: "&bIcon:&6 Blacksmith"
-            lore:
-                - "&7This indicates that your smithery"
-                - "&7is looking for work!"
+            name: "&6Blacksmith"
+            lore: []
         store:
             slot: 4
             icon-item-model: "lom:icons/map/chest_icon"
-            name: "&bIcon:&6 Shop Open"
-            lore:
-                - "&7This indicates that you have"
-                - "&7shop open for trade!"
+            name: "&6Shop Open"
+            lore: []
         rare_merchant:
             slot: 5
             icon-item-model: "lom:icons/map/jewels_icon"
-            name: "&bIcon:&6 Rare Merchant"
-            lore:
-                - "&7This indicates that you have"
-                - "&7rare items for sale!"
+            name: "&6Rare Merchant"
+            lore: []
         holy_event:
             slot: 6
             icon-item-model: "lom:icons/map/map-holy"
-            name: "&bIcon:&6 Holy Event"
-            lore:
-                - "&7This indicates that a holy or Grand"
-                - "&7Paladin Order event is taking place!"
+            name: "&6Holy Event"
+            lore: []
         demon_gathering:
             slot: 7
             icon-item-model: "lom:icons/map/map-demon"
-            name: "&bIcon:&6 Demon Gathering"
-            lore:
-                - "&7This indicates that a demonic"
-                - "&7gathering is currently underway!"
+            name: "&6Demon Gathering"
+            lore: []
         combat:
             slot: 8
             icon-item-model: "lom:icons/map/map-combat"
-            name: "&bIcon:&6 Combat Training"
-            lore:
-                - "&7This indicates that a Squires"
-                - "&7and Knights have gathered for"
-                - "&7training in the area!"
+            name: "&6Combat Training"
+            lore: []
         light_event:
             slot: 9
             icon-item-model: "lom:icons/map/light_icon"
-            name: "&bIcon:&6 Light Ritual"
-            lore:
-                - "&7This indicates light worshiping"
-                - "&7is occuring in the area!"
+            name: "&6Light Ritual"
+            lore: []
         dark_event:
             slot: 10
             icon-item-model: "lom:icons/map/dark_icon"
-            name: "&bIcon:&6 Darkness Ritual"
-            lore:
-                - "&7This indicates a darkness magical"
-                - "&7event is occuring in the area!"
+            name: "&6Darkness Ritual"
+            lore: []
         fire_event:
             slot: 11
             icon-item-model: "lom:icons/map/fire_icon"
-            name: "&bIcon:&6 Fire Gathering"
-            lore:
-                - "&7This indicates a fiery magical"
-                - "&7event is occuring in the area!"
+            name: "&6Fire Gathering"
+            lore: []
         water_event:
             slot: 12
             icon-item-model: "lom:icons/map/water_icon"
-            name: "&bIcon:&6 Water Event"
-            lore:
-                - "&7This indicates a water magical"
-                - "&7event is occuring in the area!"
+            name: "&6Water Event"
+            lore: []
         arcane_event:
             slot: 13
             icon-item-model: "lom:icons/map/arcane_icon"
-            name: "&bIcon:&6 Arcane Event"
-            lore:
-                - "&7This indicates an arcane magical"
-                - "&7event is occuring in the area!"
+            name: "&6Arcane Event"
+            lore: []
         earth_event:
             slot: 14
             icon-item-model: "lom:icons/map/earth_icon"
-            name: "&bIcon:&6 Earthen Ritual"
-            lore:
-                - "&7This indicates a earthen ritual"
-                - "&7is occuring in the area!"
+            name: "&6Earthen Ritual"
+            lore: []
         mining:
             slot: 16
             icon-item-model: "lom:icons/map/pickaxe_icon"
-            name: "&bIcon:&6 Mining Event"
-            lore:
-                - "&7This indicates you are looking"
-                - "&7do some mining with others!"
+            name: "&6Mining Event"
+            lore: []
         birthday:
             slot: 17
             icon-item-model: "lom:icons/map/map-birthday"
-            name: "&bIcon:&6 Birthday"
-            lore:
-                - "&7This indicates a birthday celebration"
-                - "&7is happening nearby!"
+            name: "&6Birthday"
+            lore: []
     history:
         slot: 26
         icon-material: jigsaw
