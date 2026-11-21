@@ -56,7 +56,7 @@ Adverts used to store an integer `iconCustomModelData`; the integer cannot be ap
 
 Rows of offline players, deleted rows and rows owned by other ports are converted when (and only when) their owner backend loads them; until then they keep resolving through step 2, so the stored integer stays the source of truth for them. The integer column is never cleared, so rolling back to the previous plugin build shows (at worst) the old integer icons for unconverted rows and the plain material for rows created after the upgrade.
 
-MagicSpells toast spells (`jobboard-invitation-received`, `advert-dispatch-other`, `jobboard-listed`, `jobboard-dispatch-other`) receive quoted `"<material>" "<item model>"` (empty model is `""` so later args do not shift). Job categories configured with only a legacy integer resolve it through the bundled legacy mapping for the toast. The matching spell definitions live in `MagicSpells_Scripting` (`spells-city-jobBoard.yml`) and must ship with this argument shape.
+Toasts (`effects.<step>.toast` in config.yml, shown through SneakyUtils `Toasts`) use the advert's or category's material and item model. Job categories configured with only a legacy integer resolve it through the bundled legacy mapping for the toast.
 
 ## Readiness, ordering and failure behavior
 

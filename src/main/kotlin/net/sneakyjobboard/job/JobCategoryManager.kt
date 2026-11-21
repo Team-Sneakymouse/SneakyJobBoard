@@ -1,6 +1,7 @@
 package net.sneakyjobboard.job
 
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.ToastIcon
 import net.sneakyjobboard.util.ItemModelDefinition
 import net.sneakyjobboard.util.ItemModelUtility
 import org.bukkit.Material
@@ -163,12 +164,9 @@ data class JobCategory(
     val durationOverrideMillis: Long? = null
 ) {
     /**
-     * Arguments for MagicSpells toast spells: `<material> [<item model>]`. A category configured with only a legacy
-     * integer resolves it through the bundled legacy mapping so its toast still shows an icon.
+     * The category's toast icon. A category configured with only a legacy integer resolves it through the bundled
+     * legacy mapping so its toast still shows an icon.
      */
-    val spellIconArguments: String
-        get() = ItemModelUtility.toastIconArguments(
-            iconMaterial,
-            ItemModelUtility.migrateLegacyInteger(iconModel, iconMaterial).itemModel
-        )
+    val toastIcon: ToastIcon
+        get() = ToastIcon(iconMaterial, ItemModelUtility.migrateLegacyInteger(iconModel, iconMaterial).itemModel)
 }

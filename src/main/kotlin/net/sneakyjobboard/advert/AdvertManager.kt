@@ -2,6 +2,8 @@ package net.sneakyjobboard.advert
 
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.JobBoardEffects
+import net.sneakyjobboard.ToastIcon
 import net.sneakyjobboard.util.ItemModelUtility
 import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
@@ -17,7 +19,6 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import java.util.*
-import kotlin.math.floor
 
 /**
  * Manages the lifecycle and operations of advertisements in the job board system.
@@ -88,10 +89,7 @@ class AdvertManager : Listener {
         )
         invitations[invitation.id] = invitation
 
-        Bukkit.getServer().dispatchCommand(
-            Bukkit.getServer().consoleSender,
-            "cast forcecast ${advert.player.name} jobboard-invitation-received ${advert.spellIconArguments()}"
-        )
+        JobBoardEffects.play(JobBoardEffects.INVITATION_RECEIVED, advert.player, icon = advert.toastIcon())
 
         return invitation
     }
@@ -150,24 +148,15 @@ class AdvertManager : Listener {
      * @param pl The player to be dispatched.
      */
     fun dispatch(invitation: Invitation) {
-        if (invitation.advert.player.isOnline) {
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${invitation.advert.player.name} jobboard-dispatch-self ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
-                    floor(invitation.location.z)
-                }"
-            )
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${invitation.inviter.name} advert-dispatch-other ${invitation.advert.player.name} ${invitation.advert.spellIconArguments()}"
+        val advertiser = invitation.advert.player
+        if (invitation.inviter.isOnline) {
+            JobBoardEffects.play(JobBoardEffects.DISPATCHED_SELF, advertiser, target = invitation.location)
+            JobBoardEffects.play(
+                JobBoardEffects.ADVERT_DISPATCHED_OTHER, invitation.inviter,
+                mapOf("advertiser" to advertiser.name), invitation.advert.toastIcon()
             )
         } else {
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${invitation.advert.player.name} jobboard-dispatch-self-offline ${floor(invitation.location.x)} ${floor(invitation.location.y)} ${
-                    floor(invitation.location.z)
-                }"
-            )
+            JobBoardEffects.play(JobBoardEffects.DISPATCHED_SELF_OFFLINE, advertiser, target = invitation.location)
         }
     }
 }
@@ -290,8 +279,8 @@ class Advert(
         else category?.iconModel?.let { ItemModelUtility.applyModel(meta, it, player) }
     }
 
-    /** Arguments for MagicSpells toast spells: quoted material + item model, resolved like [getIconItem]. */
-    internal fun spellIconArguments(): String = ItemModelUtility.toastIconArguments(
+    /** The advert's toast icon: material + item model, resolved like [getIconItem]. */
+    internal fun toastIcon(): ToastIcon = ToastIcon(
         iconMaterial ?: category?.iconMaterial ?: Material.BARRIER,
         iconItemModel ?: category?.iconModel?.itemModel
     )

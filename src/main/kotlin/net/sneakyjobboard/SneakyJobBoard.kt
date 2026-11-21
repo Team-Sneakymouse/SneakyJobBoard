@@ -99,6 +99,7 @@ class SneakyJobBoard : JavaPlugin(), Listener {
         server.pluginManager.registerEvents(JobInventoryListener(), this)
         server.pluginManager.registerEvents(JobHistoryInventoryListener(), this)
         server.pluginManager.registerEvents(JobBoardListener(), this)
+        server.pluginManager.registerEvents(JobBoardMenuListener(), this)
         server.pluginManager.registerEvents(AdvertBoardListener(), this)
         server.pluginManager.registerEvents(AdvertIconSelectorListener(), this)
         server.pluginManager.registerEvents(AdvertInvitationListener(), this)
