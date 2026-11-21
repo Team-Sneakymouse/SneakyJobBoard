@@ -61,10 +61,6 @@ class JobHistoryInventoryHolder(private val jobHistory: List<Job>) : DisplayOnly
 
         if (job != null) {
             SneakyJobBoard.getJobManager().list(job)
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${player.name} jobboard-history-listing ${job.durationMillis}"
-            )
         }
     }
 }

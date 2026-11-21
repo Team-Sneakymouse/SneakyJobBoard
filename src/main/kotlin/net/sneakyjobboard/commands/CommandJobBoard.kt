@@ -1,6 +1,7 @@
 package net.sneakyjobboard.commands
 
 import net.sneakyjobboard.jobboard.JobInventoryHolder
+import net.sneakyjobboard.jobboard.JobBoardMenu
 import net.sneakyjobboard.advert.AdvertBoardInterface
 import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
@@ -48,10 +49,7 @@ class CommandJobBoard : CommandBase("jobboard") {
 
         // If no arguments provided, show default menu
         if (remainingArgs.isEmpty()) {
-            Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${player.name} jobboard-menu-default"
-            )
+            JobBoardMenu.open(player)
             return true
         }
 

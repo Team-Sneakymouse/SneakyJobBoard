@@ -214,3 +214,40 @@ advert-icons:
         - "lom:icons/jobboard/yellowarchery"
         - "lom:icons/jobboard/yellowheal"
         - "lom:icons/jobboard/yellowswords"
+
+## Title of the job board start screen (/jobboard, or right-clicking a board). The lom:jobboard picture fills the screen.
+menu-title: ""
+
+## What players see and hear at each step. Each step can have a chat "message", a "toast" (shows the job or advert
+## icon), "sounds" only that player hears, and a "waypoint" path style that points them at the job (SneakyUtils
+## Waypoints, which runs its waypoints.commands). Leave a key out to skip it. Every step gets %player% (who it plays to).
+## Toasts make one hidden advancement per distinct text, so keep player names out of toast text.
+effects:
+    # To every player in the job's world when a job is listed. %category%, %location% (database-location).
+    job-listed:
+        message: "&eA &3%category% &ewas listed in &3%location%&e."
+        toast: "&eA &3%category% &ewas listed in &3%location%&e."
+    # To the player sent to a job: whoever accepted a listed job, or an advertiser who accepted an invitation.
+    dispatched-self:
+        message: "&eJob accepted. Navigation started. &3`/cancelpath`&e to cancel."
+        waypoint: paladin
+    # Same, when the job's poster or the inviter is offline.
+    dispatched-self-offline:
+        message: "&4The navigation was started, but the player that listed this job is currently offline. &3`/cancelpath`&4 to cancel."
+        waypoint: paladin
+    # To a job's poster when someone accepts it. %accepter%.
+    job-dispatched-other:
+        message: "&eA player has accepted your job listing."
+        toast: "&eA player has accepted your job listing."
+    # To an advertiser when someone invites them through their advert.
+    invitation-received:
+        message: "&eYou have received an invitation. Use &3`/invitations`&e to check."
+        toast: "&eYou have received an invitation."
+    # To the inviter when the advertiser accepts their invitation. %advertiser%.
+    advert-dispatched-other:
+        message: "&eA player has accepted your advert invitation."
+        toast: "&eA player has accepted your advert invitation."
+    # When the job board start screen opens.
+    menu-open:
+        sounds:
+            - {sound: "lom:jobboardopen", volume: 0.5, pitch: 1.0}

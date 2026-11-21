@@ -2,6 +2,7 @@ package net.sneakyjobboard.job
 
 import me.clip.placeholderapi.PlaceholderAPI
 import net.sneakyjobboard.SneakyJobBoard
+import net.sneakyjobboard.JobBoardEffects
 import net.sneakyjobboard.jobboard.JobBoard
 import net.sneakyjobboard.util.ItemModelUtility
 import com.sneakyutils.util.TextUtility
@@ -20,7 +21,6 @@ import org.bukkit.Location
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import java.util.*
-import kotlin.math.floor
 
 /**
  * Manages the lifecycle and operations of jobs in the system.
@@ -96,11 +96,9 @@ class JobManager : Listener {
 					PlaceholderAPI.setPlaceholders(job.player, displayStringLocation).replace("none", "Moonwell Pass")
 			}
 
+			val vars = mapOf("category" to job.category.name, "location" to displayStringLocation)
 			for (player in job.location.world.players) {
-				Bukkit.getServer().dispatchCommand(
-					Bukkit.getServer().consoleSender,
-						"cast forcecast ${player.name} jobboard-listed \"${job.category.name}\" \"${displayStringLocation}\" ${job.category.spellIconArguments}"
-					)
+				JobBoardEffects.play(JobBoardEffects.JOB_LISTED, player, vars, job.category.toastIcon)
             }
         }
 
@@ -201,33 +199,13 @@ class JobManager : Listener {
         val poster = job.player
 
 		if (poster != null) {
-			if (poster.isOnline) {
-				Bukkit.getServer().dispatchCommand(
-					Bukkit.getServer().consoleSender,
-					"cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
-						floor(job.location.z)
-					}"
-				)
-			} else {
-				Bukkit.getServer().dispatchCommand(
-					Bukkit.getServer().consoleSender,
-					"cast forcecast ${player.name} jobboard-dispatch-self-offline ${floor(job.location.x)} ${floor(job.location.y)} ${
-						floor(job.location.z)
-					}"
-				)
-			}
-
-			Bukkit.getServer().dispatchCommand(
-                Bukkit.getServer().consoleSender,
-                "cast forcecast ${poster.name} jobboard-dispatch-other ${player.name} ${job.category.spellIconArguments}"
-            )
-		} else {
-			Bukkit.getServer().dispatchCommand(
-				Bukkit.getServer().consoleSender,
-				"cast forcecast ${player.name} jobboard-dispatch-self ${floor(job.location.x)} ${floor(job.location.y)} ${
-					floor(job.location.z)
-				}"
+			val step = if (poster.isOnline) JobBoardEffects.DISPATCHED_SELF else JobBoardEffects.DISPATCHED_SELF_OFFLINE
+			JobBoardEffects.play(step, player, target = job.location)
+			JobBoardEffects.play(
+				JobBoardEffects.JOB_DISPATCHED_OTHER, poster, mapOf("accepter" to player.name), job.category.toastIcon
 			)
+		} else {
+			JobBoardEffects.play(JobBoardEffects.DISPATCHED_SELF, player, target = job.location)
 		}
     }
 }

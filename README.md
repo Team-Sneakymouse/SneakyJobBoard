@@ -2,6 +2,16 @@
 
 A Paper plugin for the LoM2 job board, persistent jobs, job history, adverts and invitations.
 
+## Player feedback (no MagicSpells)
+
+SneakyJobBoard casts no MagicSpells spells. What used to be force-cast spells is now native:
+
+| Was (forced cast) | Now |
+| --- | --- |
+| `jobboard-menu-default` (MenuSpell) | `JobBoardMenu`: the `lom:jobboard` start screen; left half opens places, right half people, bottom-right slot closes. Open sound is `effects.menu-open`, title is `menu-title` |
+| `jobboard-listed`, `jobboard-dispatch-self`, `jobboard-dispatch-self-offline`, `jobboard-dispatch-other`, `jobboard-invitation-received`, `advert-dispatch-other` | `effects.<step>` in config.yml (chat message, toast with the job/advert icon, sounds, waypoint), played by `JobBoardEffects`. Toasts and waypoints go through SneakyUtils `Toasts` and `Waypoints` |
+| `jobboard-history-listing` (item cost) | Removed: listing a job no longer costs anything |
+
 ## PostgreSQL persistence
 
 Requires the **SneakyDB** Paper runtime and published API `2026.10.26-fd4e29e90ad0`. Connection credentials stay in SneakyDB. The consumer JAR does not bundle its API, PostgreSQL driver or connection pool.
