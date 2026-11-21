@@ -59,7 +59,8 @@ class JobCategoryPicker private constructor(private val player: Player) : Displa
                     if (override != null) meta.setItemModel(override)
                     else ItemModelUtility.applyModel(meta, category.iconModel, player)
                     applyTooltip(
-                        meta, configured?.getConfigurationSection(id), "&6${category.name}", listOf("&7${category.description}")
+                        meta, configured?.getConfigurationSection(id), "&6${category.name}", listOf("&7${category.description}"),
+                        listOfNotNull(category.durationOverrideMillis?.let { durationLore(it) })
                     )
                 }
             })
@@ -84,12 +85,23 @@ class JobCategoryPicker private constructor(private val player: Player) : Displa
      * Name and lore from [entry] (`name`, `lore`), else the defaults. Like MagicSpells' `hide-tooltip`, the parts the
      * material adds itself (attributes and other item flags) are hidden; the name and lore still show.
      */
-    private fun applyTooltip(meta: ItemMeta, entry: ConfigurationSection?, defaultName: String, defaultLore: List<String>) {
+    private fun applyTooltip(
+        meta: ItemMeta,
+        entry: ConfigurationSection?,
+        defaultName: String,
+        defaultLore: List<String>,
+        extraLore: List<String> = emptyList()
+    ) {
         meta.displayName(TextUtility.convertToComponent(entry?.getString("name") ?: defaultName))
-        val lore = if (entry?.isList("lore") == true) entry.getStringList("lore") else defaultLore
+        val lore = (if (entry?.isList("lore") == true) entry.getStringList("lore") else defaultLore) + extraLore
         meta.lore(lore.map { TextUtility.convertToComponent(it) })
         meta.addItemFlags(*ItemFlag.values())
     }
+
+    /** The lore line for a category whose jobs always last [millis] (its `duration-override`). */
+    private fun durationLore(millis: Long): String =
+        if (millis > DAY_MILLIS) settings?.getString("restart-lore") ?: "&7Until server restart"
+        else (settings?.getString("duration-lore") ?: "&7Lasts %duration%").replace("%duration%", humanDuration(millis))
 
     internal fun click(slot: Int) {
         if (slot == historySlot) {
@@ -113,6 +125,19 @@ class JobCategoryPicker private constructor(private val player: Player) : Displa
     }
 
     companion object {
+        private const val DAY_MILLIS = 24L * 60 * 60 * 1000
+
+        /** [millis] as words, largest units first, seconds dropped once there are hours: "1 hour 30 minutes". */
+        internal fun humanDuration(millis: Long): String {
+            val totalSeconds = millis / 1000
+            val hours = totalSeconds / 3600
+            val minutes = totalSeconds % 3600 / 60
+            val seconds = totalSeconds % 60
+            fun part(n: Long, unit: String) = if (n == 0L) null else "$n $unit${if (n == 1L) "" else "s"}"
+            val parts = listOfNotNull(part(hours, "hour"), part(minutes, "minute"), if (hours == 0L) part(seconds, "second") else null)
+            return parts.joinToString(" ").ifEmpty { "0 minutes" }
+        }
+
         /**
          * Opens the picker for [player], or tells them to unlist first when they already have a job listed (the
          * MagicSpells menu refused the same way).
