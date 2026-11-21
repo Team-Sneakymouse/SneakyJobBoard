@@ -10,6 +10,7 @@ SneakyJobBoard casts no MagicSpells spells. What used to be force-cast spells is
 | --- | --- |
 | `jobboard-menu-default` (MenuSpell) | `JobBoardMenu`: the `lom:jobboard` start screen; left half opens places, right half people, bottom-right slot closes. Open sound is `effects.menu-open`, title is `menu-title` |
 | `jobboard-listed`, `jobboard-dispatch-self`, `jobboard-dispatch-self-offline`, `jobboard-dispatch-other`, `jobboard-invitation-received`, `advert-dispatch-other` | `effects.<step>` in config.yml (chat message, toast with the job/advert icon, sounds, waypoint), played by `JobBoardEffects`. Toasts and waypoints go through SneakyUtils `Toasts` and `Waypoints` |
+| `item-jobListing-menu-30/60/90` (category picker) | `JobCategoryPicker`, opened by `/listjob` without a category (point the "Post New Job" button at `listjob [playerName]`). Layout, icons, duration and the history button are `job-category-picker` in config.yml |
 | `jobboard-history-listing` (item cost) | Removed: listing a job no longer costs anything |
 
 ## PostgreSQL persistence

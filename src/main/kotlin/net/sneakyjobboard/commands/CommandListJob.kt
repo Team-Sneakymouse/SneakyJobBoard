@@ -4,6 +4,7 @@ import net.sneakyjobboard.dialog.TextInputDialogs
 import net.sneakyjobboard.SneakyJobBoard
 import net.sneakyjobboard.job.Job
 import net.sneakyjobboard.job.JobCategory
+import net.sneakyjobboard.job.JobCategoryPicker
 import com.sneakyutils.util.TextUtility
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
@@ -18,7 +19,8 @@ class CommandListJob : CommandBase("listjob") {
 
     init {
         this.usageMessage =
-            "/${this@CommandListJob.name} [jobCategory] [durationMillis] (tracking) (persist) (\"name\") (\"description\")" +
+            "/${this@CommandListJob.name} (no arguments: choose a category)" +
+            "\r\n/${this@CommandListJob.name} [jobCategory] [durationMillis] (tracking) (persist) (\"name\") (\"description\")" +
 			"\r\nIf the command is run from the console, use one of the following:" +
 			"\r\n${this@CommandListJob.name} [playerName] [jobCategory] [durationMillis] (tracking) (persist) (\"name\") (\"description\")" +
 			"\r\n${this@CommandListJob.name} [jobCategory] [durationMillis] (persist) [\"name\"] [\"description\"] [world] [x] [y] [z]"
@@ -39,6 +41,12 @@ class CommandListJob : CommandBase("listjob") {
         val player: Player? = if (sender is Player) sender
         else if (args.isNotEmpty()) Bukkit.getPlayer(args[0]) else null
         var nextArg: Int = if (sender is Player || player == null) 0 else 1
+
+        // No category: let the player pick one.
+        if (player != null && args.size == nextArg) {
+            JobCategoryPicker.open(player)
+            return true
+        }
 
         if ((player != null && args.size < nextArg + 2) || (player == null && args.size < nextArg + 8)) {
             sender.sendMessage(TextUtility.convertToComponent("&4Invalid Usage: $usageMessage"))
