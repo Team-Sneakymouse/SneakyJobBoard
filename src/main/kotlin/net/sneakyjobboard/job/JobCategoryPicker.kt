@@ -14,7 +14,9 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 
 /**
  * "Choose a Category": the screen players post a job from (`/listjob` without a category, the job board's
@@ -56,9 +58,9 @@ class JobCategoryPicker private constructor(private val player: Player) : Displa
                         ?.let { ItemModelUtility.parseItemModel(it, "job-category-picker.categories.$id") }
                     if (override != null) meta.setItemModel(override)
                     else ItemModelUtility.applyModel(meta, category.iconModel, player)
-                    meta.displayName(TextUtility.convertToComponent("&6${category.name}"))
-                    meta.lore(listOf(TextUtility.convertToComponent("&7${category.description}")))
-                    meta.setHideTooltip(true)
+                    applyTooltip(
+                        meta, configured?.getConfigurationSection(id), "&6${category.name}", listOf("&7${category.description}")
+                    )
                 }
             })
         }
@@ -70,15 +72,24 @@ class JobCategoryPicker private constructor(private val player: Player) : Displa
                     history?.getString("icon-item-model")
                         ?.let { ItemModelUtility.parseItemModel(it, "job-category-picker.history") }
                         ?.let { meta.setItemModel(it) }
-                    meta.displayName(TextUtility.convertToComponent("&aJob Listing History"))
-                    meta.lore(listOf(TextUtility.convertToComponent("&7Copy your recent job posting.")))
-                    meta.setHideTooltip(true)
+                    applyTooltip(meta, history, "&aJob Listing History", listOf("&7Copy your recent job posting."))
                 }
             })
         }
     }
 
     override fun getInventory(): Inventory = inventory
+
+    /**
+     * Name and lore from [entry] (`name`, `lore`), else the defaults. Like MagicSpells' `hide-tooltip`, the parts the
+     * material adds itself (attributes and other item flags) are hidden; the name and lore still show.
+     */
+    private fun applyTooltip(meta: ItemMeta, entry: ConfigurationSection?, defaultName: String, defaultLore: List<String>) {
+        meta.displayName(TextUtility.convertToComponent(entry?.getString("name") ?: defaultName))
+        val lore = if (entry?.isList("lore") == true) entry.getStringList("lore") else defaultLore
+        meta.lore(lore.map { TextUtility.convertToComponent(it) })
+        meta.addItemFlags(*ItemFlag.values())
+    }
 
     internal fun click(slot: Int) {
         if (slot == historySlot) {
